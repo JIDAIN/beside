@@ -71,7 +71,7 @@ describe("life natural input mutation normalization", () => {
     });
   });
 
-  it("normalizes meal item aliases and portions", () => {
+  it("normalizes meal item aliases, portions, and defaults create time to now", () => {
     const result = normalizeLifeMutationArgs({
       resource: "三餐",
       data: {
@@ -89,6 +89,7 @@ describe("life natural input mutation normalization", () => {
       data: {
         mealDate: "2026-09-05",
         mealType: "lunch",
+        eatenAt: "2026-09-05T16:00:00+08:00",
         items: [
           { rawName: "牛肉面", displayName: "牛肉面", portionDescription: "1碗" },
           { rawName: "鸡蛋", displayName: "鸡蛋", portionDescription: "1个" },
@@ -97,9 +98,28 @@ describe("life natural input mutation normalization", () => {
     });
   });
 
+  it("normalizes an explicit meal clock instead of replacing it with create time", () => {
+    const result = normalizeLifeMutationArgs({
+      resource: "meal",
+      data: {
+        mealType: "加餐",
+        mealTime: "12:35",
+        items: [{ name: "芒果" }],
+      },
+    }, context("12:35 吃了芒果，帮我记成加餐"));
+
+    expect(result).toMatchObject({
+      data: {
+        mealDate: "2026-09-05",
+        mealType: "snack",
+        eatenAt: "2026-09-05T12:35:00+08:00",
+      },
+    });
+  });
+
   it("allows photo-only meal draft input without inventing foods", () => {
     const result = normalizeLifeMutationArgs({ resource: "meal", attachPhoto: true, data: { mealType: "lunch" } }, context("把这张午饭照片记进去", true));
-    expect(result).toMatchObject({ data: { items: [], mealType: "lunch" } });
+    expect(result).toMatchObject({ data: { items: [], mealType: "lunch", eatenAt: "2026-09-05T16:00:00+08:00" } });
   });
 
   it("normalizes weight strings", () => {
