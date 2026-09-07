@@ -1,6 +1,7 @@
 # Meal Draft Confirmation + Before/After Photo Difference Contract
 
-Date: 2026-09-06
+Date: 2026-09-06  
+Validation update: 2026-09-07
 
 ## Goal
 
@@ -89,3 +90,29 @@ This contract belongs above the database layer:
 - Supabase: canonical persisted facts only after confirmation
 
 This keeps Harbor and MCP behavior aligned while preserving the ability to replace the AI entry point later.
+
+## 2026-09-07 实机验收
+
+餐前 / 餐后 AI 流程已经由真实使用确认通过，不再属于待验收项。
+
+确认通过的完整链路：
+
+```text
+餐前照片 + 餐后照片
+→ AI 根据前后差分与用户文字判断实际摄入
+→ 生成可检查的 meal 草稿
+→ kcal / protein / carbs / fat 等营养估算可正常呈现
+→ 用户确认
+→ 正式写入 meal
+→ 网页可正常读取并显示记录
+```
+
+当前结论：
+
+- 餐前 / 餐后两张图可正常用于实际摄入判断；
+- 用户明确文字仍优先于视觉差分；
+- 草稿 → 用户确认 → 正式写入流程符合预期；
+- 实际使用中未发现阻塞性问题；
+- 本项视为 **已验收 ✅**。
+
+需要区分：本次验收证明的是“两张图片参与 AI 分析”的流程已经可用；它不改变当前“一条正式 meal 只持久化 1 张展示照片”的数据模型边界。若未来需要永久保存餐前、餐后两张图，仍需单独设计多图持久化模型。
