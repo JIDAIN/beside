@@ -1,5 +1,5 @@
 export type LifeReminderStatus = "pending" | "snoozed" | "completed" | "dismissed";
-export type LifeReminderSourceKind = "custom" | "medicine" | "anniversary" | "system";
+export type LifeReminderSourceKind = "custom" | "medicine" | "anniversary" | "system" | "mailbox";
 
 export type LifeReminderItem = {
   id: string;
