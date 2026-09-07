@@ -310,7 +310,7 @@ export function normalizeLifeMutationArgs(args: unknown, context: NormalizeConte
     const eatenAtRaw = first(sourceData, ["eatenAt", "mealTime", "eatingTime", "ateAt", "time"]);
     if (text(eatenAtRaw)) {
       data.eatenAt = normalizeClock(eatenAtRaw, today, false);
-    } else if (action === "create") {
+    } else if (action === "create" && today === dateInShanghai(now)) {
       data.eatenAt = dateTimeInShanghai(now, today);
     }
     const rawItems = Array.isArray(sourceData.items) ? sourceData.items : [];
