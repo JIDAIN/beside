@@ -2,6 +2,17 @@
 
 只记录对理解产品状态有价值的里程碑，不记录每一次样式微调。
 
+## 2026-09-07 — 小信箱来信微信提醒上线
+
+- 小信箱正式接入统一 Reminder Engine：信件第一次真正进入 `sent` 时，只为收件人生成一条 `source_kind=mailbox` 的 reminder instance；保存 / 编辑 draft 不触发提醒，已寄出信件后续读取不会重复生成。
+- 来信提醒继续复用现有 Supabase `pg_cron` + `life_notification_deliveries` + PushPlus 投递链路，不新增第二套微信通知系统。
+- 微信内容只提示“收到一封新手札 / 新明信片”，不包含信件正文；`mailbox` 来源在 Reminder Center 中显示为“小信箱”。
+- Supabase 事务测试覆盖“直接 sent”和“draft → sent”两条路径，测试数据均回滚无残留。
+- 实际验收：Cat 寄给 Fish 的明信片在寄出后生成 Fish 的 mailbox reminder；下一轮 5 分钟云端调度完成 PushPlus 投递，delivery 为 `accepted`，`notified_at` 已写入。
+- Production deployment `dpl_9YzBipVW9PQF3Si8hGrmVxUyTXzD` READY，source commit `3ecd159c9e8a47f470726c27bab48603eecf2d35`。
+- 发布后 `/me/reminders` HTTP 200，最近 30 分钟未发现 runtime error；Production 自动 Git 部署已重新保持关闭。
+- 同步收尾 `README.md`、`docs/09-status-roadmap.md`、`docs/14-wechat-reminders.md` 与本 Changelog，使当前文档与 Production 行为一致。
+
 ## 2026-09-07 — Island Life 本轮收尾正式上线
 
 - 将本轮 GitHub `main` 的核心改造统一发布到 Production：Reminder Center V1 UI closeout、mood delete Web/API/MCP、Cat / Fish activity + weight 权限加固、Mailbox V2 Web/API/AI 与最终小信箱视觉。
