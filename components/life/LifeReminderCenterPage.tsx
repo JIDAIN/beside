@@ -40,6 +40,7 @@ function reminderTimeText(item: LifeReminderItem) {
 function sourceLabel(sourceKind: LifeReminderItem["sourceKind"]) {
   if (sourceKind === "medicine") return "药箱";
   if (sourceKind === "anniversary") return "纪念日";
+  if (sourceKind === "mailbox") return "小信箱";
   if (sourceKind === "system") return "系统";
   return "自定义";
 }
