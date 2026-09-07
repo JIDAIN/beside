@@ -3,9 +3,9 @@
 状态：当前有效。  
 状态日期：2026-09-07。
 
-> 本文描述当前 Reminder Center V1、Supabase 调度与 PushPlus 微信投递的正式架构。历史 Google Drive / Apps Script Bridge 不再属于当前提醒链路。
+> 本文描述当前 Reminder Center、Supabase 云端调度、微信公众号测试号与 PushPlus 的正式提醒架构。历史 Google Drive / Apps Script Bridge 不再属于当前提醒链路。
 
-## 1. 正式链路
+## 1. 当前正式链路
 
 ```text
 生活模块 / 自定义提醒
@@ -15,31 +15,79 @@ Reminder Engine
 life_reminder_rules
 life_reminder_instances
         ↓
-网页提醒中心
+网页 Reminder Center
         +
 Supabase pg_cron
         ↓
 life_notification_deliveries
         ↓
-Supabase Vault 中当前身份的 PushPlus token
-        ↓
-PushPlus
-        ↓
-对应微信
+按 source_kind 选择通知通道
 ```
 
-网站没有打开时提醒仍由云端执行。
-
-Reminder Engine 与 PushPlus 解耦：PushPlus 只是当前投递通道，业务规则不硬编码在 PushPlus 里。
-
-## 2. 双身份边界与统一 AI 昵称
+当前通道策略：
 
 ```text
-cat  → 只处理 cat 的实例 → 只使用 cat 的 PushPlus token
-fish → 只处理 fish 的实例 → 只使用 fish 的 PushPlus token
+mailbox
+  → 微信公众平台测试号（主通道）
+  → 若微信发送失败：PushPlus fallback
+
+其他 Reminder Center 来源
+  → PushPlus
 ```
 
-Cat / Fish 的账号、数据权限和 PushPlus token 仍然完全分离，但 **Island Life 的 AI 昵称统一为「团子」**：
+网站没有打开时，提醒仍由 Supabase 云端执行。
+
+Reminder Engine 与具体微信渠道保持解耦：业务模块只生成 reminder instance，不直接调用微信或 PushPlus。
+
+## 2. 微信公众平台测试号
+
+当前已经接通微信公众平台测试号模板消息 API。
+
+Cat / Fish 各自关注同一个测试号，并分别绑定自己的 OpenID：
+
+```text
+cat  → life_wechat_openid_cat
+fish → life_wechat_openid_fish
+```
+
+模板消息使用测试模板「团子来信 💌」，字段为：
+
+```text
+first
+keyword1 = 提醒类型
+keyword2 = 提醒内容
+keyword3 = 提醒时间
+remark
+```
+
+小信箱通知点击后跳转：
+
+```text
+https://couple-better-game.vercel.app/nest/mailbox
+```
+
+测试号主要用于验证和当前私人使用；未来如果迁移到正式公众号，应继续复用同一 provider 边界，只替换正式公众号的 AppID / AppSecret / Template ID / OpenID 配置，不重写 Reminder Engine。
+
+## 3. Secret 与身份边界
+
+微信公众号配置与 PushPlus token 均只保存在 Supabase Vault，不进入 Git，不下发浏览器。
+
+当前 Vault 配置包括：
+
+```text
+life_wechat_app_id
+life_wechat_app_secret
+life_wechat_template_id
+life_wechat_openid_cat
+life_wechat_openid_fish
+
+life_pushplus_cat
+life_pushplus_fish
+```
+
+Cat / Fish 的微信目标地址完全分离。
+
+AI 昵称统一为「团子」：
 
 ```text
 Harbor Cat  → 团子
@@ -48,37 +96,99 @@ Cat 微信提醒署名  → 团子
 Fish 微信提醒署名 → 团子
 ```
 
-不再按 actor 使用不同 AI 昵称。AI 昵称只是产品称呼，不参与身份认证。
+AI 昵称、用户自称、普通聊天文本都不参与身份认证。sender / recipient 仍由登录、OAuth、服务端签名身份和 mailbox 业务规则确定。
 
-身份来自登录 / OAuth / 服务端签名上下文，不来自：
+## 4. 小信箱来信提醒
 
-- AI 昵称；
-- 用户自称；
-- 前端提交的任意 actor；
-- 普通聊天文本。
+小信箱继续复用统一 Reminder Engine。
 
-PushPlus token 加密保存在 Supabase Vault。网页与普通 API 只能读取 `已绑定 / 未绑定` 状态，不能把 token 明文读回客户端。
-
-### PushPlus 微信卡片展示边界
-
-PushPlus 免费微信普通模板顶部的 **“设备通知”** 属于 PushPlus / 微信模板本身的固定模块名，程序传入的 `title` 不能替换这一行。
-
-程序可控制的是模板中的消息标题和正文，其中 API `title` 会显示在微信卡片的“通知内容”字段。因此小岛侧应把这里写成有辨识度、符合产品语气的内容，而不是依赖外层“设备通知”。
-
-当前小信箱标题：
+触发规则：
 
 ```text
-明信片 → 💌 收到明信片啦～
-手札   → 💌 有一封手札来啦～
+保存 / 编辑 draft       → 不提醒
+draft → sent            → 仅 recipient 生成 1 条 mailbox instance
+直接以 sent 创建        → 仅 recipient 生成 1 条 mailbox instance
+已 sent 后读取 / 展示    → 不重复提醒
 ```
 
-正文不展示信件原文，并统一由“团子”署名。
+实例：
 
-## 3. 数据模型
+```text
+source_kind = mailbox
+recipient = 信件收件人
+source_ref = 对应 mailbox letter
+metadata.format = postcard | letter
+metadata.destination = /mailbox
+```
+
+当前微信公众号消息示例：
+
+```text
+主人～团子来报信啦！ 💌
+提醒类型：小信箱 · 明信片 / 小信箱 · 手札
+提醒内容：只说明收到新来信
+提醒时间：实际到达时间
+团子已经帮主人放进小信箱，快去看看呀～
+```
+
+隐私边界：微信提醒不包含信件正文。真正的信件内容只在小岛登录后的信箱中查看。
+
+## 5. 微信主通道 + PushPlus fallback
+
+小信箱发送函数：
+
+```text
+private.life_mailbox_notification_send(actor, instance)
+```
+
+逻辑：
+
+```text
+1. 生成团子模板消息
+2. 调微信测试号模板消息 API
+3. 微信成功
+   → delivery.provider = wechat_test_account
+   → accepted
+4. 微信失败
+   → 自动调用现有 PushPlus
+5. PushPlus 成功
+   → delivery.provider = pushplus_wechat
+   → metadata.fallbackUsed = true
+   → accepted
+6. 两边都失败
+   → failed
+   → 等现有 delivery retry 规则处理
+```
+
+`life_notification_deliveries.metadata` 会记录：
+
+```text
+preferredProvider
+primaryProvider
+fallbackUsed
+primaryError（发生 fallback 时）
+```
+
+因此后续可以区分“公众号正常发送”和“公众号失败后由 PushPlus 兜底”。
+
+## 6. 其他提醒来源
+
+当前以下来源暂时继续走 PushPlus，不在本次迁移中扩大范围：
+
+```text
+自定义提醒
+药箱到期
+纪念日
+每日未记录 system nudge
+```
+
+这样可以先让“小信箱来信”作为微信公众号正式试运行场景，观察稳定性后再逐步迁移其他提醒。
+
+## 7. Reminder Center 数据模型
 
 ### `life_reminder_rules`
 
-表示持续规则或自定义提醒来源，记录：
+表示持续规则或自定义提醒来源：
 
 ```text
 创建者
@@ -91,18 +201,7 @@ source_kind
 
 ### `life_reminder_instances`
 
-表示一次真正会发生的提醒。
-
-状态：
-
-```text
-pending
-snoozed
-completed
-dismissed
-```
-
-主要字段：
+表示一次真正发生的提醒：
 
 ```text
 recipient
@@ -116,158 +215,28 @@ dedupe_key
 metadata
 ```
 
-用户状态与投递状态分离：
-
-- `life_reminder_instances.status`：用户如何处理提醒；
-- `life_notification_deliveries.status`：这一次 PushPlus 投递结果。
-
-PushPlus `accepted` 不等于用户已完成。
-
-## 4. 当前来源
-
-### 自定义提醒
-
-接收范围：
+状态：
 
 ```text
-cat
-fish
-both
+pending
+snoozed
+completed
+dismissed
 ```
 
-`both` 会物化为 Cat 与 Fish 各自一条实例，因此双方可以独立完成、忽略或 snooze。
+### `life_notification_deliveries`
 
-### 药箱到期提醒
-
-每个账号独立设置：
+只描述“这次通知投递发生了什么”，与用户是否完成提醒分离。
 
 ```text
-medicine_reminder_enabled
-medicine_offsets
+reserved
+accepted
+failed
 ```
 
-默认：
+`accepted` 只表示通知渠道接受发送，不代表用户完成了提醒。
 
-```text
-开启
-提前 30 / 7 / 1 / 0 天
-```
-
-规则：
-
-- 提前量范围 0～90 天；
-- 每个账号最多 10 个提前量；
-- 只物化未来约 90 天实例；
-- 关闭只影响当前账号；
-- 包装有效期与开封后有效期同时存在时，按更早者提醒。
-
-### 纪念日提醒
-
-纪念日已经进入 Reminder Center，不再走独立的旧直发分支。
-
-来源：
-
-```text
-app_configs.anniversary_date
-```
-
-默认：
-
-```text
-09:15
-提前 7 天 / 1 天 / 当天
-```
-
-2 月 29 日在非闰年按 2 月 28 日处理。
-
-### 小信箱来信提醒
-
-小信箱来信已经进入统一 Reminder Engine，不单独再造 PushPlus 发送逻辑。
-
-触发规则：
-
-```text
-保存 / 编辑 draft       → 不提醒
-draft → sent            → 仅 recipient 生成 1 条 mailbox instance
-直接以 sent 创建        → 仅 recipient 生成 1 条 mailbox instance
-已 sent 后续读取 / 展示  → 不重复提醒
-```
-
-来信实例使用：
-
-```text
-source_kind = mailbox
-recipient = 信件收件人
-source_ref = 对应 mailbox letter
-```
-
-当前来信文案：
-
-```text
-postcard title = 💌 收到明信片啦～
-letter title   = 💌 有一封手札来啦～
-```
-
-提醒正文只提示收到手札 / 明信片，不包含信件正文；sender / recipient 继续由服务端签名身份和 mailbox 规则确定，前端不能伪造。
-
-### 每日未记录提醒
-
-每日未记录提醒保留为低噪音 system nudge，不进入长期 Reminder Center 列表。
-
-默认：
-
-```text
-21:15
-发送窗口约 20 分钟
-```
-
-当天本人已有心情、睡眠、餐食、体重，或本人参与 / 双方共同活动中的任一记录时，不再发送。
-
-## 5. Reminder Center UI
-
-入口：
-
-```text
-我的 → 提醒中心
-```
-
-首页：
-
-```text
-接下来
-→ 最近 3 条提醒
-→ 点击进入完整提醒中心
-```
-
-提醒中心分区：
-
-```text
-今天
-即将到来
-已完成
-提醒设置
-```
-
-提醒操作：
-
-```text
-完成
-1 小时后
-忽略
-```
-
-提醒设置保持轻量：
-
-- 当前 PushPlus 绑定状态；
-- 药箱提醒开关；
-- 药箱提前天数；
-- 纪念日提醒摘要。
-
-`mailbox` 来源在 UI 中显示为“小信箱”。
-
-不扩张为项目、标签、优先级、子任务、看板等完整 TODO 产品。
-
-## 6. Snooze
+## 8. Snooze、幂等与失败恢复
 
 点击“1 小时后”时：
 
@@ -283,92 +252,74 @@ notified_at → null
 instance id + effective due time
 ```
 
-因此一条已经成功推送的提醒，也可以在用户明确 snooze 后于新时间再次推送；网络重试仍不会造成同一有效到期时间重复轰炸。
+因此同一有效到期时间不会因网络重试重复发送；明确 snooze 后可以在新时间再次提醒。
 
-## 7. 调度
+`life_notification_deliveries` 同时负责：
+
+- 网络投递去重；
+- accepted / failed 记录；
+- 最多 3 次重试；
+- 卡住的 reserved 超时恢复；
+- 记录实际 provider 与 fallback 状态。
+
+## 9. 云端调度
 
 实例物化：
 
 ```text
 life-reminder-materialize-v1
 每天执行
-→ materialize_medicine_expiry_reminders
-→ materialize_anniversary_reminders
 ```
 
-PushPlus 投递：
+通知调度仍复用现有 cron：
 
 ```text
 life-pushplus-reminders-v1
 */5 * * * *
 ```
 
-每 5 分钟：
+这里的 cron 名称是历史名称；实际 Reminder Center dispatcher 已经具备按来源选择 provider 的能力，并不再意味着所有提醒都只走 PushPlus。
+
+小信箱来信实例在信件第一次真正进入 `sent` 时即时生成，随后由最多约 5 分钟一次的统一调度投递。
+
+## 10. 2026-09-07 微信公众号验收
+
+已经完成：
 
 ```text
-1. 检查当前 actor 是否配置 PushPlus
-2. 处理 daily-record system nudge
-3. 找到期 Reminder Center instances
-4. reserve delivery ledger
-5. 调用 PushPlus
-6. accepted / failed 回写 delivery ledger
-7. 成功后写 instance.notified_at
+微信测试号 AppID / AppSecret                    ✅ Vault
+Cat OpenID                                      ✅
+Fish OpenID                                     ✅
+「团子来信 💌」模板                             ✅
+Cat 单独模板消息                                ✅ 实收
+Fish 单独模板消息                               ✅ 实收
+Cat → Fish 定向测试                             ✅ 无串人
+Fish → Cat 定向测试                             ✅ 无串人
+小信箱微信公众号主通道代码                     ✅ Production DB
+PushPlus fallback                               ✅ Production DB
 ```
 
-小信箱来信实例在信件真正进入 `sent` 时即时生成，不等待每日物化任务；随后仍由同一个 5 分钟 PushPlus 调度发送。
+真实 provider 测试：
 
-## 8. 幂等与失败
+- 直接微信公众号发送：Cat / Fish 均返回 `wechat_test_account` 成功；
+- 完整 Reminder Engine 测试 Cat：`wechatSent=1`、`pushplusFallbackSent=0`；
+- 完整 Reminder Engine 测试 Fish：微信请求遇到一次瞬时 `SSL_ERROR_SYSCALL`，系统自动切到 PushPlus，`pushplusFallbackSent=1` 且投递成功；
+- 两次端到端测试生成的临时 reminder / delivery 数据均已清理，残留为 0。
 
-`life_notification_deliveries` 负责：
+这同时验证了“公众号正常走主通道”和“公众号临时不可用时 PushPlus 自动兜底”两条路径。
 
-- 防止同一次有效到期时间重复推送；
-- 成功记录 `accepted`；
-- 失败记录 `failed`；
-- 允许按规则重试；
-- 卡住的 `reserved` 可以超时恢复。
+## 11. 当前扩展原则
 
-小信箱额外在业务实例层保证“一封信第一次进入 sent 只生成一次来信提醒”，避免刷新、重复查询或再次打开收信箱造成重复通知。
-
-## 9. 当前验收状态
-
-```text
-Reminder Engine / 数据模型               ✅ Production
-自定义提醒                               ✅ Production
-药箱自动提醒                             ✅ Production
-纪念日进入 Reminder Center               ✅ Production
-小信箱来信进入 Reminder Center           ✅ Production
-完成 / 忽略 / snooze                     ✅ Production
-首页最近 3 条                            ✅ Production
-今天 / 即将到来 / 已完成                 ✅ Production
-提醒设置                                 ✅ Production
-PushPlus 云端 5 分钟调度                  ✅
-Cat PushPlus                             ✅
-Fish PushPlus                            ✅
-Cat 自动提醒实机链路                     ✅
-Fish 单独 PushPlus 实机测试               ✅
-both 双人实例与独立 token                ✅
-Cat / Fish 双端微信实收                  ✅
-Cat → Fish 小信箱来信投递                ✅ accepted
-Cat / Fish AI 提醒署名统一为团子          ✅ Supabase
-```
-
-2026-09-07 双端验收：`recipient_scope=both` 会物化为 Cat / Fish 两条独立实例，两条 delivery 分别使用各自 Vault token；验收时均为 `accepted`、失败数为 0，双方均确认微信实际收到。测试 rule / instance 已清理，残留为 0。
-
-2026-09-07 小信箱验收：Cat 寄出一张给 Fish 的明信片后，系统生成 Fish 的 `source_kind=mailbox` reminder instance；下一轮云端调度完成 PushPlus 投递，delivery 为 `accepted`，`notified_at` 已写入。事务测试覆盖直接 `sent` 与 `draft → sent` 两条路径，测试数据均回滚无残留。
-
-2026-09-07 AI 昵称统一：Supabase 正式提醒生成函数已改为 Cat / Fish 均使用“团子”；Fish 的 daily-record 与 anniversary 消息已直接调用数据库函数验证返回“团子提醒”。新小信箱提醒标题同时改为更轻松的“💌 收到明信片啦～ / 💌 有一封手札来啦～”。历史已经发送的微信记录不回写。
-
-Reminder Center V1 UI closeout 已随 Production deployment `dpl_GC1Ut3u64w5rpZ8iwzRp5nyyvWmm` 正式上线；小信箱来信提醒随后随 Production deployment `dpl_9YzBipVW9PQF3Si8hGrmVxUyTXzD` 正式上线。`/me/reminders` 发布后 HTTP 200，最近 30 分钟未发现 runtime error。
-
-## 10. 后续扩展原则
-
-未来生理期、睡眠、饮食、天气等提醒都应复用：
+未来生理期、睡眠、饮食、天气等提醒仍统一复用：
 
 ```text
 业务模块
 → Reminder Engine
 → Reminder Instance
-→ Notification delivery
+→ Notification Delivery
+→ Provider
 ```
 
-不要为每个模块单独再做一套定时任务和 PushPlus 发送逻辑。
+不要为每个模块单独创建定时任务或各写一套微信发送逻辑。
+
+公众号测试稳定后，再决定是否把药箱 / 纪念日 / 自定义提醒切到公众号，以及是否申请正式的「团子」公众号。
