@@ -32,14 +32,17 @@ Couple Better Game（当前主程序 / Island Life）
 | 任务 | 必读 |
 |---|---|
 | 产品 / 页面流程 | `docs/01-product.md` |
-| 架构 / 重构 | `docs/02-architecture.md` |
+| 架构 / 重构 | `docs/02-architecture.md` + `docs/adr/README.md` |
 | 数据字段 / Supabase | `docs/03-data-model.md` |
-| 数据清理 / import / restore / Legacy Game 边界 | `docs/48-life-legacy-game-data-boundary.md` |
-| API / 同步 / 鉴权 | `docs/04-api-and-sync.md` |
+| 数据清理 / import / restore / Legacy Game 边界 | `docs/48-life-legacy-game-data-boundary.md` + `docs/16-operations-runbook.md` |
+| API / 同步 / 鉴权 | `docs/04-api-and-sync.md` + `docs/17-auth-and-pairing.md` |
+| AI / MCP | `docs/11-ai-write-architecture.md` + `docs/26-ai-access-core-principles.md` + `docs/28-ai-natural-language-contract.md` |
 | 金币 / 宝石 / 旧游戏规则 | `docs/05-business-rules.md` |
 | **任何 V2 可见 UI** | **`docs/12-island-life-design-system.md` + `docs/06-ui-guidelines.md`** |
 | 开发 / 测试 | `docs/07-development-testing.md` |
-| 部署 / 安全 | `docs/08-deployment-security.md` |
+| 环境变量 / 配置 | `docs/15-configuration-reference.md` |
+| 部署 / 安全 | `docs/08-deployment-security.md` + `docs/15-configuration-reference.md` |
+| Production 故障 / 恢复 | `docs/16-operations-runbook.md` |
 
 ## 3. 领域边界
 
@@ -179,27 +182,44 @@ DailyMealsPanelCore -> provider-free nutrition UI
 
 ## 8. AI 写入原则
 
-不是每个领域各造一套 AI。统一遵循：自然语言/图片 -> 草稿 -> 用户明确确认 -> 稳定 idempotency key -> 领域校验 -> restricted canonical write -> read-back。
+不是每个领域各造一套 AI。Web / MCP / 程序内置 AI 复用 AI Access Core 与 canonical services。
 
-`lib/ai/record-write-protocol.ts` 已预留：
+通用规则：
 
 ```text
-meal / mood / sleep / activity / weight / medicine
+查询 / 讨论 -> 不写
+用户明确要求新增 / 修改 -> normalize -> permission -> idempotency -> canonical write -> read-back
+删除 / 高风险覆盖 -> 额外安全校验
 ```
 
-AI 不获得任意 SQL 权限。
+**新 meal 是特殊流程**：
+
+```text
+用户文字 / 图片
+→ AI 生成实际摄入与营养草稿
+→ 用户修改 / 确认
+→ 正式 life_mutate
+```
+
+不要把“新 meal 必须先确认草稿”的规则错误扩展成所有生活资源都必须二次确认。
+
+`lib/ai/record-write-protocol.ts` 与 Natural Input Normalizer 提供共享 contract；AI 不获得任意 SQL 权限。
 
 `legacy_home` 是 Legacy Game 兼容入口，不属于普通 Island Life resource；只有用户明确要求旧游戏操作时才进入该流程。
+
+旧 Harbor Sheet / Apps Script / Fast Wake / Drive Bridge 已退出当前 AI 主链路，不得因为 archive 或历史 migration 仍存在就重新实现。
 
 ## 9. Supabase / 安全
 
 - Browser -> Next.js API -> server-only Supabase；
 - secret 不进入浏览器；
+- Web session 与 MCP OAuth token 都绑定固定 actor；
 - DDL 只通过新 migration；
 - 已执行 migration 不回改；
 - 多表写入考虑事务；
 - anon/authenticated 不意外获得 server-only RPC；
-- 真实药箱 Excel/库存不得提交到 GitHub migration。
+- 真实药箱 Excel/库存、账号密码、PushPlus token 不得提交到 GitHub migration；
+- 环境变量语义以 `docs/15-configuration-reference.md` 为准。
 
 ## 10. Legacy Game
 
@@ -211,7 +231,7 @@ V2 不顺手重写 Legacy Game，也不把 Life facts 自动转成全局排行�
 
 ## 11. 开发验证
 
-每阶段至少：
+代码改动每阶段至少：
 
 ```text
 npm run test
@@ -219,7 +239,14 @@ npm run lint
 npm run build
 ```
 
-可见 UI 还需 Vercel Preview 人工检查。未做视觉检查，不写“视觉已验证”。
+可见 UI 还需经授权的 Vercel Preview / Production 实机检查。未做视觉检查，不写“视觉已验证”。
+
+只修改文档 / Skill 时不要求为了形式运行完整 build，但必须核对：
+
+- 链接和路径；
+- 当前代码事实；
+- 是否与 Production 状态冲突；
+- 是否残留已经退役的 transport / 权限 / API 描述。
 
 ## 12. Vercel 部署审批（强制）
 
@@ -242,6 +269,36 @@ npm run build
 - 不得为了“顺便看看效果”自行部署；
 - 部署审批是逐次授权，不视为永久授权。
 
+长期设计理由见 `docs/adr/0006-manual-production-deployment.md`。
+
 ## 13. 当前下一步
 
 `docs/09-status-roadmap.md` 为唯一当前状态页。按该文档继续推进；任何需要 Vercel Preview / Production 的节点都必须先执行第 12 节审批流程。
+
+## 14. 文档治理（强制）
+
+`docs/README.md` 是文档体系规则入口。
+
+维护时必须遵守：
+
+```text
+当前事实 -> 顶层领域主文档
+架构原因 -> docs/adr/
+版本 / 阶段 / 实施验收 -> docs/archive/
+当前上线状态 -> 09-status-roadmap.md
+发生了什么 -> CHANGELOG.md
+```
+
+### 防止文档漂移
+
+以下变化必须同批更新文档：
+
+- API / transport / auth -> `04-api-and-sync.md`；
+- schema / 数据域 -> `03-data-model.md`；
+- 环境变量 -> `15-configuration-reference.md`；
+- Production 排障 / 恢复方式 -> `16-operations-runbook.md`；
+- 长期架构方向 -> 新 ADR 或 supersede 旧 ADR。
+
+顶层长期文档按**领域**命名，不按 `R8 / R10 / R11.5` 之类开发轮次持续新增。版本化实施记录在结论吸收后必须归档。
+
+如果发现当前主文档与代码冲突，不能继续复制旧文档；先以 Production / 当前 `main` 核验事实，再修正文档。
