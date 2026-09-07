@@ -10,9 +10,9 @@ import {
 const DELIVERY_ID = "123e4567-e89b-42d3-a456-426614174000";
 
 describe("life WeChat reminders", () => {
-  it("binds Harbor aliases to fixed actors", () => {
+  it("uses the same Island Life AI nickname for both fixed actors", () => {
     expect(harborAiName("cat")).toBe("团子");
-    expect(harborAiName("fish")).toBe("仔仔");
+    expect(harborAiName("fish")).toBe("团子");
   });
 
   it("builds a low-pressure daily reminder for cat", () => {
@@ -31,7 +31,7 @@ describe("life WeChat reminders", () => {
     expect(message.content).toContain("——团子");
   });
 
-  it("builds fish anniversary reminders for seven days, tomorrow, and today", () => {
+  it("builds fish anniversary reminders with the shared Tuanzi nickname", () => {
     const sevenDays = buildWechatReminderMessage("fish", {
       deliveryId: DELIVERY_ID,
       kind: "anniversary",
@@ -54,10 +54,10 @@ describe("life WeChat reminders", () => {
       daysUntil: 0,
     });
 
-    expect(sevenDays.title).toBe("仔仔提醒｜纪念日还有 7 天");
-    expect(sevenDays.content).toContain("——仔仔");
-    expect(tomorrow.title).toBe("仔仔提醒｜明天是你们的纪念日");
-    expect(today.title).toBe("仔仔提醒｜今天是你们的纪念日");
+    expect(sevenDays.title).toBe("团子提醒｜纪念日还有 7 天");
+    expect(sevenDays.content).toContain("——团子");
+    expect(tomorrow.title).toBe("团子提醒｜明天是你们的纪念日");
+    expect(today.title).toBe("团子提醒｜今天是你们的纪念日");
   });
 
   it("parses valid reminder claims and rejects malformed claims", () => {
