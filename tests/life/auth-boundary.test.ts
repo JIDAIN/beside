@@ -18,6 +18,21 @@ describe("V2 fixed account boundary", () => {
     expect(login).not.toContain("signup");
   });
 
+  it("returns WeChat mailbox deep links to the mailbox after login", () => {
+    const loginPage = source("app/login/page.tsx");
+    const login = source("components/life/LifeLoginPage.tsx");
+    const openMailbox = source("app/open/mailbox/route.ts");
+    const migration = source("supabase/migrations/20260907205500_mailbox_wechat_deep_link_login_return.sql");
+
+    expect(login).toContain("router.replace(nextPath)");
+    expect(loginPage).toContain('candidate.startsWith("/")');
+    expect(loginPage).toContain('candidate.startsWith("//")');
+    expect(loginPage).toContain('candidate.startsWith("/login")');
+    expect(openMailbox).toContain("resolveFixedLifeIdentity");
+    expect(openMailbox).toContain('login.searchParams.set("next", "/nest/mailbox")');
+    expect(migration).toContain("https://couple-better-game.vercel.app/open/mailbox");
+  });
+
   it("authenticates username and password against the server-only Supabase RPC", () => {
     const fixedAuth = source("lib/server/fixed-life-auth.ts");
     expect(fixedAuth).toContain("LIFE_ACCOUNT_COOKIE");
