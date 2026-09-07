@@ -32,12 +32,23 @@ PushPlus
 
 Reminder Engine 与 PushPlus 解耦：PushPlus 只是当前投递通道，业务规则不硬编码在 PushPlus 里。
 
-## 2. 双身份边界
+## 2. 双身份边界与统一 AI 昵称
 
 ```text
 cat  → 只处理 cat 的实例 → 只使用 cat 的 PushPlus token
 fish → 只处理 fish 的实例 → 只使用 fish 的 PushPlus token
 ```
+
+Cat / Fish 的账号、数据权限和 PushPlus token 仍然完全分离，但 **Island Life 的 AI 昵称统一为「团子」**：
+
+```text
+Harbor Cat  → 团子
+Harbor Fish → 团子
+Cat 微信提醒署名  → 团子
+Fish 微信提醒署名 → 团子
+```
+
+不再按 actor 使用不同 AI 昵称。AI 昵称只是产品称呼，不参与身份认证。
 
 身份来自登录 / OAuth / 服务端签名上下文，不来自：
 
@@ -47,6 +58,21 @@ fish → 只处理 fish 的实例 → 只使用 fish 的 PushPlus token
 - 普通聊天文本。
 
 PushPlus token 加密保存在 Supabase Vault。网页与普通 API 只能读取 `已绑定 / 未绑定` 状态，不能把 token 明文读回客户端。
+
+### PushPlus 微信卡片展示边界
+
+PushPlus 免费微信普通模板顶部的 **“设备通知”** 属于 PushPlus / 微信模板本身的固定模块名，程序传入的 `title` 不能替换这一行。
+
+程序可控制的是模板中的消息标题和正文，其中 API `title` 会显示在微信卡片的“通知内容”字段。因此小岛侧应把这里写成有辨识度、符合产品语气的内容，而不是依赖外层“设备通知”。
+
+当前小信箱标题：
+
+```text
+明信片 → 💌 收到明信片啦～
+手札   → 💌 有一封手札来啦～
+```
+
+正文不展示信件原文，并统一由“团子”署名。
 
 ## 3. 数据模型
 
@@ -175,7 +201,14 @@ recipient = 信件收件人
 source_ref = 对应 mailbox letter
 ```
 
-提醒正文只提示“收到一封新手札 / 新明信片”，不包含信件正文；sender / recipient 继续由服务端签名身份和 mailbox 规则确定，前端不能伪造。
+当前来信文案：
+
+```text
+postcard title = 💌 收到明信片啦～
+letter title   = 💌 有一封手札来啦～
+```
+
+提醒正文只提示收到手札 / 明信片，不包含信件正文；sender / recipient 继续由服务端签名身份和 mailbox 规则确定，前端不能伪造。
 
 ### 每日未记录提醒
 
@@ -316,11 +349,14 @@ Fish 单独 PushPlus 实机测试               ✅
 both 双人实例与独立 token                ✅
 Cat / Fish 双端微信实收                  ✅
 Cat → Fish 小信箱来信投递                ✅ accepted
+Cat / Fish AI 提醒署名统一为团子          ✅ Supabase
 ```
 
 2026-09-07 双端验收：`recipient_scope=both` 会物化为 Cat / Fish 两条独立实例，两条 delivery 分别使用各自 Vault token；验收时均为 `accepted`、失败数为 0，双方均确认微信实际收到。测试 rule / instance 已清理，残留为 0。
 
 2026-09-07 小信箱验收：Cat 寄出一张给 Fish 的明信片后，系统生成 Fish 的 `source_kind=mailbox` reminder instance；下一轮云端调度完成 PushPlus 投递，delivery 为 `accepted`，`notified_at` 已写入。事务测试覆盖直接 `sent` 与 `draft → sent` 两条路径，测试数据均回滚无残留。
+
+2026-09-07 AI 昵称统一：Supabase 正式提醒生成函数已改为 Cat / Fish 均使用“团子”；Fish 的 daily-record 与 anniversary 消息已直接调用数据库函数验证返回“团子提醒”。新小信箱提醒标题同时改为更轻松的“💌 收到明信片啦～ / 💌 有一封手札来啦～”。历史已经发送的微信记录不回写。
 
 Reminder Center V1 UI closeout 已随 Production deployment `dpl_GC1Ut3u64w5rpZ8iwzRp5nyyvWmm` 正式上线；小信箱来信提醒随后随 Production deployment `dpl_9YzBipVW9PQF3Si8hGrmVxUyTXzD` 正式上线。`/me/reminders` 发布后 HTTP 200，最近 30 分钟未发现 runtime error。
 
