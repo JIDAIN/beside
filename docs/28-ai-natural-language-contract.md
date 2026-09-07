@@ -1,6 +1,6 @@
 # AI 自然语言输入与 Clarification Contract
 
-> 状态：AI Access Core 的长期业务契约。Harbor、程序内置 AI、未来 MCP / function calling 共用。
+> 状态：AI Access Core 的长期业务契约。Harbor、程序内置 AI、MCP / function calling 共用。
 
 ## 1. 目标
 
@@ -167,7 +167,7 @@ unit: "碗"
 
 营养数字允许常见别名，最终仍由 canonical meal parser 严格校验。
 
-有可信餐食图片且用户明确要求保存时，可以先创建照片餐食；看不清的重量和营养值不得伪造精确值。
+有可信餐食图片且用户明确要求保存时，可以在饮食草稿确认后保存图片；看不清的重量和营养值不得伪造精确值。
 
 ### 4.5 Weight
 
@@ -250,12 +250,14 @@ Delete 的安全检查优先于 create/update 字段完整性检查：删除不�
 - 删除安全；
 - 正式写入与查询。
 
-### Adapter 负责
+### Adapter / Transport 负责
 
-- Harbor Sheet / Fast Wake / MCP / API transport；
-- 可信身份入口；
+- `/mcp`、Web API、程序内置 AI 等当前 transport adapter；
+- 把可信 Web session / MCP OAuth identity 传入共享业务层；
 - transport auth / retry / timeout；
-- 原样传递 clarification 和 tool result。
+- 原样传递 clarification 和 tool result，不重写业务语义。
+
+Harbor Sheet、Apps Script、Fast Wake、Drive Bridge 已退役，不属于当前 Adapter 职责；相关实现历史只保留在 `docs/archive/`、migration 历史和 Git 历史。
 
 ## 7. 新模块规则
 
@@ -271,7 +273,7 @@ Delete 的安全检查优先于 create/update 字段完整性检查：删除不�
 → tests
 ```
 
-然后 Harbor / MCP / 内置 AI 自动共享，不为每个 AI 入口重复写业务规则。
+然后 MCP / Harbor / 内置 AI 自动共享，不为每个 AI 入口重复写业务规则。
 
 ## 8. 统一验收矩阵
 
@@ -286,7 +288,7 @@ Delete 的安全检查优先于 create/update 字段完整性检查：删除不�
 - idempotency；
 - meal 图片入口；
 - moodLabel 等用户可读语义；
-- Harbor receipt 结构；
+- MCP OAuth / tool response structure；
 - MCP / 内置 AI 共用 contract。
 
 人工统一验收只负责验证真实用户体验，不再负责发现基础字段名错误。
