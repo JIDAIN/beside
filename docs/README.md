@@ -36,6 +36,7 @@
 | [`46-harbor-mcp-project-instructions.md`](46-harbor-mcp-project-instructions.md) | Harbor Cat / Fish 当前 MCP Project Instructions |
 | [`47-harbor-instructions-maintenance.md`](47-harbor-instructions-maintenance.md) | Project Instructions 的维护规则 |
 | [`48-life-legacy-game-data-boundary.md`](48-life-legacy-game-data-boundary.md) | Island Life 与旧版“变瘦变美大作战”游戏子项目的数据隔离与维护边界 |
+| [`49-tuanzi-notification-tone.md`](49-tuanzi-notification-tone.md) | 团子的“主人 / 老婆”提醒语气与 PushPlus 激活消息展示规则 |
 
 ## 架构决策 ADR
 
