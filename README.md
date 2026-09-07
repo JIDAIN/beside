@@ -221,6 +221,8 @@ lib/home/                Legacy Game 领域逻辑
 supabase/migrations/     Production 数据库迁移历史
 tests/                   Test / source contract / service tests
 docs/                    当前有效主文档
+docs/adr/                长期架构决策（为什么这样设计）
+docs/archive/            历史实施、迁移与阶段验收记录
 ```
 
 ## 文档入口
@@ -232,9 +234,13 @@ docs/                    当前有效主文档
 3. [`docs/02-architecture.md`](docs/02-architecture.md)
 4. [`docs/03-data-model.md`](docs/03-data-model.md)
 5. [`docs/04-api-and-sync.md`](docs/04-api-and-sync.md)
-6. [`docs/09-status-roadmap.md`](docs/09-status-roadmap.md)
-7. [`docs/11-ai-write-architecture.md`](docs/11-ai-write-architecture.md)
-8. [`docs/14-wechat-reminders.md`](docs/14-wechat-reminders.md)
-9. [`docs/17-auth-and-pairing.md`](docs/17-auth-and-pairing.md)
+6. [`docs/08-deployment-security.md`](docs/08-deployment-security.md)
+7. [`docs/15-configuration-reference.md`](docs/15-configuration-reference.md)
+8. [`docs/16-operations-runbook.md`](docs/16-operations-runbook.md)
+9. [`docs/09-status-roadmap.md`](docs/09-status-roadmap.md)
+10. [`docs/11-ai-write-architecture.md`](docs/11-ai-write-architecture.md)
+11. [`docs/14-wechat-reminders.md`](docs/14-wechat-reminders.md)
+12. [`docs/17-auth-and-pairing.md`](docs/17-auth-and-pairing.md)
+13. [`docs/adr/README.md`](docs/adr/README.md)
 
 AI / 自动化修改前必须先读 [`AGENTS.md`](AGENTS.md)。
