@@ -250,7 +250,7 @@ export async function completeLifeWechatReminder(
     p_actor: actor,
     p_accepted: input.accepted,
     p_provider_message_id: input.providerMessageId?.trim() || null,
-    p_error: input.error?.trim().slice(0, 1000) || null,
+    p_provider_error: input.error?.trim().slice(0, 1000) || null,
     p_space_slug: coupleSpaceSlug(),
   });
 }
