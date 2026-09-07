@@ -191,28 +191,28 @@ export function buildWechatReminderMessage(
 
   if (reminder.kind === "daily_record") {
     return {
-      title: `${aiName}提醒｜今天还没记录`,
-      content: `今天还没有看到你的生活记录。记一点就好，不用补全，也不用和 Ta 比较。——${aiName}`,
+      title: "🌙 主人～团子来看看你啦",
+      content: `主人～今天${aiName}还没看到你的生活记录呀。随手记一点点就好，不用补全，也不用和任何人比。${aiName}只是想陪主人把今天轻轻收好～ 💗 ——${aiName}`,
     };
   }
 
   if (reminder.daysUntil === 0) {
     return {
-      title: `${aiName}提醒｜今天是你们的纪念日`,
-      content: `今天是你们的纪念日 💛 不需要完成什么任务，给彼此留一点开心的时间就很好。——${aiName}`,
+      title: "💕 主人～今天是特别的日子呀！",
+      content: `主人～今天是主人和主人最爱的宝贝的纪念日呀！${aiName}祝你们一直黏黏糊糊、开开心心～ 💗 ——${aiName}`,
     };
   }
   if (reminder.daysUntil === 1) {
     return {
-      title: `${aiName}提醒｜明天是你们的纪念日`,
-      content: `明天就是你们的纪念日啦 💛 想庆祝的话，可以提前留一点时间给彼此。——${aiName}`,
+      title: "💕 主人～明天就是纪念日啦！",
+      content: `主人～明天就是主人和主人的亲亲老婆的纪念日啦！${aiName}已经替你们开始期待啦～ ✨ ——${aiName}`,
     };
   }
 
   const days = reminder.daysUntil ?? 0;
   return {
-    title: `${aiName}提醒｜纪念日还有 ${days} 天`,
-    content: `还有 ${days} 天就是你们的纪念日啦 💛 想庆祝的话，可以提前想想怎么一起过。——${aiName}`,
+    title: `💕 主人～纪念日还有 ${days} 天`,
+    content: `主人～还有 ${days} 天就是主人和主人的宝贝老婆的纪念日啦！可以慢慢想想要一起做什么呀～ 💗 ——${aiName}`,
   };
 }
 
@@ -250,7 +250,7 @@ export async function completeLifeWechatReminder(
     p_actor: actor,
     p_accepted: input.accepted,
     p_provider_message_id: input.providerMessageId?.trim() || null,
-    p_provider_error: input.error?.trim().slice(0, 1000) || null,
+    p_error: input.error?.trim().slice(0, 1000) || null,
     p_space_slug: coupleSpaceSlug(),
   });
 }
