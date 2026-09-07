@@ -4,7 +4,11 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLifeIdentity } from "@/components/life/LifeIdentityContext";
 
-export function LifeLoginPage() {
+type LifeLoginPageProps = {
+  nextPath?: string;
+};
+
+export function LifeLoginPage({ nextPath = "/" }: LifeLoginPageProps) {
   const router = useRouter();
   const { refreshIdentity } = useLifeIdentity();
   const [username, setUsername] = useState("");
@@ -25,7 +29,7 @@ export function LifeLoginPage() {
       const data = (await response.json()) as { ok?: boolean; error?: string };
       if (!response.ok || !data.ok) throw new Error(data.error || "登录失败");
       await refreshIdentity();
-      router.replace("/");
+      router.replace(nextPath);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "登录失败");
     } finally {
