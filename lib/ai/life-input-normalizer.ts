@@ -57,6 +57,18 @@ function dateInShanghai(now = new Date(), offsetDays = 0) {
   return base.toISOString().slice(0, 10);
 }
 
+function dateTimeInShanghai(now: Date, date = dateInShanghai(now)) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Shanghai",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(now);
+  const get = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value || "00";
+  return `${date}T${get("hour")}:${get("minute")}:${get("second")}+08:00`;
+}
+
 function inferDate(explicit: unknown, userText: string, now: Date) {
   const value = text(explicit);
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
@@ -295,6 +307,12 @@ export function normalizeLifeMutationArgs(args: unknown, context: NormalizeConte
   if (resource === "meal") {
     data.mealDate = today;
     data.mealType = normalizeMealType(first(sourceData, ["mealType", "type", "meal", "mealName"]), context.latestUserText);
+    const eatenAtRaw = first(sourceData, ["eatenAt", "mealTime", "eatingTime", "ateAt", "time"]);
+    if (text(eatenAtRaw)) {
+      data.eatenAt = normalizeClock(eatenAtRaw, today, false);
+    } else if (action === "create") {
+      data.eatenAt = dateTimeInShanghai(now, today);
+    }
     const rawItems = Array.isArray(sourceData.items) ? sourceData.items : [];
     const normalizedItems = rawItems.map(normalizeMealItem).filter(Boolean);
     if (!normalizedItems.length) {
