@@ -21,7 +21,7 @@ export function LifeWechatReminderCard({ actor }: { actor: LifePartnerKey }) {
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const accountName = actor === "cat" ? "小猫" : "小鱼";
-  const aiName = actor === "cat" ? "团子" : "仔仔";
+  const aiName = "团子";
 
   useEffect(() => {
     let cancelled = false;
