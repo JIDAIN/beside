@@ -1,8 +1,8 @@
 # 餐食照片存储与显示边界
 
-状态：R11.5（2026-09-06）
+状态：2026-09-07。
 
-详细实现与发布记录见 `docs/45-r11-5-meal-nutrition-photo-display.md`。
+R11.5 的实施与发布记录已归档到 `docs/archive/v2-evolution/45-r11-5-meal-nutrition-photo-display.md`；本文档只维护当前有效的照片存储与显示契约。
 
 ## 1. 当前模型
 
@@ -24,7 +24,7 @@ public.meals.photo_scale
 
 ## 2. 上传与压缩
 
-浏览器与 AI 媒体最终都进入服务端压缩边界：
+浏览器上传、MCP / ChatGPT 直接附件以及 browser media recovery 最终都进入服务端照片处理边界：
 
 ```text
 原图
@@ -36,7 +36,7 @@ public.meals.photo_scale
 → meals.photo_path
 ```
 
-普通网页上传单文件上限仍为 10MB；受信任的 Drive 原图通道可有不同入口上限，但最终展示图仍走相同压缩逻辑。
+不同入口可以有各自的请求体 / 附件限制，但正式展示图必须复用同一套压缩、权限和状态写入逻辑。
 
 支持 MIME：JPEG / PNG / WebP / HEIC / HEIF。
 
@@ -91,7 +91,9 @@ PUT /api/meals/:id/photo
 流程：
 
 ```text
-校验
+Web/MCP 身份鉴权
+→ meal ownership
+→ 图片校验
 → 压缩
 → 上传新对象
 → 计算默认旋转
@@ -142,11 +144,20 @@ scale = 1
 - 当前不能声称同一 meal 已永久保存两张照片；
 - 不创建不存在的 `beforePhotoPath` / `afterPhotoPath` 字段。
 
-如果未来需要永久保存餐前 + 餐后多图，应新增独立 `meal_media`/附件模型，而不是继续扩张单个 `photo_path`。
+如果未来需要永久保存餐前 + 餐后多图，应新增独立 `meal_media` / attachment 模型，而不是继续扩张单个 `photo_path`。
 
-## 7. AI 媒体恢复
+## 7. AI / MCP 媒体路径
 
-如果 MCP / 客户端没有透传真实图片字节，但用户要求保存图片：
+支持真实附件的客户端：
+
+```text
+附件字节
+→ AI / MCP adapter
+→ canonical meal photo service
+→ 压缩 + private Storage
+```
+
+如果 MCP client 没有透传真实图片字节，但用户要求保存图片：
 
 ```text
 life_mutate attachPhoto=true
@@ -157,6 +168,8 @@ life_mutate attachPhoto=true
 ```
 
 收到 `MEDIA_ATTACHMENT_REQUIRED` 后不得重复 create/update 造成双写。
+
+旧 Harbor Sheet / Drive Bridge 原图通道已经退役，不属于当前照片上传架构。
 
 ## 8. 安全约束
 
