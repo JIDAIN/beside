@@ -20,6 +20,7 @@ Cat / Fish 服务端身份与写权限边界              ✅ Production
 Reminder Center V1 + Reminder Engine            ✅ Production
 PushPlus 双身份投递链路                         ✅ 已验收
 药箱 / 纪念日提醒                               ✅ Production
+小信箱来信提醒                                 ✅ Production + Fish 微信实收链路验收
 小信箱 V2 draft / sent 数据模型与权限           ✅ Production
 小信箱三箱 UI / 信纸分页 / 横向明信片            ✅ Production
 mood delete Web/API/MCP                         ✅ Production
@@ -134,6 +135,7 @@ Cat / Fish 对应微信
 药箱到期提醒                                ✅
 药箱提醒开关 / 提前天数                     ✅
 纪念日进入 Reminder Center                  ✅
+小信箱来信进入 Reminder Center              ✅
 首页最近 3 条提醒                           ✅
 PushPlus 状态整合到提醒设置                 ✅
 PushPlus 云端 5 分钟调度                    ✅
@@ -142,6 +144,8 @@ both → Cat / Fish 双实例投递                ✅
 ```
 
 `snooze` 会重置 `notified_at`，并按新的 effective due time 生成新的 delivery dedupe key；因此已推送的提醒可以在明确点击“1 小时后”后合法再次推送，而不会因为网络重试造成重复轰炸。
+
+小信箱来信提醒不依赖独立的第二套微信逻辑：信件真正寄出时只为收件人创建一条 `mailbox` reminder instance，随后继续走统一 Reminder Engine → pg_cron → PushPlus 链路。草稿保存、草稿编辑不会触发，提醒内容不包含正文。2026-09-07 已验证 Cat → Fish 明信片寄出后实例生成，并在下一轮 5 分钟调度中得到 PushPlus `accepted` 投递结果。
 
 完整说明见 `docs/14-wechat-reminders.md`。
 
@@ -169,6 +173,8 @@ sent  -> 寄件人与收件人可见，永久只读，sent_at = 实际寄出时�
 待寄出可编辑 / 删除 / 寄出                  ✅
 寄出后不可编辑 / 删除                       ✅ 服务端 + RPC
 AI draft / sent 语义                        ✅
+寄出后给收件人生成 mailbox 来信提醒          ✅
+来信提醒进入 PushPlus 微信链路               ✅
 ```
 
 AI / MCP 语义：
@@ -180,165 +186,44 @@ AI / MCP 语义：
 已 sent update/delete  -> 拒绝
 ```
 
-真实 Supabase 事务验收：
+提醒语义：
 
 ```text
-Cat 创建 / 修改自己的 draft                 ✅
-Fish 看不到 / 不能修改 Cat draft            ✅
-draft -> sent                               ✅
-寄出后双方可见                              ✅
-Cat / Fish 修改 sent                        ✅ 被拒绝
-Cat / Fish 删除 sent                        ✅ 被拒绝
-旧 schemaVersion=1 备份恢复                  ✅ 自动按 sent 兼容
-测试事务残留                                ✅ 0
+保存 / 编辑 draft       -> 不提醒
+首次进入 sent           -> 只给 recipient 生成 1 条 mailbox reminder
+已 sent 的后续读取       -> 不重复提醒
+微信内容                 -> 只提示收到手札 / 明信片，不展示正文
 ```
 
-## 7. 饮食、营养与照片
+## 7. 当前维护状态
 
-默认摄入分析优先级：
+当前版本已经从“集中重构”进入：
 
 ```text
-用户明确文字 > 餐前 / 餐后差分 > 单图估算
+正常使用
++ 小步迭代
++ 新生活 domain 复用既有基础设施
 ```
 
-持久化规则：
+后续新增生理期、真正需要准时触发的生活提醒等能力时，应优先复用：
 
 ```text
-讨论 / 估算 / 修正 ≠ 保存
-明确确认保存 -> 才写入
+身份层          -> fixed Cat / Fish auth
+数据写入        -> canonical domain service / RPC
+AI              -> AI Access Core + MCP
+提醒            -> Reminder Engine + PushPlus
+UI              -> Island Life design system + App* patterns
 ```
 
-图片处理：
+不再为单个新模块重复造鉴权、AI 接入、通知或视觉基础设施。
 
-```text
-EXIF normalize
-→ 最长边 600px
-→ WebP quality 70
-→ >120 KB 再逐步降质量
-→ 最低 quality 55
-→ 一般目标 50～100 KB
-```
+## 8. 下一步原则
 
-当前一条正式 meal 绑定 1 张展示照片；多图可参与 AI 分析，但暂不做多图持久化模型。
+当前没有必须阻止使用的 P0 / P1 缺口。下一轮应按真实使用中的需求小步推进，而不是继续无目标重构。
 
-## 8. 无感加载 / 数据同步
+优先级原则：
 
-当前流程：
-
-```text
-先显示 Cat/Fish scope 下的本地 stale cache
-→ mount 后后台强制校验
-→ focus / visibilitychange 后后台强制校验
-→ online 后后台强制校验
-```
-
-已验收：ChatGPT 写入后，从 ChatGPT 切回网页无需手动刷新即可出现最新数据；餐食照片与日历心情不再依赖整页刷新。
-
-## 9. 数据与安全
-
-生活数据继续采用：
-
-```text
-RLS enabled
-+ anon/authenticated 无直接表权限
-+ service_role / canonical actor-aware RPC 访问
-```
-
-已验证 actor-aware RPC：
-
-```text
-activity create / update / delete      ✅
-weight create / update / delete        ✅
-mailbox list / create / update draft   ✅
-mailbox send / delete draft            ✅
-mood delete                            ✅
-reminder instance mutation             ✅
-```
-
-当前封闭服务端架构下，Supabase Advisor 的 `RLS enabled no policy` 属于预期 INFO，不为消除提示而开放客户端 policy。
-
-## 10. Legacy Game 与生活域
-
-必须继续保持：
-
-```text
-实际饮食摄入 ≠ Legacy Game deficit ≠ 真实体重 ≠ 运动
-```
-
-展示层可以按 `partnerKey + date` 关联，但一个 domain 不自动覆盖另一个 domain。
-
-详细说明见 `docs/48-life-legacy-game-data-boundary.md`。
-
-## 11. 当前 Production
-
-Primary domain：`https://couple-better-game.vercel.app`
-
-```text
-deployment: dpl_GC1Ut3u64w5rpZ8iwzRp5nyyvWmm
-state: READY
-target: production
-source commit: 7196c2fc843a0ca8d3aae00ed5ea87257a2ff5cf
-```
-
-本次 Production 已包含：
-
-```text
-Reminder Center V1 UI closeout
-mood delete Web/API/MCP
-Cat / Fish activity + weight 权限加固
-Mailbox V2 Web/API/AI
-Mailbox 最终纸张 / 横向明信片视觉
-本轮收尾文档基线
-```
-
-发布后冒烟：
-
-```text
-/                         HTTP 200
-/me/reminders             HTTP 200
-/nest/mailbox             HTTP 200
-最近 30 分钟 runtime error  0
-```
-
-构建日志确认 Next.js 16.2.6 Production Build 成功，`/api/life/reminders`、`/api/life/mailbox`、`/mcp` 等正式路由均进入构建产物。
-
-发布完成后已经提交 relock：`c951d062f2b9631a34f5811774e792505498e9fa`。后续文档提交不会触发新的 Production。
-
-当前 `vercel.json`：
-
-```json
-{
-  "git": {
-    "deploymentEnabled": false
-  }
-}
-```
-
-## 12. 已知边界（非本次上线阻塞项）
-
-- Mailbox V2 暂不支持“寄出后只隐藏自己已寄出副本”的 per-user archive state；如以后需要，应增加 per-user mailbox view state，而不是删除原信；
-- 一条 meal 当前只正式绑定 1 张展示照片；
-- 餐前 / 餐后可一起用于 AI 分析，但还没有多图持久化模型；
-- Server-side vision recognizer 没有配置对应识别能力时会安全跳过，不影响照片保存；
-- 某些 MCP 客户端不透传图片字节时仍可能需要 browser recovery；
-- 内置网页 AI 的附件能力与 ChatGPT Project 多图会话能力不完全相同；
-- `drive-bridge-staging` 仍有一个空 bucket 可在后续维护时删除；
-- Production 自动部署长期保持关闭。
-
-这些项目都可以作为后续需求驱动的迭代，不需要继续拖延当前版本收尾。
-
-## 13. 下一步候选
-
-当前版本上线后，默认进入“正常使用 + 小步迭代”阶段：
-
-```text
-1. 实际使用中发现问题再修，不再继续无目标大改
-2. 新增生理期等生活 domain 时复用 AI Access Core + Reminder Engine
-3. 确实需要时再设计 Mailbox per-user archive state
-4. 确实需要时再设计 meal 多图持久化
-5. 定期做权限 / 数据恢复 / Production smoke 回归
-```
-
-## 14. 部署纪律
-
-任何新的 Production deployment 都必须获得用户当次明确授权。一次“允许部署”只授权当前一次部署；完成后必须继续保持 `git.deploymentEnabled=false`。
+1. 先处理真实使用中暴露出的错误或摩擦；
+2. 再增加明确高价值的新生活 domain；
+3. 新能力尽量复用现有 AI Access Core、Reminder Engine 和 actor-aware 数据边界；
+4. Production 部署继续逐次向用户申请，不恢复 Git 自动部署。
