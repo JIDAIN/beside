@@ -1,6 +1,6 @@
 # API、云端同步与鉴权
 
-状态：2026-09-06。
+状态：2026-09-07。
 
 ## 1. API 总览
 
@@ -23,44 +23,69 @@
 | PUT | `/api/life/activities/[id]` | 修改活动 |
 | DELETE | `/api/life/activities/[id]` | 删除活动 |
 
-### AI 入口
+具体生活资源还包括 weight、medicine、mailbox、reminder、settings、data-management 等 API；本页维护稳定入口与契约，不手工枚举所有 route 文件。
+
+### AI / MCP 入口
+
+当前正式入口：
 
 ```text
 /mcp
-/api/drive-bridge/*
 /api/ai/chat
 ```
 
-三条入口最终都进入 AI Access Core / canonical domain services。
+MCP OAuth 支撑端点：
+
+```text
+/oauth/register
+/oauth/authorize
+/oauth/token
+```
+
+Harbor Cat / Fish 直接通过 MCP OAuth 连接 `/mcp`。旧 `/api/drive-bridge/*`、Harbor Sheet、Apps Script / Fast Wake transport 已退出当前运行链路，只保留在历史 migration、`docs/archive/` 或 Git 历史中。
 
 ## 2. 当前鉴权模型
 
-浏览器：
+### Web / 程序内置 AI
 
 ```text
 Browser
-→ Next.js API
-→ 当前登录 / cloud session 鉴权
-→ server-side domain service
-→ service-role RPC
+→ /api/auth/login
+→ Supabase 固定账号凭据校验
+→ life-account-session HttpOnly Cookie
+→ Next.js API / /api/ai/chat
+→ actor-aware canonical service / restricted RPC
 → Supabase
 ```
 
-浏览器不持有 Supabase service secret。
+浏览器不持有 Supabase service secret，也不能通过页面参数切换真实写入身份。
 
-AI：
+### MCP
 
-- Harbor Cat / Fish 通过固定 Bridge 身份 + HMAC；
-- MCP 使用对应 OAuth / fixed access identity；
-- 程序内置 AI 使用当前登录身份；
-- AI 昵称不参与权限判断。
+```text
+MCP client
+→ OAuth register / authorize / token
+→ signed access token（绑定 cat 或 fish）
+→ /mcp
+→ life_query / life_mutate
+→ AI Access Core / canonical services
+→ Supabase
+```
+
+MCP token 的 `partnerKey` 是可信身份来源；昵称、自称、`person=cat/fish` 等普通文本不能改变 OAuth 身份。
+
+### Legacy Game
+
+旧 `/game` 兼容同步仍保留 `couple-cloud-session` / `DATA_EDIT_PASSWORD` 等历史路径，但它们不再是 Island Life 登录或 AI/MCP 鉴权的一部分。
+
+详细身份与权限矩阵见 [`17-auth-and-pairing.md`](17-auth-and-pairing.md)。
 
 ## 3. Meal API
 
 ### 查询
 
 ```http
-GET /api/meals?date=2026-09-06&person=cat
+GET /api/meals?date=2026-09-07&person=cat
 ```
 
 ### 新增 / 更新 / 删除
@@ -84,6 +109,8 @@ NULL = 未估算
 0    = 确实为 0
 ```
 
+个人 meal 的 create / update / delete / photo mutation 都必须绑定当前 signed actor；不能只相信 payload 中的 `person` / `partnerKey`。
+
 ## 4. Meal Photo API
 
 ### 上传 / 更换
@@ -96,6 +123,7 @@ PUT /api/meals/<uuid>/photo
 
 ```text
 鉴权
+→ ownership
 → 图片校验
 → EXIF 方向归一
 → 最长边 600px WebP 压缩
@@ -136,14 +164,15 @@ DELETE /api/meals/<uuid>/photo
 
 ## 5. AI 写入统一协议
 
-稳定入口：
+稳定业务工具：
 
 ```text
+life_capabilities
 life_query
 life_mutate
 ```
 
-普通查询不应先调用 `life_capabilities`；只有未知能力发现或开发排错时才需要。
+普通已知业务 query/mutate 不应先调用 `life_capabilities`；只有未知能力发现或开发排错时才需要。
 
 正式写入统一原则：
 
@@ -154,7 +183,7 @@ life_mutate
 → permission
 → idempotency
 → domain write
-→ read-back / receipt
+→ read-back / result
 ```
 
 不提供任意 SQL 或任意表修改工具。
@@ -177,7 +206,7 @@ life_mutate
 - 没有 `meal_drafts` 后台表；
 - 服务端不通过当前 `userText` 是否包含“确认/可以/好的”来决定能不能 create meal；
 - 确认状态属于对话上下文；
-- 如果确认后的写入临时失败，用户说“再试一次”时，AI 可以重试已确认的正式操作。
+- 如果确认后的写入临时失败，AI 可以在用户明确要求重试时重试已确认操作。
 
 身份、删除、高风险覆盖等安全规则仍必须由服务端硬校验。
 
@@ -235,7 +264,7 @@ life_mutate attachPhoto=true
 → MEDIA_ATTACHMENT_REQUIRED
 → recovery.uploadUrl
 → 用户浏览器补传
-→ 完成原正式操作
+→ 服务端完成原操作
 ```
 
 收到恢复链接后：
@@ -245,22 +274,9 @@ life_mutate attachPhoto=true
 - 不再生成第二套业务参数；
 - 未完成前不能声称照片已保存。
 
-## 10. Harbor Fast Path
+支持真实附件直传的 MCP 客户端可以直接完成图片保存，不进入 browser recovery。
 
-正常 Harbor query/mutate：
-
-```text
-1 COMMAND
-→ 1 Fast Wake
-→ 同 command_id RECEIPT
-→ 回复
-```
-
-`locked / processing / receiptReady=false` 时，只等待同一 receipt，不重复 Wake / command。
-
-业务成功只认 RECEIPT `ok=true`，不能把 Wake HTTP 200 当成成功。
-
-## 11. 游戏云端同步
+## 10. 游戏云端同步
 
 Legacy Game 兼容同步仍保持：
 
@@ -269,16 +285,29 @@ GET  /api/home-data
 POST /api/save-data
 ```
 
-内部 legacy GitHub 命名 / compatibility shim 不改变 Supabase 是事实源这一点。
+这条 compatibility path 与 Island Life 的 fixed-account session / MCP OAuth 是不同的身份与同步路径。
 
-Meal calories 不自动生成 deficit，也不自动修改金币、宝石、钱包或 heatmap。
+Supabase 仍是正式云端事实源；Meal calories 不自动生成 deficit，也不自动修改金币、宝石、钱包或 heatmap。
+
+## 11. 缓存与同步原则
+
+Island Life 浏览器缓存只属于可重建的 stale read model：
+
+```text
+先展示 scope-aware stale cache
+→ mount / focus / visibility / online 后台校验
+→ 服务端 / Supabase 返回最新事实
+```
+
+缓存不参与权限判断，也不是第二数据库。mutation 后必须防止旧 in-flight read 覆盖新写入结果。
 
 ## 12. 安全与部署边界
 
 - 浏览器不持有 Supabase secret；
 - server-only RPC 不开放给任意浏览器；
-- AI 入口绑定固定 actor；
+- Web session / MCP token 都绑定固定 actor；
+- 个人数据写权限由服务端 / RPC 再校验；
 - 写入使用稳定幂等边界；
 - 图片 bucket 为 private；
 - Production 自动部署默认关闭；
-- 每一次新的 Production deployment 都必须获得用户当次明确授权。
+- 每一次新的 Preview / Production deployment 都必须获得用户当次明确授权。
