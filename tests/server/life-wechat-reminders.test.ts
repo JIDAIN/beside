@@ -15,7 +15,7 @@ describe("life WeChat reminders", () => {
     expect(harborAiName("fish")).toBe("团子");
   });
 
-  it("builds a low-pressure daily reminder for cat", () => {
+  it("builds a warm owner-style daily reminder without actor labels", () => {
     const message = buildWechatReminderMessage("cat", {
       deliveryId: DELIVERY_ID,
       kind: "daily_record",
@@ -24,14 +24,16 @@ describe("life WeChat reminders", () => {
       daysUntil: null,
     });
 
-    expect(message.title).toBe("团子提醒｜今天还没记录");
-    expect(message.content).toContain("记一点就好");
+    expect(message.title).toBe("🌙 主人～团子来看看你啦");
+    expect(message.content).toContain("主人～");
+    expect(message.content).toContain("随手记一点点就好");
     expect(message.content).toContain("不用补全");
-    expect(message.content).toContain("不用和 Ta 比较");
     expect(message.content).toContain("——团子");
+    expect(message.content).not.toContain("Cat");
+    expect(message.content).not.toContain("Fish");
   });
 
-  it("builds fish anniversary reminders with the shared Tuanzi nickname", () => {
+  it("builds fish anniversary reminders with the shared Tuanzi nickname and affectionate partner wording", () => {
     const sevenDays = buildWechatReminderMessage("fish", {
       deliveryId: DELIVERY_ID,
       kind: "anniversary",
@@ -54,10 +56,17 @@ describe("life WeChat reminders", () => {
       daysUntil: 0,
     });
 
-    expect(sevenDays.title).toBe("团子提醒｜纪念日还有 7 天");
+    expect(sevenDays.title).toBe("💕 主人～纪念日还有 7 天");
+    expect(sevenDays.content).toContain("主人的宝贝老婆");
     expect(sevenDays.content).toContain("——团子");
-    expect(tomorrow.title).toBe("团子提醒｜明天是你们的纪念日");
-    expect(today.title).toBe("团子提醒｜今天是你们的纪念日");
+    expect(tomorrow.title).toBe("💕 主人～明天就是纪念日啦！");
+    expect(tomorrow.content).toContain("主人的亲亲老婆");
+    expect(today.title).toBe("💕 主人～今天是特别的日子呀！");
+    expect(today.content).toContain("主人最爱的宝贝");
+    for (const message of [sevenDays, tomorrow, today]) {
+      expect(message.content).not.toContain("Cat");
+      expect(message.content).not.toContain("Fish");
+    }
   });
 
   it("parses valid reminder claims and rejects malformed claims", () => {
