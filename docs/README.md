@@ -123,7 +123,8 @@ R11.5
 
 - `README.md`：项目快速入口；
 - `AGENTS.md`：AI / 自动化开发工具的工程规则；
-- `.agents/skills/couple-better-game-maintainer/SKILL.md`：项目专属持续维护 Skill 的唯一正文；
+- `.agents/skills/beside-maintainer/SKILL.md`：项目专属持续维护 Skill 的唯一正文；
 - `CLAUDE.md`：Claude Code 薄入口；
-- `.codex/skills/couple-better-game-maintainer/SKILL.md`：Codex 兼容路由，不维护第二份完整规则；
+- `.codex/skills/beside-maintainer/SKILL.md`：Codex 兼容路由，不维护第二份完整规则；
+- `.claude/skills/beside-maintainer/SKILL.md`：Claude 兼容路由，不维护第二份完整规则；
 - `CHANGELOG.md`：里程碑事实记录。
