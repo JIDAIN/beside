@@ -2,6 +2,12 @@
 
 本文件是所有 AI 编程助手和自动化开发工具的项目级规则。修改代码、数据库、测试、文档前必须先阅读本文件。
 
+项目专属执行 Skill 的唯一正文位于：
+
+`.agents/skills/couple-better-game-maintainer/SKILL.md`
+
+开始任务时先读取本文件，再读取该 Skill；`.claude/skills/` 与 `.codex/skills/` 只做兼容发现路由，不维护第二份完整项目规则。
+
 ## 1. 项目现状
 
 项目技术栈：Next.js 16 / React 19 / TypeScript / Tailwind CSS / `animal-island-ui` / Vitest / Vercel / Supabase PostgreSQL。
