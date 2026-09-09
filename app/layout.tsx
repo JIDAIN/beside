@@ -15,9 +15,9 @@ import "./r8-3-hotfix.css";
 import "./mailbox-visual-closeout.css";
 
 export const metadata: Metadata = {
-  applicationName: "岛屿生活",
-  title: "岛屿生活",
-  description: "属于两个人的轻量生活记录：心情、睡眠、活动、饮食与小窝。",
+  applicationName: "伴岛",
+  title: "伴岛",
+  description: "属于两个人的轻量生活记录与陪伴空间：心情、睡眠、活动、饮食与小窝。",
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    title: "岛屿生活",
+    title: "伴岛",
     statusBarStyle: "default",
   },
 };
