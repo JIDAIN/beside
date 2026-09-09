@@ -2,14 +2,14 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "🐟和🐱变美变瘦大作战",
-    short_name: "变美变瘦",
-    description: "双人同行的温柔成长小页游：金币、宝石与五月成就地图。",
+    name: "伴岛",
+    short_name: "伴岛",
+    description: "属于两个人的轻量生活记录与陪伴空间。",
     start_url: "/",
     scope: "/",
     display: "standalone",
     background_color: "#fff8f1",
-    theme_color: "#ffb6cb",
+    theme_color: "#aedcc8",
     icons: [
       {
         src: "/icon-192.png",
