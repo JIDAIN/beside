@@ -2,7 +2,9 @@
 
 > 正式中文名：**伴岛**｜英文名：**Beside**｜小名：**小岛**
 >
-> 当前 GitHub 仓库仍使用机器标识 `couple_better_game`，待外部连接检查完成后再统一迁移。
+> 当前 GitHub 仓库：`JIDAIN/beside`｜当前 Vercel 项目：`beside`
+>
+> Production 域名继续保留 `https://couple-better-game.vercel.app`，作为现有 MCP、微信提醒、OAuth 与生产链接兼容地址，不因品牌改名迁移。
 >
 > `Island Life` 继续作为当前生活域 / 架构术语保留；`Legacy Game` 继续作为旧游戏子系统术语保留。
 
