@@ -1,28 +1,30 @@
 # CLAUDE.md
 
-本文件只作为 Claude Code / VSCode AI 的入口，不重复维护项目事实。
+本文件只作为 Claude Code / VSCode AI 的薄入口，不重复维护项目事实或 Skill 正文。
 
 ## 开始前
 
 必须依次阅读：
 
 1. `AGENTS.md`
-2. `README.md`
-3. `docs/README.md`
-4. `docs/09-status-roadmap.md`
-5. 当前任务对应的主文档和源码
+2. `.agents/skills/couple-better-game-maintainer/SKILL.md`
+3. `README.md`
+4. `docs/README.md`
+5. `docs/09-status-roadmap.md`
+6. 当前任务对应的主文档和源码
 
-如果这里与 `AGENTS.md` 冲突，以 `AGENTS.md` 为准。
+如果这里与 `AGENTS.md` 冲突，以 `AGENTS.md` 为准；项目专属 Skill 的正式正文只维护在 `.agents/skills/`。
 
 ## 当前项目提醒
 
 - 项目已经有 Vercel API 和 Supabase，不要再按“纯前端、无数据库”假设工作。
 - `localStorage` 是运行缓存，不是唯一云端真相来源。
-- 饮食摄入、游戏 `deficit`、体重、运动必须分域。
+- Island Life 与 Legacy Game 必须分域；饮食摄入、游戏 `deficit`、体重、运动/活动也必须分域。
 - Supabase secret 只能服务端使用。
-- 旧 GitHub public JSON 同步已经废弃，禁止恢复。
-- 游戏代码存在 currency semantics legacy 名称，改金币/宝石逻辑前必须阅读 `docs/05-business-rules.md`。
-- UI 已完成 animal-island-ui 体系迁移，当前应维护 `components/ui/App*` wrapper，而不是重复执行旧迁移流程。
+- 已退役同步/transport 不得从 archive 或旧 migration 恢复。
+- 任何 V2 可见 UI 先读 `docs/12-island-life-design-system.md`；当前主导航是 `今日 / 饮食 / 日历 / 小窝 / 我的`。
+- UI 优先维护项目已有 `components/ui/App*` / Pattern，不新造第二套视觉体系。
+- 任何 Vercel Preview / Production 都必须得到该次明确授权。
 
 ## 完成任务后
 
