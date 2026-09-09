@@ -7,7 +7,7 @@
 必须依次阅读：
 
 1. `AGENTS.md`
-2. `.agents/skills/couple-better-game-maintainer/SKILL.md`
+2. `.agents/skills/beside-maintainer/SKILL.md`
 3. `README.md`
 4. `docs/README.md`
 5. `docs/09-status-roadmap.md`
