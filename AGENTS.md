@@ -4,7 +4,7 @@
 
 项目专属执行 Skill 的唯一正文位于：
 
-`.agents/skills/couple-better-game-maintainer/SKILL.md`
+`.agents/skills/beside-maintainer/SKILL.md`
 
 开始任务时先读取本文件，再读取该 Skill；`.claude/skills/` 与 `.codex/skills/` 只做兼容发现路由，不维护第二份完整项目规则。
 
@@ -17,7 +17,7 @@
 当前产品关系：
 
 ```text
-Couple Better Game（当前主程序 / Island Life）
+伴岛 / Beside（当前主程序 / Island Life）
 └─ 游戏
    └─ 变瘦变美大作战（Legacy Game 子项目）
 ```
