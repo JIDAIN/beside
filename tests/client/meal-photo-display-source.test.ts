@@ -34,6 +34,7 @@ describe("meal photo orientation and framing", () => {
     expect(editor).toContain('min="60"');
     expect(editor).toContain('max="100"');
     expect(editor).toContain("updateMealPhotoDisplay");
-    expect(editor).toContain("竖着显示也会完整保留照片内容");
+    expect(editor).toContain("调整照片");
+    expect(editor).not.toContain("竖着显示也会完整保留照片内容");
   });
 });

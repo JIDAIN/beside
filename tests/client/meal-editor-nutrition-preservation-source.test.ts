@@ -24,7 +24,7 @@ describe("meal editor nutrition preservation", () => {
   });
 
   it("lets users edit estimated weight instead of silently resetting it to null", () => {
-    expect(editor).toContain("估计重量 g（可选）");
+    expect(editor).toContain("重量（g）");
     expect(editor).not.toContain("estimatedWeightG: null, caloriesKcal");
   });
 });

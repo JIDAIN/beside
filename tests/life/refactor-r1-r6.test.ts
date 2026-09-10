@@ -31,7 +31,7 @@ describe("R1-R6 refactor boundaries", () => {
     expect(food).toContain("SNACK_OPTIONS");
     expect(food).toContain("+ 新增加餐");
     expect(editor).not.toContain("AppRoleSwitch");
-    expect(editor).toContain("把这一餐轻轻记下来");
+    expect(editor).toContain("餐次<AppSelect");
     expect(editor).not.toContain("记录这一餐的时间、照片和食物");
   });
 
