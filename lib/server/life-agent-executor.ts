@@ -13,6 +13,7 @@ import {
   pickMedicineUpdateBase,
   pickWeightUpdateBase,
 } from "../ai/life-update-merge";
+import { inferMealSlotHint } from "../ai/meal-slot-hints";
 import { getLifeExport } from "./life-data-management";
 import { listMedicines } from "./supabase-medicine";
 import { listWeights } from "./supabase-weight";
@@ -69,6 +70,20 @@ function wantsHydratedUpdate(row: JsonRecord) {
   if (isDeleteAction(row.action)) return false;
   if (isUpdateAction(row.action)) return true;
   return !stringValue(row.action) && Boolean(stringValue(row.id ?? row.recordId));
+}
+
+function applyExplicitMealSlotHint(args: unknown, latestUserText: string) {
+  const row = asRecord(args);
+  if (canonicalResource(row.resource) !== "meal" || isDeleteAction(row.action)) return row;
+  const hint = inferMealSlotHint(latestUserText);
+  if (!hint) return row;
+  return {
+    ...row,
+    data: {
+      ...asRecord(row.data),
+      ...hint,
+    },
+  };
 }
 
 async function loadExportUser() {
@@ -208,9 +223,12 @@ export async function executeLifeAgentTool(
   args: unknown,
   context: LifeAgentExecutionContext,
 ) {
-  const prepared = name === "life_mutate"
-    ? await hydratePartialUpdateArgs(args, context)
+  const hinted = name === "life_mutate"
+    ? applyExplicitMealSlotHint(args, context.latestUserText)
     : args;
+  const prepared = name === "life_mutate"
+    ? await hydratePartialUpdateArgs(hinted, context)
+    : hinted;
   if (name === "life_mutate") {
     await assertActivityMutationBoundary(prepared, context);
   }
