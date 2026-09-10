@@ -235,6 +235,11 @@ EXIF normalize
 
 当前一条正式 meal 绑定 1 张展示照片；多图可参与 AI 分析，但暂不做多图持久化模型。
 
+2026-09-10 已在代码侧完成 Meal V2 收口：分类改为四类主餐/加餐、加餐时段合并为
+morning/afternoon/night、状态改为 estimated/confirmed，并为 AI Access Core 增加
+补录与饭后确认同一 Meal 的动作。该批代码和 migration 在下一次获得明确部署授权并
+完成 Production smoke 前，不标记为已上线。
+
 ## 8. 无感加载 / 数据同步
 
 当前流程：

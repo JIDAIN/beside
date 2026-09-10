@@ -21,13 +21,12 @@ const FIXED_MEALS: Array<{ type: MealType; label: string; icon: string }> = [
 const SNACK_OPTIONS: Array<{ period: SnackPeriod; label: string; icon: string }> = [
   { period: "morning", label: "上午加餐", icon: "🌤️" },
   { period: "afternoon", label: "下午加餐", icon: "🍓" },
-  { period: "evening", label: "晚上加餐", icon: "🌙" },
+  { period: "night", label: "晚上加餐", icon: "🌙" },
 ];
 const SNACK_LABELS: Record<SnackPeriod, string> = {
   morning: "上午加餐",
   afternoon: "下午加餐",
-  evening: "晚上加餐",
-  late_night: "夜间加餐",
+  night: "晚上加餐",
 };
 const DEFAULT_MEAL_ART: Record<string, string> = {
   breakfast: "/illustrations/meals/breakfast.svg",

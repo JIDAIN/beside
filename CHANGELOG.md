@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-09-10 — Meal V2 写入链路收口
+
+- 将饮食分类收敛为 breakfast/lunch/dinner/snack，加餐时段收敛为 morning/afternoon/night，状态收敛为 estimated/confirmed。
+- `life_mutate` 新增补录食物与饭后确认动作，自动定位当前账号当天唯一目标 Meal，并强制保留首次记录的 eatenAt。
+- 新增兼容 migration：历史 other 转为 snack、evening/late_night 合并为 night、draft 转为 estimated。
+- 同步饮食 UI、自然语言归一化、工具能力说明和回归测试；修复 Meal V2 adapter 的错误类型导入。
+
 只记录对理解产品状态有价值的里程碑，不记录每一次样式微调。
 
 ## 2026-09-07 — 小信箱来信微信提醒上线

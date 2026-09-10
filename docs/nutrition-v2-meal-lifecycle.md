@@ -69,3 +69,11 @@ AI 首先判断用户意图：
 - 整餐营养汇总
 
 不能只保存总热量。
+
+## 当前实现
+
+- canonical 类型已收敛为本文的 MealType、SnackPeriod 与 status；
+- `life_mutate` 支持 `append_meal_item` 与 `confirm_estimated_meal`；
+- 两种动作都按当前 OAuth 身份和餐食日期自动定位唯一目标，并保留原 eatenAt；
+- 找不到目标或候选不唯一时返回澄清错误，不猜 UUID，也不自动新建；
+- 历史分类与状态通过追加 migration 转换，不修改既有 migration。

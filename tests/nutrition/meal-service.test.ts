@@ -90,7 +90,7 @@ describe("nutrition meal service", () => {
     const result = parseMealWritePayload({
       partnerKey: "fish",
       mealDate: "2026-09-01",
-      mealType: "other",
+      mealType: "snack",
       items: [{ rawName: "无糖饮料", caloriesKcal: 0 }],
     });
 

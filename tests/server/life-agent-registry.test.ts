@@ -6,6 +6,9 @@ const mocks = vi.hoisted(() => ({
   updateWeight: vi.fn(),
   deleteWeight: vi.fn(),
   createMeal: vi.fn(),
+  updateMeal: vi.fn(),
+  listMeals: vi.fn(),
+  getMealOwner: vi.fn(),
   deleteMedicine: vi.fn(),
   createMailboxItem: vi.fn(),
   updateMailboxDraft: vi.fn(),
@@ -28,7 +31,13 @@ vi.mock("../../lib/server/supabase-weight", async () => {
 
 vi.mock("../../lib/server/supabase-nutrition", async () => {
   const actual = await vi.importActual<typeof import("../../lib/server/supabase-nutrition")>("../../lib/server/supabase-nutrition");
-  return { ...actual, createMeal: mocks.createMeal };
+  return {
+    ...actual,
+    createMeal: mocks.createMeal,
+    updateMeal: mocks.updateMeal,
+    listMeals: mocks.listMeals,
+    getMealOwner: mocks.getMealOwner,
+  };
 });
 
 vi.mock("../../lib/server/supabase-medicine", async () => {
@@ -57,9 +66,11 @@ import { executeLifeAgentTool } from "../../lib/server/life-agent-registry";
 
 const CAT = { partnerKey: "cat" as const, displayName: "猫猫" as const };
 const LETTER_ID = "00000000-0000-4000-8000-000000000001";
+const MEAL_ID = "00000000-0000-4000-8000-000000000002";
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.getMealOwner.mockResolvedValue("cat");
 });
 
 describe("life internal AI registry guards", () => {
@@ -132,6 +143,73 @@ describe("life internal AI registry guards", () => {
         { rawName: "鸡蛋", portionDescription: "1个" },
       ],
     });
+  });
+
+  it("appends an item to the unique meal without changing its original time", async () => {
+    mocks.listMeals.mockResolvedValue([{
+      id: MEAL_ID,
+      partnerKey: "cat",
+      mealDate: "2026-09-05",
+      mealType: "breakfast",
+      eatenAt: "2026-09-05T08:00:00+08:00",
+      snackPeriod: null,
+      status: "confirmed",
+      source: "chatgpt",
+      totalCaloriesKcal: 200,
+      calorieMinKcal: null,
+      calorieMaxKcal: null,
+      note: null,
+      idempotencyKey: "chatgpt:existing",
+      photoPath: null,
+      photoRotationDegrees: 0,
+      photoScale: 1,
+      createdAt: "2026-09-05T00:00:00Z",
+      updatedAt: "2026-09-05T00:00:00Z",
+      deletedAt: null,
+      items: [{
+        id: "item-1", foodId: null, rawName: "牛奶", displayName: "牛奶",
+        portionDescription: null, estimatedWeightG: null, caloriesKcal: 200,
+        calorieMinKcal: null, calorieMaxKcal: null, proteinG: null, carbsG: null,
+        fatG: null, sortOrder: 0, createdAt: "", updatedAt: "",
+      }],
+    }]);
+    mocks.updateMeal.mockImplementation(async (_id, payload) => ({ id: MEAL_ID, ...payload }));
+
+    await executeLifeAgentTool("life_mutate", {
+      resource: "meal",
+      action: "append_meal_item",
+      data: { mealDate: "2026-09-05", mealType: "早餐", items: [{ name: "鸡蛋", caloriesKcal: 80 }] },
+    }, { identity: CAT, latestUserText: "早餐补充一个鸡蛋" });
+
+    expect(mocks.updateMeal).toHaveBeenCalledWith(MEAL_ID, expect.objectContaining({
+      eatenAt: "2026-09-05T08:00:00+08:00",
+      status: "confirmed",
+      totalCaloriesKcal: 280,
+      items: [expect.objectContaining({ rawName: "牛奶" }), expect.objectContaining({ rawName: "鸡蛋" })],
+    }));
+  });
+
+  it("confirms the unique estimated meal and preserves eatenAt", async () => {
+    mocks.listMeals.mockResolvedValue([{
+      id: MEAL_ID, partnerKey: "cat", mealDate: "2026-09-05", mealType: "lunch",
+      eatenAt: "2026-09-05T12:00:00+08:00", snackPeriod: null, status: "estimated",
+      source: "chatgpt", totalCaloriesKcal: 500, calorieMinKcal: 450, calorieMaxKcal: 550,
+      note: null, idempotencyKey: "chatgpt:estimated", photoPath: null,
+      photoRotationDegrees: 0, photoScale: 1, createdAt: "", updatedAt: "", deletedAt: null,
+      items: [],
+    }]);
+    mocks.updateMeal.mockImplementation(async (_id, payload) => ({ id: MEAL_ID, ...payload }));
+
+    await executeLifeAgentTool("life_mutate", {
+      resource: "meal", action: "confirm_estimated_meal",
+      data: { mealDate: "2026-09-05", mealType: "午餐", items: [{ name: "米饭", caloriesKcal: 300 }] },
+    }, { identity: CAT, latestUserText: "午饭吃完了，按实际摄入确认" });
+
+    expect(mocks.updateMeal).toHaveBeenCalledWith(MEAL_ID, expect.objectContaining({
+      eatenAt: "2026-09-05T12:00:00+08:00",
+      status: "confirmed",
+      items: [expect.objectContaining({ rawName: "米饭" })],
+    }));
   });
 
   it("rejects delete calls when the latest user message did not ask to delete", async () => {

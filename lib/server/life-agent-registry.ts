@@ -13,7 +13,13 @@ import {
 import { parseMailboxPayload } from "../life/mailbox-service";
 import { parseMedicinePayload } from "../life/medicine-service";
 import { parseWeightWritePayload } from "../life/weight-service";
-import { defaultMealPhotoDisplay, parseMealWritePayload } from "../nutrition/meal-service";
+import {
+  defaultMealPhotoDisplay,
+  parseMealWritePayload,
+  type MealItemWrite,
+  type MealRecord,
+  type MealWritePayload,
+} from "../nutrition/meal-service";
 import {
   createActivity,
   deleteActivity,
@@ -173,6 +179,67 @@ function requireOwnMutationTarget(args: JsonRecord, data: JsonRecord, context: L
   throw new Error("个人数据写入目标无效；只能写入 me/当前账号");
 }
 
+function writableMealItems(items: MealRecord["items"]): MealItemWrite[] {
+  return items.map((item) => ({
+    foodId: item.foodId,
+    rawName: item.rawName,
+    displayName: item.displayName,
+    portionDescription: item.portionDescription,
+    estimatedWeightG: item.estimatedWeightG,
+    caloriesKcal: item.caloriesKcal,
+    calorieMinKcal: item.calorieMinKcal,
+    calorieMaxKcal: item.calorieMaxKcal,
+    proteinG: item.proteinG,
+    carbsG: item.carbsG,
+    fatG: item.fatG,
+  }));
+}
+
+function mealWriteBase(meal: MealRecord): MealWritePayload {
+  return {
+    partnerKey: meal.partnerKey,
+    mealDate: meal.mealDate,
+    mealType: meal.mealType,
+    eatenAt: meal.eatenAt,
+    snackPeriod: meal.snackPeriod,
+    status: meal.status,
+    source: meal.source,
+    totalCaloriesKcal: meal.totalCaloriesKcal,
+    calorieMinKcal: meal.calorieMinKcal,
+    calorieMaxKcal: meal.calorieMaxKcal,
+    note: meal.note,
+    idempotencyKey: meal.idempotencyKey,
+    items: writableMealItems(meal.items),
+  };
+}
+
+async function resolveMealTarget(
+  args: JsonRecord,
+  data: JsonRecord,
+  actor: "cat" | "fish",
+  estimatedOnly: boolean,
+) {
+  const date = stringValue(data.mealDate);
+  if (!date) throw new Error("需要餐食日期才能定位目标记录");
+  const requestedId = stringValue(args.id);
+  const mealType = stringValue(data.mealType);
+  const snackPeriod = stringValue(data.snackPeriod);
+  const meals = await listMeals({ mealDate: date, partnerKey: actor });
+  const candidates = meals.filter((meal) =>
+    (!requestedId || meal.id === requestedId) &&
+    (!mealType || meal.mealType === mealType) &&
+    (!snackPeriod || meal.snackPeriod === snackPeriod) &&
+    (!estimatedOnly || meal.status === "estimated"),
+  );
+  if (candidates.length === 0) {
+    throw new Error(estimatedOnly ? "没有找到可确认的饭前估算餐食" : "没有找到可补录的目标餐食");
+  }
+  if (candidates.length > 1) {
+    throw new Error("找到多条可能的餐食记录，请先查询并确认具体哪一餐");
+  }
+  return candidates[0];
+}
+
 async function bindAttachmentToMeal(mealId: string, attachment: LifeAgentAttachment) {
   const path = buildMealPhotoPath(mealId, attachment.extension);
   await uploadMealPhotoObject(
@@ -252,7 +319,7 @@ export const LIFE_AGENT_TOOLS = [
             type: "string",
             description: "mood/sleep/activity/meal/weight/medicine/mailbox/settings/legacy_home；也接受对应中文别名。",
           },
-          action: { type: "string", description: "可选。记录/新增=create，修改=update，删除=delete；mood/sleep 默认 upsert，settings 默认 update。mailbox 寄出已有草稿使用 update + data.status=sent。" },
+          action: { type: "string", description: "可选。记录/新增=create，修改=update，删除=delete；meal 补录食物=append_meal_item，饭后确认估算餐=confirm_estimated_meal；mood/sleep 默认 upsert，settings 默认 update。mailbox 寄出已有草稿使用 update + data.status=sent。" },
           id: { type: "string", description: "update/delete 的记录 UUID；禁止猜测，不知道时先查询" },
           attachPhoto: { type: "boolean", description: "meal 是否绑定本轮图片" },
           data: {
@@ -304,7 +371,7 @@ function capabilities(identity: FixedLifeIdentity) {
       mood: "upsert/delete；只操作当前 OAuth 账号",
       sleep: "upsert；只写当前 OAuth 账号；支持 bedtime/sleepTime 与 wakeTime 等别名",
       activity: "create/update/delete；participantScope=me/both；both 创建一条双方共享活动",
-      meal: "create/update/delete；只写当前 OAuth 账号；可 attachPhoto",
+      meal: "create/update/append_meal_item/confirm_estimated_meal/delete；补录和饭后确认自动定位唯一餐食并保留 eatenAt；只写当前 OAuth 账号；可 attachPhoto",
       weight: "create/update/delete；只写当前 OAuth 账号；缺体重数值时向用户确认",
       medicine: "create/update/delete；medicineName/drugName/name 均可；数量缺省为 1",
       mailbox: "create draft/sent；update/delete 仅限自己的 draft；update draft + status=sent 表示寄出；sent 永久只读",
@@ -443,21 +510,61 @@ async function mutateLife(args: JsonRecord, context: LifeAgentExecutionContext) 
         if (owner !== actor) throw new Error("只能删除当前账号自己的餐食");
         return deleteMeal(id);
       }
-      if (action !== "create" && action !== "update") throw new Error("meal 只支持 create/update/delete");
+      if (!["create", "update", "append_meal_item", "confirm_estimated_meal"].includes(action)) {
+        throw new Error("meal 只支持 create/update/append_meal_item/confirm_estimated_meal/delete");
+      }
       const date = stringValue(data.mealDate);
+      let writeData: JsonRecord = { ...data };
+      let targetId = "";
+      if (action === "append_meal_item" || action === "confirm_estimated_meal") {
+        const target = await resolveMealTarget(
+          args,
+          data,
+          actor,
+          action === "confirm_estimated_meal",
+        );
+        targetId = target.id;
+        const incomingItems = Array.isArray(data.items) ? data.items : [];
+        if (incomingItems.length === 0) {
+          throw new Error(action === "append_meal_item" ? "补录至少需要一个食物明细" : "饭后确认至少需要实际摄入的食物明细");
+        }
+        const base = mealWriteBase(target);
+        writeData = {
+          ...base,
+          ...data,
+          partnerKey: actor,
+          mealDate: target.mealDate,
+          mealType: target.mealType,
+          snackPeriod: target.snackPeriod,
+          eatenAt: target.eatenAt,
+          status: action === "confirm_estimated_meal" ? "confirmed" : target.status,
+          source: "chatgpt",
+          idempotencyKey: target.idempotencyKey,
+          items: action === "append_meal_item"
+            ? [...base.items, ...incomingItems]
+            : incomingItems,
+          ...(action === "append_meal_item"
+            ? { totalCaloriesKcal: undefined, calorieMinKcal: undefined, calorieMaxKcal: undefined }
+            : {}),
+        };
+      }
       const parsed = parseMealWritePayload({
-        ...data,
+        ...writeData,
         partnerKey: actor,
-        status: "confirmed",
+        status: action === "create"
+          ? (data.status === "estimated" ? "estimated" : "confirmed")
+          : writeData.status,
         source: "chatgpt",
-        idempotencyKey: idempotencyKey("meal", context, date, data, action === "create"),
+        idempotencyKey: action === "create"
+          ? idempotencyKey("meal", context, date, data, action === "create")
+          : writeData.idempotencyKey,
       });
       if (!parsed.ok) throw new Error(parsed.reason);
       let meal;
       if (action === "create") {
         meal = await createMeal(parsed.value);
       } else {
-        const id = requireId(args);
+        const id = targetId || requireId(args);
         const owner = await getMealOwner(id);
         if (owner !== actor) throw new Error("只能修改当前账号自己的餐食");
         meal = await updateMeal(id, parsed.value);

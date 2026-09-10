@@ -67,14 +67,12 @@ const MEAL_TYPES: Array<{ value: MealType; label: string }> = [
   { value: "lunch", label: "午餐" },
   { value: "dinner", label: "晚餐" },
   { value: "snack", label: "加餐" },
-  { value: "other", label: "其他" },
 ];
 
 const SNACK_PERIODS: Array<{ value: SnackPeriod; label: string }> = [
   { value: "morning", label: "上午" },
   { value: "afternoon", label: "下午" },
-  { value: "evening", label: "晚上" },
-  { value: "late_night", label: "夜间" },
+  { value: "night", label: "晚上" },
 ];
 
 function makeKey(prefix: string) {

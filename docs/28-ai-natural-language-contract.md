@@ -169,6 +169,20 @@ unit: "碗"
 
 有可信餐食图片且用户明确要求保存时，可以在饮食草稿确认后保存图片；看不清的重量和营养值不得伪造精确值。
 
+Meal 写入动作：
+
+```text
+create                    新建一餐（status 可为 estimated 或 confirmed）
+append_meal_item          向当天唯一匹配餐食追加食物，保留 eatenAt
+update                    按可靠 UUID 修改餐食
+confirm_estimated_meal    用实际摄入替换当天唯一 estimated 餐食并改为 confirmed，保留 eatenAt
+delete                    按可靠 UUID 删除
+```
+
+补录或饭后确认无需用户提供 UUID。AI Access Core 按当前 actor、mealDate、
+mealType，以及加餐时的 snackPeriod 定位；没有候选或存在多个候选时必须澄清，
+不能猜测、不能新建第二条同餐次记录。
+
 ### 4.5 Weight
 
 接受：`weightKg / weight / kg / value`。

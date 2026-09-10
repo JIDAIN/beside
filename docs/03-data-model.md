@@ -123,6 +123,16 @@ deleted_at
 
 `NULL` kcal 表示未知，`0` 表示确实为 0 kcal。
 
+Meal V2 的受限值：
+
+```text
+meal_type    breakfast / lunch / dinner / snack
+snack_period morning / afternoon / night（仅 snack，可为空）
+status       estimated / confirmed
+```
+
+历史 `other` 会迁移为 `snack`，历史 `evening / late_night` 合并为 `night`，历史 `draft` 迁移为 `estimated`。
+
 当前正式 meal 只有一个 `photo_path`；`photo_rotation_degrees` 与 `photo_scale` 是显示元数据。
 
 ## 5. `meal_items`
@@ -330,6 +340,10 @@ get_chatgpt_meal_record
 replace_meal_photo_state
 update_meal_photo_display
 ```
+
+AI Access Core 在这些 canonical RPC 之上提供 `append_meal_item` 与
+`confirm_estimated_meal` 语义：自动定位唯一目标 Meal、复用 update transaction，
+并在补录和饭后确认时保留原 `eaten_at`。
 
 ## 14. Source / AI 写入
 

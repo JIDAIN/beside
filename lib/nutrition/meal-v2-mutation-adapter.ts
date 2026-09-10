@@ -1,4 +1,4 @@
-import type { MealAction } from "./meal-action";
+import type { MealActionV2 } from "./meal-action";
 
 /**
  * Meal V2 mutation semantic adapter.
@@ -27,14 +27,14 @@ export type MealMutationIntent =
       data: Record<string, unknown>;
     };
 
-export function isAppendMealItemAction(action: MealAction | string) {
+export function isAppendMealItemAction(action: MealActionV2 | string) {
   return action === "append_meal_item";
 }
 
-export function isConfirmEstimatedMealAction(action: MealAction | string) {
+export function isConfirmEstimatedMealAction(action: MealActionV2 | string) {
   return action === "confirm_estimated_meal";
 }
 
-export function shouldPreserveMealTime(action: MealAction | string) {
+export function shouldPreserveMealTime(action: MealActionV2 | string) {
   return action === "append_meal_item" || action === "confirm_estimated_meal";
 }

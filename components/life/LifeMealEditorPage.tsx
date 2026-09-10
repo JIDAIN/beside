@@ -15,8 +15,8 @@ import { invalidateStaleQuery, peekStaleQuery, setStaleQueryData } from "@/lib/c
 import { createMealRecord, deleteMealPhoto, deleteMealRecord, fetchMeals, mealPhotoUrl, MealApiError, updateMealPhotoDisplay, updateMealRecord, uploadMealPhoto } from "@/lib/nutrition/meal-client";
 import type { MealItemRecord, MealPhotoRotation, MealRecord, MealType, MealWritePayload, NutritionPartnerKey, SnackPeriod } from "@/lib/nutrition/meal-service";
 
-const MEAL_LABELS: Record<MealType, string> = { breakfast: "早餐", lunch: "午餐", dinner: "晚餐", snack: "加餐", other: "其他" };
-const SNACK_LABELS: Record<SnackPeriod, string> = { morning: "上午加餐", afternoon: "下午加餐", evening: "晚上加餐", late_night: "夜间加餐" };
+const MEAL_LABELS: Record<MealType, string> = { breakfast: "早餐", lunch: "午餐", dinner: "晚餐", snack: "加餐" };
+const SNACK_LABELS: Record<SnackPeriod, string> = { morning: "上午加餐", afternoon: "下午加餐", night: "晚上加餐" };
 const DEFAULT_MEAL_ART: Record<string, string> = { breakfast: "/illustrations/meals/breakfast.svg", lunch: "/illustrations/meals/lunch.svg", dinner: "/illustrations/meals/dinner.svg", snack: "/illustrations/meals/snack.svg" };
 const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
 const PHOTO_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
@@ -41,7 +41,7 @@ function fromItem(item: MealItemRecord): ItemDraft { return { key: item.id, food
 function numberOrNull(value: string) { const text = value.trim(); if (!text) return null; const number = Number(text); return Number.isFinite(number) && number >= 0 ? number : NaN; }
 function dateTimeWithLocalOffset(mealDate: string, time: string) { if (!time) return null; const local = new Date(`${mealDate}T${time}:00`); return Number.isNaN(local.getTime()) ? null : local.toISOString(); }
 function validMealType(value: string | null): MealType { return value === "breakfast" || value === "lunch" || value === "dinner" || value === "snack" ? value : "lunch"; }
-function validSnackPeriod(value: string | null): SnackPeriod | null { return value === "morning" || value === "afternoon" || value === "evening" || value === "late_night" ? value : null; }
+function validSnackPeriod(value: string | null): SnackPeriod | null { return value === "morning" || value === "afternoon" || value === "night" ? value : null; }
 function draftNutrition(items: ItemDraft[]) {
   const fields = ["caloriesKcal", "proteinG", "fatG", "carbsG"] as const;
   const totals: Record<(typeof fields)[number], number> = { caloriesKcal: 0, proteinG: 0, fatG: 0, carbsG: 0 };

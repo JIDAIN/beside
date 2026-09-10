@@ -117,6 +117,25 @@ describe("life natural input mutation normalization", () => {
     });
   });
 
+  it("preserves meal v2 actions and normalizes the night snack slot", () => {
+    expect(normalizeLifeMutationArgs({
+      resource: "meal",
+      action: "append_meal_item",
+      data: { mealType: "早餐", items: [{ name: "鸡蛋" }] },
+    }, context("早餐补充一个鸡蛋"))).toMatchObject({
+      action: "append_meal_item",
+      data: { mealType: "breakfast", items: [{ rawName: "鸡蛋" }] },
+    });
+    expect(normalizeLifeMutationArgs({
+      resource: "meal",
+      action: "confirm",
+      data: { mealType: "加餐", snackPeriod: "late_night", items: [{ name: "香蕉" }] },
+    }, context("确认昨晚的夜宵"))).toMatchObject({
+      action: "confirm_estimated_meal",
+      data: { mealType: "snack", snackPeriod: "night" },
+    });
+  });
+
   it("allows photo-only meal draft input without inventing foods", () => {
     const result = normalizeLifeMutationArgs({ resource: "meal", attachPhoto: true, data: { mealType: "lunch" } }, context("把这张午饭照片记进去", true));
     expect(result).toMatchObject({ data: { items: [], mealType: "lunch", eatenAt: "2026-09-05T16:00:00+08:00" } });

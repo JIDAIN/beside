@@ -43,7 +43,6 @@ const MEAL_ORDER: Record<MealType, number> = {
   lunch: 1,
   dinner: 2,
   snack: 3,
-  other: 4,
 };
 
 const MEAL_LABEL: Record<MealType, string> = {
@@ -51,14 +50,12 @@ const MEAL_LABEL: Record<MealType, string> = {
   lunch: "午餐",
   dinner: "晚餐",
   snack: "加餐",
-  other: "其他",
 };
 
 const SNACK_LABEL: Record<SnackPeriod, string> = {
   morning: "上午加餐",
   afternoon: "下午加餐",
-  evening: "晚间加餐",
-  late_night: "夜间加餐",
+  night: "晚上加餐",
 };
 
 function localIsoDate(date = new Date()) {

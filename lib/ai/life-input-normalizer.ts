@@ -91,11 +91,15 @@ function normalizeAction(resource: string, value: unknown, id: unknown) {
   const aliases: Record<string, string> = {
     新增: "create", 添加: "create", 记录: "create", 保存: "create", 创建: "create",
     修改: "update", 更新: "update", 编辑: "update",
+    补充: "append_meal_item", 补录: "append_meal_item", 追加: "append_meal_item",
+    确认用餐: "confirm_estimated_meal", 饭后确认: "confirm_estimated_meal",
     删除: "delete", 删掉: "delete", 移除: "delete",
     覆盖: "replace",
   };
   if (aliases[raw]) return aliases[raw];
-  if (["create", "update", "delete", "upsert", "replace"].includes(raw)) return raw;
+  if (raw === "append_item") return "append_meal_item";
+  if (raw === "confirm") return "confirm_estimated_meal";
+  if (["create", "update", "delete", "upsert", "replace", "append_meal_item", "confirm_estimated_meal"].includes(raw)) return raw;
   if (resource === "mood" || resource === "sleep") return "upsert";
   if (resource === "settings") return "update";
   if (resource === "legacy_home") return "replace";
@@ -175,7 +179,7 @@ function normalizeMealType(value: unknown, userText: string) {
   if (/午餐|午饭|lunch/i.test(source)) return "lunch";
   if (/晚餐|晚饭|dinner/i.test(source)) return "dinner";
   if (/加餐|零食|夜宵|宵夜|snack/i.test(source)) return "snack";
-  return raw || "other";
+  return raw;
 }
 
 function normalizeMealItem(input: unknown) {
@@ -307,6 +311,15 @@ export function normalizeLifeMutationArgs(args: unknown, context: NormalizeConte
   if (resource === "meal") {
     data.mealDate = today;
     data.mealType = normalizeMealType(first(sourceData, ["mealType", "type", "meal", "mealName"]), context.latestUserText);
+    const snackPeriodRaw = text(first(sourceData, ["snackPeriod", "snackTime"])).toLowerCase();
+    if (data.mealType === "snack") {
+      if (["morning", "上午", "早上", "早晨"].includes(snackPeriodRaw)) data.snackPeriod = "morning";
+      else if (["afternoon", "下午", "午后"].includes(snackPeriodRaw)) data.snackPeriod = "afternoon";
+      else if (["night", "evening", "late_night", "晚上", "晚间", "夜间", "夜宵", "宵夜"].includes(snackPeriodRaw)) data.snackPeriod = "night";
+      else if (/(夜宵|宵夜|晚上|晚间|夜间)/.test(context.latestUserText)) data.snackPeriod = "night";
+      else if (/(上午|早上|早晨)/.test(context.latestUserText)) data.snackPeriod = "morning";
+      else if (/(下午|午后)/.test(context.latestUserText)) data.snackPeriod = "afternoon";
+    }
     const eatenAtRaw = first(sourceData, ["eatenAt", "mealTime", "eatingTime", "ateAt", "time"]);
     if (text(eatenAtRaw)) {
       data.eatenAt = normalizeClock(eatenAtRaw, today, false);

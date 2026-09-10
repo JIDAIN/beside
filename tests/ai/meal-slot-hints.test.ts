@@ -16,6 +16,17 @@ describe("meal slot hints", () => {
     });
   });
 
+  it("normalizes evening and late-night snacks into the single night slot", () => {
+    expect(inferMealSlotHint("晚上加餐吃了酸奶")).toEqual({
+      mealType: "snack",
+      snackPeriod: "night",
+    });
+    expect(inferMealSlotHint("夜宵吃了一根香蕉")).toEqual({
+      mealType: "snack",
+      snackPeriod: "night",
+    });
+  });
+
   it("does not override an ordinary breakfast", () => {
     expect(inferMealSlotHint("早餐吃了半个面包和一杯咖啡")).toBeNull();
   });

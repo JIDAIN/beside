@@ -1,7 +1,7 @@
 export type NutritionPartnerKey = "fish" | "cat";
-export type MealType = "breakfast" | "lunch" | "dinner" | "snack" | "other";
-export type SnackPeriod = "morning" | "afternoon" | "evening" | "late_night";
-export type MealStatus = "draft" | "confirmed";
+export type MealType = "breakfast" | "lunch" | "dinner" | "snack";
+export type SnackPeriod = "morning" | "afternoon" | "night";
+export type MealStatus = "estimated" | "confirmed";
 export type MealSource = "manual" | "chatgpt" | "import";
 export type MealPhotoRotation = 0 | 90 | 180 | 270;
 export type MealPhotoDisplay = {
@@ -69,9 +69,9 @@ type ParseResult<T> =
   | { ok: true; value: T }
   | { ok: false; reason: string };
 
-const MEAL_TYPES: readonly MealType[] = ["breakfast", "lunch", "dinner", "snack", "other"];
-const SNACK_PERIODS: readonly SnackPeriod[] = ["morning", "afternoon", "evening", "late_night"];
-const MEAL_STATUSES: readonly MealStatus[] = ["draft", "confirmed"];
+const MEAL_TYPES: readonly MealType[] = ["breakfast", "lunch", "dinner", "snack"];
+const SNACK_PERIODS: readonly SnackPeriod[] = ["morning", "afternoon", "night"];
+const MEAL_STATUSES: readonly MealStatus[] = ["estimated", "confirmed"];
 const MEAL_SOURCES: readonly MealSource[] = ["manual", "chatgpt", "import"];
 const PARTNER_KEYS: readonly NutritionPartnerKey[] = ["fish", "cat"];
 const PHOTO_ROTATIONS: readonly MealPhotoRotation[] = [0, 90, 180, 270];
