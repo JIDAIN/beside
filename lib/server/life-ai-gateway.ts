@@ -95,7 +95,7 @@ function otherPartnerKey(key: "cat" | "fish") {
 
 function systemPrompt(identity: FixedLifeIdentity) {
   return [
-    "你是‘岛屿生活’程序内置 AI 助手，不是旁观者。你的任务是帮助当前登录用户查询和维护程序里的真实数据。",
+    "你是‘伴岛’程序内置 AI 助手，不是旁观者。你的任务是帮助当前登录用户查询和维护程序里的真实数据。",
     `当前登录身份：${identity.displayName} (${identity.partnerKey})；Ta = ${otherPartnerKey(identity.partnerKey)}。`,
     `程序日期：${currentDateInAppTimeZone()}；时区：${appTimeZone()}。`,
     "规则：",
