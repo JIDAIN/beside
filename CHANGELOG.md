@@ -6,6 +6,8 @@
 - 历史详情写入后立即同步 day、month 与 month-bundle 缓存，返回月历不会被旧快照覆盖。
 - 历史活动新增会把 `occurred_at` 对齐到所选业务日期，不再错误使用操作当天；切换日期时关闭残留编辑态并刷新活动列表。
 - 历史饮食入口明确标为“查看 / 编辑”，并继续把日期传入饮食列表和餐食编辑页，保存或删除后返回同一天。
+- Production deployment `dpl_PYMXPTaxy6vt4g1aU89FkZaftDbw` READY；`/`、`/calendar`、`/calendar/2026-09-09` 与 `/food?date=2026-09-09` 均为 HTTP 200，最近 30 分钟无 runtime error。
+- 发布完成后已恢复 `vercel.json -> git.deploymentEnabled=false`，后续提交不会自动触发 Production。
 
 ## 2026-09-10 — 单图饮食记录与历史异常修复
 

@@ -1,7 +1,7 @@
 # 当前状态与 Roadmap
 
-**状态日期：2026-09-07**  
-**当前结论：本轮核心改造已收尾并进入 Production。**
+**状态日期：2026-09-10**  
+**当前结论：Meal V2 与历史生活详情编辑已经收尾并进入 Production。**
 
 Harbor 当前 Project 指令模板：`docs/46-harbor-mcp-project-instructions.md`。
 
@@ -15,6 +15,8 @@ Harbor 当前 Project 指令模板：`docs/46-harbor-mcp-project-instructions.md
 Island Life 主页面与双人生活记录              ✅ Production
 无感加载 / stale cache / 前台恢复校验          ✅ Production
 Meal CRUD / 营养 / 照片 / AI 草稿确认          ✅ Production
+Meal V2 补录 / 单图直记 / 饭前饭后生命周期     ✅ Production
+历史饮食 / 心情 / 睡眠 / 活动查看与编辑         ✅ Production
 Harbor Cat / Fish direct MCP + AI Access Core  ✅ Production
 Cat / Fish 服务端身份与写权限边界              ✅ Production
 Reminder Center V1 + Reminder Engine            ✅ Production
@@ -36,7 +38,7 @@ Lint  ✅
 Build ✅
 ```
 
-2026-09-07 本次 Production deployment 已完成；对应一次性部署授权已经消耗，后续如需再次发布必须重新获得明确授权。
+2026-09-10 本次 Production deployment 已完成；对应一次性部署授权已经消耗，后续如需再次发布必须重新获得明确授权。
 
 ## 2. 产品与固定身份
 
@@ -235,15 +237,18 @@ EXIF normalize
 
 当前一条正式 meal 绑定 1 张展示照片；多图可参与 AI 分析，但暂不做多图持久化模型。
 
-2026-09-10 已在代码侧完成 Meal V2 收口：分类改为四类主餐/加餐、加餐时段合并为
-morning/afternoon/night、状态改为 estimated/confirmed，并为 AI Access Core 增加
-补录与饭后确认同一 Meal 的动作。该批代码和 migration 在下一次获得明确部署授权并
-完成 Production smoke 前，不标记为已上线。
+2026-09-10 已完成 Meal V2 收口并发布 Production：分类改为四类主餐/加餐、加餐时段
+合并为 morning/afternoon/night、状态改为 estimated/confirmed，并为 AI Access Core
+增加补录与饭后确认同一 Meal 的动作；对应 migration 已在 Production 执行。
 
 同日补充单图记录边界：单张餐前照片配合明确的“记录整顿饭/全部热量”意图，草稿确认后
 直接创建 confirmed Meal；只有明确要求饭前估算并保留饭后确认流程时才使用 estimated。
 饭后确认会丢弃旧估算汇总并按实际 items 重算。2026-09-09 Fish 被误记为第二条早餐的
 Venchi 黑巧克力已核对为上午加餐，数据修复为 snack + morning。
+
+历史详情维护也已上线：从月历进入任意历史日期后，可以查看并编辑该日期的饮食、心情、
+睡眠与活动。个人数据仍只能修改当前登录用户自己的记录；活动继续服从 owner / both
+权限。历史活动新增时，`occurred_at` 使用所选业务日期，不使用实际点击保存当天。
 
 ## 8. 无感加载 / 数据同步
 
@@ -325,7 +330,7 @@ Cat -> Fish 明信片        reminder instance 已生成
 最近 30 分钟 runtime error  0
 ```
 
-最新 Production deployment 为 `dpl_9YzBipVW9PQF3Si8hGrmVxUyTXzD`，构建 source commit `3ecd159c9e8a47f470726c27bab48603eecf2d35`。后续文档提交不会触发新的 Production。
+最新 Production deployment 为 `dpl_PYMXPTaxy6vt4g1aU89FkZaftDbw`，构建 source commit `e2374880d601b9f1379f8e03bc1353dadc1e5e42`。发布后 `/`、`/calendar`、`/calendar/2026-09-09`、`/food?date=2026-09-09` 均返回 HTTP 200，最近 30 分钟 runtime error 为 0。后续文档提交不会触发新的 Production。
 
 当前 `vercel.json`：
 
