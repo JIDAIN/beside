@@ -318,25 +318,9 @@
   color: var(--life-teal-strong);
   box-shadow: 0 2px 8px rgb(78 92 85 / 0.09);
 }
-.life-review-calendar.is-food {
-  border-color: rgb(237 181 137 / 0.35);
-  background: linear-gradient(160deg, #fffdf8 0%, #fff8ef 72%, #fff1df 100%);
-}
-.life-review-calendar.is-sleep {
-  border-color: rgb(159 155 218 / 0.32);
-  background: linear-gradient(160deg, #fffdf8 0%, #faf8ff 72%, #f1effc 100%);
-}
-.life-review-calendar.is-food .life-calendar-view-switch button[aria-selected="true"],
-.life-review-calendar.is-food .life-role-switch button[aria-pressed="true"] { color: #a8653f; background: #fff7ed; }
-.life-review-calendar.is-sleep .life-calendar-view-switch button[aria-selected="true"],
-.life-review-calendar.is-sleep .life-role-switch button[aria-pressed="true"] { color: #6f63a6; background: #f5f2ff; }
-.life-review-calendar.is-food .life-round-button { color: #a8653f; background: #fff0df; }
-.life-review-calendar.is-sleep .life-round-button { color: #6f63a6; background: #efedfb; }
-.life-review-calendar.is-food .life-calendar-day,
-.life-review-calendar.is-sleep .life-calendar-day {
-  border: 1px solid rgb(112 104 93 / 0.09);
-  background: rgb(255 253 248 / 0.45);
-}
+.life-header-role-switch { width: 7.75rem; }
+.life-header-role-switch .life-role-switch { width: 100%; }
+.life-header-role-switch .life-role-switch button { min-width: 0; }
 .life-calendar-metric {
   display: grid;
   min-width: 0;

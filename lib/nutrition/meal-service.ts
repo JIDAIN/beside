@@ -11,6 +11,16 @@ export type MealPhotoDisplay = {
 
 export const MEAL_PHOTO_SCALE_MIN = 0.6;
 export const MEAL_PHOTO_SCALE_MAX = 1;
+export const MAIN_MEAL_TYPES = ["breakfast", "lunch", "dinner"] as const;
+export type MainMealType = (typeof MAIN_MEAL_TYPES)[number];
+
+export function isMainMealType(value: MealType): value is MainMealType {
+  return MAIN_MEAL_TYPES.includes(value as MainMealType);
+}
+
+export function mealTypeLabel(value: MealType) {
+  return value === "breakfast" ? "早餐" : value === "lunch" ? "午餐" : value === "dinner" ? "晚餐" : "加餐";
+}
 
 export type MealItemWrite = {
   foodId: string | null;

@@ -34,6 +34,7 @@ export class NutritionCloudError extends Error {
       | "SERVER_CONFIG"
       | "NUTRITION_READ_FAILED"
       | "NUTRITION_WRITE_FAILED"
+      | "MEAL_SLOT_CONFLICT"
       | "PHOTO_READ_FAILED"
       | "PHOTO_WRITE_FAILED"
       | "CLOUD_NETWORK_ERROR",
@@ -106,6 +107,13 @@ async function callRpc<T>(
   if (!response.ok) {
     const result = (await response.json().catch(() => null)) as RpcErrorBody | null;
     const fallback = operation === "read" ? "读取饮食数据失败" : "写入饮食数据失败";
+    const conflictText = `${result?.message ?? ""} ${result?.details ?? ""}`;
+    if (operation === "write" && result?.code === "23505" && conflictText.includes("meals_main_slot_active_unique")) {
+      throw new NutritionCloudError(
+        "当天已经有这条主餐记录，请编辑原记录，或使用补录追加食物",
+        "MEAL_SLOT_CONFLICT",
+      );
+    }
     throw new NutritionCloudError(
       result?.message ?? fallback,
       operation === "read" ? "NUTRITION_READ_FAILED" : "NUTRITION_WRITE_FAILED",

@@ -96,12 +96,15 @@ export function LifeCalendarPage({ initialView = "mood", initialMonth }: { initi
 
   const legend = view === "mood" ? "没有记录就留白；今天用小太阳标记。" : view === "food" ? "圆块大小表示当日总热量，数字为具体 kcal。" : "圆块大小表示睡眠时长，数字为具体小时数。";
   return (
-    <AppPageShell title="月度回顾" subtitle="从一个月里，慢慢看见生活的变化。">
+    <AppPageShell
+      title="月度回顾"
+      subtitle="从一个月里，慢慢看见生活的变化。"
+      actions={view !== "mood" ? <div className="life-header-role-switch"><AppRoleSwitch value={role} onChange={setRole} /></div> : null}
+    >
       <section className={`life-calendar-paper life-calendar-page life-review-calendar is-${view}`}>
         <div className="life-calendar-view-switch" role="tablist" aria-label="选择月度回顾类型">
           {VIEW_OPTIONS.map((option) => <button key={option.value} type="button" role="tab" aria-selected={view === option.value} onClick={() => setView(option.value)}>{option.label}</button>)}
         </div>
-        {view !== "mood" ? <div className="mt-3 flex justify-end"><AppRoleSwitch value={role} onChange={setRole} /></div> : null}
         <div className="mt-4 flex items-center justify-between gap-3 px-2">
           <button type="button" aria-label="上个月" onClick={() => setMonth((value) => shiftMonth(value, -1))} className="life-round-button">‹</button>
           <div className="text-center"><p className="text-lg font-black tracking-tight text-[var(--life-text)]">{monthTitle(month)}</p><p className="mt-1 text-[10px] font-bold text-[var(--life-text-muted)]">{view === "mood" ? "我 · Ta" : role === "me" ? "我" : "Ta"}</p></div>

@@ -14,7 +14,7 @@ function nutritionErrorResponse(error: NutritionCloudError) {
   const status =
     error.errorCode === "SERVER_CONFIG"
       ? 500
-      : error.message.includes("Idempotency key")
+      : error.errorCode === "MEAL_SLOT_CONFLICT" || error.message.includes("Idempotency key")
         ? 409
         : 502;
   return jsonError(error.message, status, error.errorCode);

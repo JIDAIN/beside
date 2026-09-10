@@ -179,6 +179,8 @@ life_mutate
 
 普通已知业务 query/mutate 不应先调用 `life_capabilities`；只有未知能力发现或开发排错时才需要。
 
+Meal create 的业务边界：早餐 / 午餐 / 晚餐若当天同一 owner 已有有效记录，API 返回 `409 MEAL_SLOT_CONFLICT`，调用方应进入原记录编辑或补录；snack create 不受该槽位约束，每次进食均创建独立记录。应用层预检用于给出清楚提示，数据库部分唯一索引用于防止并发竞态。
+
 正式写入统一原则：
 
 ```text

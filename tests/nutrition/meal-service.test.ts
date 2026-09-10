@@ -1,12 +1,20 @@
 import { describe, expect, it } from "vitest";
 import {
   defaultMealPhotoDisplay,
+  isMainMealType,
+  mealTypeLabel,
   parseMealPhotoDisplayPayload,
   parseMealQuery,
   parseMealWritePayload,
 } from "../../lib/nutrition/meal-service";
 
 describe("nutrition meal service", () => {
+  it("distinguishes fixed daily meals from repeatable snack events", () => {
+    expect(["breakfast", "lunch", "dinner"].every((type) => isMainMealType(type as "breakfast"))).toBe(true);
+    expect(isMainMealType("snack")).toBe(false);
+    expect(mealTypeLabel("breakfast")).toBe("早餐");
+    expect(mealTypeLabel("snack")).toBe("加餐");
+  });
   it("accepts a confirmed ChatGPT meal and derives totals from items", () => {
     const result = parseMealWritePayload({
       partnerKey: "fish",

@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
 import { useLifeIdentity } from "@/components/life/LifeIdentityContext";
-import Link from "next/link";
 import { deleteSleep, saveSleep } from "@/lib/life/life-client";
 import type { LifeDayRecord, LifePartnerKey, SleepRecord } from "@/lib/life/life-service";
 import { buildSleepTimestamps, durationText, formatTime, timeInputValue } from "./today-life-model";
@@ -87,7 +86,6 @@ export function TodaySleepCard({
       <div className="mb-3 flex items-center justify-between gap-3">
         <p className="text-sm font-extrabold text-[var(--life-text)]">🌙 睡眠</p>
         <div className="flex items-center gap-3">
-          <Link href={`/calendar?view=sleep&month=${date.slice(0, 7)}`} className="life-card-action">月历</Link>
           {!readOnly ? (
             <button type="button" className="life-card-action" onClick={() => setEditing((value) => !value)}>
               {editing ? "收起" : mySleep ? "编辑" : "+ 记录"}

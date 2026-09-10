@@ -23,7 +23,7 @@ function nutritionErrorResponse(error: NutritionCloudError) {
       ? 500
       : error.message.includes("Meal not found")
         ? 404
-        : error.message.includes("Idempotency key")
+        : error.errorCode === "MEAL_SLOT_CONFLICT" || error.message.includes("Idempotency key")
           ? 409
           : 502;
   return jsonError(error.message, status, error.errorCode);

@@ -71,6 +71,7 @@ const MEAL_ID = "00000000-0000-4000-8000-000000000002";
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.getMealOwner.mockResolvedValue("cat");
+  mocks.listMeals.mockResolvedValue([]);
 });
 
 describe("life internal AI registry guards", () => {
@@ -144,6 +145,47 @@ describe("life internal AI registry guards", () => {
         { rawName: "鸡蛋", portionDescription: "1个" },
       ],
     });
+  });
+
+  it("rejects a second fixed meal and directs the agent to update the original", async () => {
+    mocks.listMeals.mockResolvedValue([{ id: MEAL_ID, mealType: "breakfast" }]);
+
+    await expect(executeLifeAgentTool(
+      "life_mutate",
+      {
+        resource: "meal",
+        action: "create",
+        data: { mealDate: "2026-09-10", mealType: "breakfast", items: [{ name: "鸡蛋", caloriesKcal: 80 }] },
+      },
+      { identity: CAT, latestUserText: "再记一份早餐" },
+    )).rejects.toThrow("当天早餐已经存在");
+    expect(mocks.createMeal).not.toHaveBeenCalled();
+  });
+
+  it("allows multiple independent snacks in the same period", async () => {
+    mocks.createMeal.mockImplementation(async (payload) => ({ id: "snack-2", ...payload }));
+
+    await executeLifeAgentTool(
+      "life_mutate",
+      {
+        resource: "meal",
+        action: "create",
+        data: {
+          mealDate: "2026-09-10",
+          mealType: "snack",
+          snackPeriod: "afternoon",
+          items: [{ name: "酸奶", caloriesKcal: 120 }],
+        },
+      },
+      { identity: CAT, latestUserText: "下午又吃了一杯酸奶，单独记一次" },
+    );
+
+    expect(mocks.listMeals).not.toHaveBeenCalled();
+    expect(mocks.createMeal).toHaveBeenCalledWith(expect.objectContaining({
+      mealType: "snack",
+      snackPeriod: "afternoon",
+      items: [expect.objectContaining({ rawName: "酸奶" })],
+    }));
   });
 
   it("appends an item to the unique meal without changing its original time", async () => {

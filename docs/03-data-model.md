@@ -349,6 +349,12 @@ AI Access Core 在这些 canonical RPC 之上提供 `append_meal_item` 与
 `confirm_estimated_meal` 语义：自动定位唯一目标 Meal、复用 update transaction，
 并在补录和饭后确认时保留原 `eaten_at`。
 
+Meal 数量约束：
+
+- `(couple_space_id, partner_key, meal_date, meal_type)` 对有效的 breakfast / lunch / dinner 使用部分唯一索引，每人每日每种主餐最多一条；
+- snack 不进入该唯一索引，同一 morning / afternoon / night 可有多条独立事件；
+- 软删除后的主餐槽可以重新创建；每条 snack 独立持有自己的 `photo_path` 与 items。
+
 ## 14. Source / AI 写入
 
 统一来源词汇：

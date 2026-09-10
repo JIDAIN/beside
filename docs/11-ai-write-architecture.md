@@ -90,7 +90,7 @@ legacy_home
 mood       upsert / delete
 sleep      upsert
 activity   create / update / delete
-meal       create / update / delete + photo
+meal       create / update / append_meal_item / confirm_estimated_meal / delete + photo
 weight     create / update / delete
 medicine   create / update / delete
 mailbox    draft/create/update/delete/send + sent create semantics
@@ -114,6 +114,7 @@ legacy_home replace
 
 - Mood / Sleep / Meal / Weight：个人写入只允许当前 actor；
 - Meal / Weight update/delete：按真实记录 owner 再核验；
+- Meal：早餐 / 午餐 / 晚餐按 actor + date + type 唯一；重复意图转为补录或更新。snack 按每次进食独立创建，同一时段允许多条；多候选补录不得猜测；
 - Activity：`cat` / `fish` 单方活动只有对应本人可维护；`both` 双方可维护，但不能被任一方静默改成单方；
 - Mailbox：sender 固定当前 actor，recipient 按业务规则指向 Ta；draft 仅寄件人可维护，sent 永久只读；
 - Medicine：家庭共享，双方可维护；

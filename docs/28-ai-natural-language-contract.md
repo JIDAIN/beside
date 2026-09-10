@@ -184,9 +184,9 @@ confirm_estimated_meal    用实际摄入替换当天唯一 estimated 餐食并�
 delete                    按可靠 UUID 删除
 ```
 
-补录或饭后确认无需用户提供 UUID。AI Access Core 按当前 actor、mealDate、
-mealType，以及加餐时的 snackPeriod 定位；没有候选或存在多个候选时必须澄清，
-不能猜测、不能新建第二条同餐次记录。
+早餐、午餐、晚餐是每天各一个的固定槽：当前 actor + mealDate + mealType 最多一条有效 Meal；再次出现同一主餐的食物时必须追加或更新原记录。加餐是独立进食事件，morning / afternoon / night 每个时段允许多条；不同时间、照片或食物分别 create，分别保留图片与营养。
+
+补录或饭后确认无需用户提供 UUID。AI Access Core 按当前 actor、mealDate、mealType，以及加餐时的 snackPeriod 定位；没有候选或存在多个候选时必须澄清。尤其同一加餐时段有多条时，必须确认具体哪次，不能猜测或把不同照片合并。
 
 ### 4.5 Weight
 

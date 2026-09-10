@@ -15,6 +15,8 @@ import { parseMedicinePayload } from "../life/medicine-service";
 import { parseWeightWritePayload } from "../life/weight-service";
 import {
   defaultMealPhotoDisplay,
+  isMainMealType,
+  mealTypeLabel,
   parseMealWritePayload,
   type MealItemWrite,
   type MealRecord,
@@ -371,7 +373,7 @@ function capabilities(identity: FixedLifeIdentity) {
       mood: "upsert/delete；只操作当前 OAuth 账号",
       sleep: "upsert；只写当前 OAuth 账号；支持 bedtime/sleepTime 与 wakeTime 等别名",
       activity: "create/update/delete；participantScope=me/both；both 创建一条双方共享活动",
-      meal: "create/update/append_meal_item/confirm_estimated_meal/delete；补录和饭后确认自动定位唯一餐食并保留 eatenAt；只写当前 OAuth 账号；可 attachPhoto",
+      meal: "create/update/append_meal_item/confirm_estimated_meal/delete；早餐/午餐/晚餐每天各最多一条，补录更新原记录；上午/下午/晚上加餐可各记录多次且每次独立保留照片；补录和饭后确认保留 eatenAt；只写当前 OAuth 账号；可 attachPhoto",
       weight: "create/update/delete；只写当前 OAuth 账号；缺体重数值时向用户确认",
       medicine: "create/update/delete；medicineName/drugName/name 均可；数量缺省为 1",
       mailbox: "create draft/sent；update/delete 仅限自己的 draft；update draft + status=sent 表示寄出；sent 永久只读",
@@ -562,6 +564,15 @@ async function mutateLife(args: JsonRecord, context: LifeAgentExecutionContext) 
       if (!parsed.ok) throw new Error(parsed.reason);
       let meal;
       if (action === "create") {
+        if (isMainMealType(parsed.value.mealType)) {
+          const existingMeals = await listMeals({ mealDate: parsed.value.mealDate, partnerKey: actor });
+          const existing = existingMeals.find((candidate) => candidate.mealType === parsed.value.mealType);
+          if (existing) {
+            throw new Error(
+              `当天${mealTypeLabel(parsed.value.mealType)}已经存在；补充食物请使用 append_meal_item，修改内容请更新原记录`,
+            );
+          }
+        }
         meal = await createMeal(parsed.value);
       } else {
         const id = targetId || requireId(args);

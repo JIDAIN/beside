@@ -27,12 +27,13 @@ describe("mood and sleep deletion", () => {
     expect(migration).toContain("grant execute on function public.delete_sleep_record(uuid,text,text) to service_role");
   });
 
-  it("labels sleep input by wake date and exposes calendar shortcuts", () => {
+  it("labels sleep input by wake date and keeps monthly navigation in the calendar tab", () => {
     const sleep = source("components/life/today/TodaySleepCard.tsx");
     const food = source("components/life/LifeFoodPage.tsx");
     expect(sleep).toContain("昨晚入睡");
     expect(sleep).toContain("今天起床");
-    expect(sleep).toContain('/calendar?view=sleep&month=');
-    expect(food).toContain('/calendar?view=food&month=');
+    expect(sleep).not.toContain('/calendar?view=sleep&month=');
+    expect(food).not.toContain('/calendar?view=food&month=');
+    expect(food).toContain('actions={<div className="life-header-role-switch"><AppRoleSwitch');
   });
 });
