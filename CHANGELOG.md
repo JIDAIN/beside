@@ -1,1 +1,164 @@
-awk: cannot open "--" (No such file or directory)
+# Changelog
+
+## 2026-09-10 — 历史生活详情可编辑
+
+- 月历日期详情不再把心情、睡眠和活动统一锁成只读；当前登录用户可以维护所选历史日期中自己的记录，Ta 的个人数据继续只读，活动继续遵守 owner / both 服务端权限。
+- 历史详情写入后立即同步 day、month 与 month-bundle 缓存，返回月历不会被旧快照覆盖。
+- 历史活动新增会把 `occurred_at` 对齐到所选业务日期，不再错误使用操作当天；切换日期时关闭残留编辑态并刷新活动列表。
+- 历史饮食入口明确标为“查看 / 编辑”，并继续把日期传入饮食列表和餐食编辑页，保存或删除后返回同一天。
+
+## 2026-09-10 — 单图饮食记录与历史异常修复
+
+- 明确单张餐前照片的直接记录语义：用户要求记录整顿饭或全部热量时，草稿确认后直接保存为 confirmed，不等待饭后图；只有明确要求饭前估算时才进入 estimated → confirmed 生命周期。
+- 饭后确认不再沿用饭前估算的整餐热量与区间；未显式提供新汇总时，根据实际摄入 items 重新计算。
+- 增加 2026-09-09 Fish 饮食异常的数据修复：误记为第二条早餐的 Venchi 黑巧克力更正为上午加餐，不删除真实早餐。
+- Meal V2 两个 migration 已在 Production 执行，旧 `other / draft / evening / late_night` 数据归零；Production deployment `dpl_8ocV2TjFkW4ih4EZBcvQ2sLahTj9` READY。
+
+## 2026-09-10 — Meal V2 写入链路收口
+
+- 将饮食分类收敛为 breakfast/lunch/dinner/snack，加餐时段收敛为 morning/afternoon/night，状态收敛为 estimated/confirmed。
+- `life_mutate` 新增补录食物与饭后确认动作，自动定位当前账号当天唯一目标 Meal，并强制保留首次记录的 eatenAt。
+- 新增兼容 migration：历史 other 转为 snack、evening/late_night 合并为 night、draft 转为 estimated。
+- 同步饮食 UI、自然语言归一化、工具能力说明和回归测试；修复 Meal V2 adapter 的错误类型导入。
+
+只记录对理解产品状态有价值的里程碑，不记录每一次样式微调。
+
+## 2026-09-07 — 小信箱来信微信提醒上线
+
+- 小信箱正式接入统一 Reminder Engine：信件第一次真正进入 `sent` 时，只为收件人生成一条 `source_kind=mailbox` 的 reminder instance；保存 / 编辑 draft 不触发提醒，已寄出信件后续读取不会重复生成。
+- 来信提醒继续复用现有 Supabase `pg_cron` + `life_notification_deliveries` + PushPlus 投递链路，不新增第二套微信通知系统。
+- 微信内容只提示“收到一封新手札 / 新明信片”，不包含信件正文；`mailbox` 来源在 Reminder Center 中显示为“小信箱”。
+- Supabase 事务测试覆盖“直接 sent”和“draft → sent”两条路径，测试数据均回滚无残留。
+- 实际验收：Cat 寄给 Fish 的明信片在寄出后生成 Fish 的 mailbox reminder；下一轮 5 分钟云端调度完成 PushPlus 投递，delivery 为 `accepted`，`notified_at` 已写入。
+- Production deployment `dpl_9YzBipVW9PQF3Si8hGrmVxUyTXzD` READY，source commit `3ecd159c9e8a47f470726c27bab48603eecf2d35`。
+- 发布后 `/me/reminders` HTTP 200，最近 30 分钟未发现 runtime error；Production 自动 Git 部署已重新保持关闭。
+- 同步收尾 `README.md`、`docs/09-status-roadmap.md`、`docs/14-wechat-reminders.md` 与本 Changelog，使当前文档与 Production 行为一致。
+
+## 2026-09-07 — Island Life 本轮收尾正式上线
+
+- 将本轮 GitHub `main` 的核心改造统一发布到 Production：Reminder Center V1 UI closeout、mood delete Web/API/MCP、Cat / Fish activity + weight 权限加固、Mailbox V2 Web/API/AI 与最终小信箱视觉。
+- 小信箱正式切换为 `draft / sent` 模型：待寄出只有寄件人可见可改；寄出后双方可见且永久只读。UI 使用收信箱 / 已寄出 / 待寄出三箱、手札 / 明信片筛选、月份归档、整页信纸翻页和始终水平横向的明信片。
+- Reminder Center V1 正式上线完整 `今天 / 即将到来 / 已完成 / 提醒设置` 体验与首页最近 3 条提醒；Reminder Engine、药箱、纪念日、snooze 与 PushPlus 云端调度继续复用既有 Supabase 数据层。
+- Cat / Fish 的 Web session、MCP token 与 actor-aware RPC 权限边界进入同一 Production 版本；AI 昵称和前端自称不参与鉴权。
+- 根目录 `README.md`、`docs/09-status-roadmap.md`、`docs/14-wechat-reminders.md` 同步更新为当前 Island Life 架构与正式状态。
+- 发布前代码 CI：Test / Lint / Build 全部通过。
+- Production deployment `dpl_GC1Ut3u64w5rpZ8iwzRp5nyyvWmm` READY，source commit `7196c2fc843a0ca8d3aae00ed5ea87257a2ff5cf`。
+- 发布后 `/`、`/me/reminders`、`/nest/mailbox` 均返回 HTTP 200；Vercel 最近 30 分钟 runtime error 为 0。
+- 一次性部署授权已消耗；`vercel.json` 已恢复 `git.deploymentEnabled=false`，后续普通提交不会自动触发 Production。
+- 当前版本进入“正常使用 + 小步迭代”阶段，后续生理期等新生活 domain 继续复用 AI Access Core + Reminder Engine，而不是重做基础设施。
+
+## 2026-09-07 — Reminder Center V1 收尾（Supabase 已生效，UI 待 Production 部署）
+
+- 在既有 PushPlus 通知层上完成统一 Reminder Engine：`life_reminder_rules / life_reminder_instances` 作为规则与具体提醒实例，`life_notification_deliveries` 继续只负责投递状态。
+- 自定义提醒、药箱到期提醒、纪念日提醒统一进入 Reminder Center；纪念日不再走旧的独立直发分支。
+- 药箱提醒按 Cat / Fish 分别支持开关与提前天数，默认 `[30,7,1,0]`，范围 0～90 天；只物化未来约 90 天内实例。
+- 修复 snooze 语义：成功推送后点击“1 小时后”会重置 `notified_at`，新的 effective due time 使用新的 delivery dedupe key，可合法再次提醒且不产生网络重试重复推送。
+- 新 Reminder Center UI 已进入 GitHub `main`：`今天 / 即将到来 / 已完成`、完整已完成历史、药箱设置、PushPlus 状态、关闭药箱提醒。
+- 今日首页新增“接下来”轻量卡片，只展示最近 3 条提醒并跳转完整提醒中心。
+- Cat PushPlus 已绑定且真实自动提醒链路已验收；Fish 尚未绑定，因此 Fish / both 的真实微信投递等待后续验收。
+- Supabase 已验证 Cat/Fish reminder settings、药箱实例、纪念日实例与两个 cron 任务；此次 UI 代码未获得新的 Production 部署授权，因此线上仍为上一版 Reminder Center UI。
+- 同批同步更新 `docs/03-data-model.md`、`docs/09-status-roadmap.md`、`docs/14-wechat-reminders.md` 和文档索引。
+
+## 2026-09-04 — R8.8 缓存竞态收口与首屏无闪烁（PR #58）
+
+- 为 stale-query 增加 request revision barrier：早于本地/read-back 写入启动的旧请求不再有资格覆盖新缓存；途中 invalidate 会从 mutation 之后重新读取。
+- 月度 bundle 尚在飞行时发生心情写入，会显式失效旧快照，修复“刚改心情又被旧月历回滚”的竞态。
+- 浏览器绘制前恢复最近确认的 cat/fish scope 与持久读缓存；服务端签名 Cookie 仍是唯一权限依据。
+- 今日、饮食、日历移除用户可见的“第一次读取/正在确认账号”首屏文字；用稳定静态壳或月份网格承接首帧。
+- 饮食数据未恢复时使用中性照片位，不再先画默认餐图再切实拍图。
+- GitHub Actions：Test 221/221、Lint、Production Build 全部通过。
+- Production deployment `dpl_2WsHTaUJZYLht9J8mRZZQ4vjKLSf` READY；`/`、`/food`、`/calendar` 均为 200，部署后最近 30 分钟无 error/fatal runtime log。
+- 发布完成后已恢复 `vercel.json -> git.deploymentEnabled: false`，关闭提交未触发第二次部署。
+
+## 2026-09-04 — R8.7 无阻塞启动与缓存一致性（PR #57）
+
+- 移除全屏启动 splash 与 620ms/2.4s 人为等待，缓存页面立即显示、数据后台校验。
+- 最近确认身份作为非授权本地 scope hint 跨应用重开保留；服务端签名 Cookie 仍是唯一权限依据。
+- 启动预热改为 canonical day/meal/settings keys，月历与小窝数据延后，减少首屏重复 RPC 与资源争抢。
+- 月度 bundle 同步生成月历缓存，避免同一月份并发读取 `get_life_month_moods` 和 `get_life_month_bundle`。
+- Life 写入 read-back 后原子同步 day/month/bundle 缓存，修复月历心情先显示旧值的问题。
+- 版本化餐食照片改为一年私有 immutable 缓存；餐食编辑/删除直接更新本地列表缓存。
+- Test 216/216、Lint、Production Build 与 HTTP smoke 均通过；Production deployment `dpl_4n8MPK4N5ZQjNTCmj6gXLijYZupe` READY。
+- Production 实机复查暴露出“旧 in-flight 请求可能覆盖新缓存”和剩余首屏占位闪烁，后续由 R8.8 收口。
+
+## 2026-09-02 — P2.5 同日饮食与游戏记录关联
+
+- 在现有「今日 → 饮食小记」中新增“当天合在一起看”，不新增第五个主 Tab。
+- 按 `partnerKey + date` 把当天实际摄入与已有游戏 daily record 关联展示。
+- 同一张 AppCard 现在显示：当天总摄入、可用总热量区间、游戏热量缺口、运动分钟和游戏体重快照。
+- meals 存在但该日没有 `DailyRecord` 时明确显示“当天游戏记录未填写”；不会自动创建游戏记录。
+- daily record 存在但没有 meals 时，实际摄入显示“未记录”。
+- Meal API 加载失败时显示“暂未加载”，避免把错误状态误显示成 0 kcal。
+- 新增 `lib/home/daily-overview-service.ts`，只读选择 `date + role` 对应游戏快照。
+- 新增 `tests/home/daily-overview-service.test.ts`，覆盖角色选择、日期选择和缺失记录状态。
+- P2.5 不新增数据库表、RPC 或 API，不扩大数据库权限面。
+- 保持 `intake ≠ deficit ≠ weight ≠ exercise`；关联仅用于展示，不用 meals 自动覆盖游戏 deficit。
+- 记录旧模型限制：`DailyRecord` 没有单侧 input-presence 标记，无法可靠区分“主动填写 0”和“旧模型补零”；当前不做启发式猜测。
+- GitHub Actions Test / Lint / Build 全部通过；对应 Vercel production deployment 为 READY。
+- P2.5 完成，下一阶段切换为 P3 体重趋势。
+
+## 2026-09-02 — 角色映射纠正与饮食数据修正
+
+- 根据真实使用反馈纠正 ChatGPT 饮食角色映射：**用户自己的饮食聊天 = `cat`（猫猫），鱼鱼的饮食聊天 = `fish`（鱼鱼）**。
+- 修正此前因错误映射写到 `fish` 的旧照片餐食记录，并同步修正对应 `chatgpt:` 幂等键前缀。
+- 食堂绿豆汤语境纠正为：默认按**完全无糖、汤水为主、少量绿豆**理解；除非用户另外说明加糖。
+- 9 月 1 日对应晚饭记录已按无糖绿豆汤重新修正。
+
+## 2026-09-02 — ChatGPT “记上”持久化流程
+
+- 完成 P2：只有用户明确表达“记上”或等价保存意图后才持久化餐食；讨论、估算、修正不会自动写库。
+- 新增 production migration `20260901162337_add_chatgpt_meal_persistence_rpc.sql`。
+- 新增 service-only `create_chatgpt_meal_record`，强制 `source=chatgpt`、`status=confirmed`，要求 `chatgpt:` 幂等键并校验食物明细和热量合计。
+- 同一幂等键使用事务 advisory lock，并继续复用 meals 唯一 idempotency 约束，避免网络/并发重试形成重复餐食。
+- 新增 `get_chatgpt_meal_record`，用于写入结果不确定时按同一 key 查询确认。
+- ChatGPT 使用用户已授权的 Supabase 连接能力调用受限 meal RPC，不把数据库 secret 或同步密码复制到聊天，也不新增公开写 API。
+- production smoke test 验证首次创建、同 key 重试、按 key 读回和权限边界；测试 meal 已清理。
+- P2 不改变游戏 deficit、运动、体重、钱包、金币、宝石或热力图。
+
+## 2026-09-01 — 今日饮食 Web UI
+
+- 在现有 `#today` notice-board 中新增「饮食小记」，不增加第五个底部 Tab。
+- 按日期和 fish/cat 查询 Supabase 餐食，展示当天餐数、kcal 合计、餐型、区间、备注和来源。
+- 食物明细可展开，支持手动新增 / 完整编辑 / 删除确认 / 软删除。
+- 新增 `lib/nutrition/meal-client.ts`；浏览器只走同源 Meal API 和 HttpOnly cloud session。
+- UI 继续复用现有 App* / animal-island-ui 视觉体系。
+
+## 2026-09-01 — Supabase migration 与工程 baseline
+
+- 将 production 中保留的原始 migration SQL 回填到 `supabase/migrations/`。
+- 新增 `supabase/README.md`，明确数据库变更、RLS、service_role 和空库重建规则。
+- 确认 `coin_deficit_streak_days` 默认值已经从 7 统一为当前规则的 5。
+- 建立 GitHub Actions Test / Lint / Build baseline。
+- 修复旧兑换记录兜底时间的跨时区测试问题。
+
+## 2026-09-01 — 项目文档与 AI 规则治理
+
+- 重审 README、AGENTS、CLAUDE、项目 Skill 和全部 docs。
+- 将多套重复、过期的 refactor / migration / future-design 文档合并为当前主文档体系。
+- 新增持续维护型 Codex Skill：`couple-better-game-maintainer`。
+- 明确四个独立数据域：饮食摄入、游戏 deficit、体重、运动。
+- 明确 Supabase 已是云端主数据源，公开 GitHub JSON 同步退出当前架构。
+
+## 2026-09-01 — 饮食后端第一阶段
+
+- 建立 `meals / meal_items / foods / food_aliases` 营养数据模型。
+- 新增 `/api/meals` 与 `/api/meals/[id]` CRUD。
+- 新增 meal payload 校验、热量区间、source、idempotency key 支持。
+- 多表写入采用 Supabase 事务 RPC。
+- 完成新增 → 查询 → 修改 → 软删除数据库冒烟验证。
+
+## 2026-09-01 — Supabase 成为唯一云端主数据源
+
+- 游戏快照迁移到规范化 Supabase 表。
+- `/api/home-data` / `/api/save-data` 接入 Supabase RPC。
+- 新增 cloud session 和新设备首次写入保护。
+- 停止 GitHub JSON 镜像写入并删除当前 `public/data/couple-data.json`。
+- 重写可达 Git 历史；GitHub Support 继续处理旧 dangling commit cached views。
+
+## 2026-05 至 2026-08 — Web MVP 与游戏核心
+
+- 完成双人每日记录、历史补录 / 编辑 / 删除。
+- 完成金币 / 宝石、情侣奖励、钱包回算和周统计。
+- 完成成长地图、成长日志、兑换商店和兑换记录。
+- 完成 AppDataStore、localStorage、JSON 备份恢复、CSV 复盘。
+- 完成 animal-island-ui 视觉体系和 `components/ui/App*` wrapper。
