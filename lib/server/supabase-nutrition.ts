@@ -22,6 +22,11 @@ type MealPhotoReplacement = {
   meal: MealRecord;
 };
 
+type MealWriteIdentity = {
+  partnerKey: NutritionPartnerKey;
+  idempotencyKey: string | null;
+};
+
 export class NutritionCloudError extends Error {
   constructor(
     message: string,
@@ -122,11 +127,11 @@ export async function listMeals(query: MealQuery) {
   );
 }
 
-export async function getMealOwner(mealId: string): Promise<NutritionPartnerKey | null> {
+async function getMealWriteIdentity(mealId: string): Promise<MealWriteIdentity | null> {
   let response: Response;
   try {
     response = await fetch(
-      `${supabaseUrl()}/rest/v1/meals?id=eq.${encodeURIComponent(mealId)}&select=partner_key,deleted_at&limit=1`,
+      `${supabaseUrl()}/rest/v1/meals?id=eq.${encodeURIComponent(mealId)}&select=partner_key,idempotency_key,deleted_at&limit=1`,
       { headers: serviceHeaders(), cache: "no-store" },
     );
   } catch {
@@ -135,10 +140,21 @@ export async function getMealOwner(mealId: string): Promise<NutritionPartnerKey 
   if (!response.ok) {
     throw new NutritionCloudError("读取餐食归属失败", "NUTRITION_READ_FAILED");
   }
-  const rows = (await response.json()) as Array<{ partner_key?: string; deleted_at?: string | null }>;
+  const rows = (await response.json()) as Array<{
+    partner_key?: string;
+    idempotency_key?: string | null;
+    deleted_at?: string | null;
+  }>;
   const row = rows[0];
-  if (!row || row.deleted_at) return null;
-  return row.partner_key === "cat" || row.partner_key === "fish" ? row.partner_key : null;
+  if (!row || row.deleted_at || (row.partner_key !== "cat" && row.partner_key !== "fish")) return null;
+  return {
+    partnerKey: row.partner_key,
+    idempotencyKey: typeof row.idempotency_key === "string" ? row.idempotency_key : null,
+  };
+}
+
+export async function getMealOwner(mealId: string): Promise<NutritionPartnerKey | null> {
+  return (await getMealWriteIdentity(mealId))?.partnerKey ?? null;
 }
 
 export async function createMeal(payload: MealWritePayload) {
@@ -150,11 +166,15 @@ export async function createMeal(payload: MealWritePayload) {
 }
 
 export async function updateMeal(mealId: string, payload: MealWritePayload) {
+  const existing = await getMealWriteIdentity(mealId);
+  const safePayload = existing
+    ? { ...payload, idempotencyKey: existing.idempotencyKey }
+    : payload;
   return callRpc<MealRecord>(
     "update_meal_record",
     {
       p_meal_id: mealId,
-      p_payload: payload,
+      p_payload: safePayload,
       p_space_slug: coupleSpaceSlug(),
     },
     "write",
