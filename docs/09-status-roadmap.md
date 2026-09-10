@@ -1,7 +1,7 @@
 # 当前状态与 Roadmap
 
 **状态日期：2026-09-10**  
-**当前结论：统一月度回顾、睡眠起床日交互与个人记录删除已经收尾并进入 Production。**
+**当前结论：主餐唯一 / 加餐事件模型、统一月度回顾和睡眠交互已经收尾并进入 Production。**
 
 Harbor 当前 Project 指令模板：`docs/46-harbor-mcp-project-instructions.md`。
 
@@ -16,6 +16,7 @@ Island Life 主页面与双人生活记录              ✅ Production
 无感加载 / stale cache / 前台恢复校验          ✅ Production
 Meal CRUD / 营养 / 照片 / AI 草稿确认          ✅ Production
 Meal V2 补录 / 单图直记 / 饭前饭后生命周期     ✅ Production
+主餐每日唯一 + 多次加餐独立照片事件            ✅ Production
 历史饮食 / 心情 / 睡眠 / 活动查看与编辑         ✅ Production
 睡眠按起床日归档 + 心情/睡眠删除                ✅ Production
 心情 / 饮食 / 睡眠统一月度回顾                  ✅ Production
@@ -335,7 +336,7 @@ Cat -> Fish 明信片        reminder instance 已生成
 最近 30 分钟 runtime error  0
 ```
 
-最新 Production deployment 为 `dpl_A8twTjXXro2oY5jtwkgDPEQ3664m`，构建 source commit `39735d84e5ae88de03ecd688898970ae4df50738`（功能提交 `e2bf262dc23732b10ab68098e26ef9c8c0d701b1`）。发布后 `/`、`/calendar`、`/calendar?view=food&month=2026-09`、`/calendar?view=sleep&month=2026-09` 与 `/food` 均返回 HTTP 200，最近 30 分钟 runtime error 为 0。睡眠删除 migration 已在 Production 执行并确认仅 `service_role` 可调用；后续文档提交不会触发新的 Production。
+最新 Production deployment 为 `dpl_7Hg1BTDuiVqTZCWBa1j2A6iV7C6E`，构建 source commit `7c4bb5cbc2dbd96f7c2b439278f2b3112e4e08d8`（功能提交 `d449b6836a97fa349bc371419613cf4c6a4459b9`）。发布后 `/calendar`、`/calendar?view=food`、`/calendar?view=sleep` 与 `/food` 均返回 HTTP 200，最近 30 分钟 runtime error 为 0。主餐唯一 migration 已在 Production 执行；事务回滚 smoke test 确认第二条同日主餐被唯一索引拒绝，而同一下午的两条加餐均可创建。旧枚举数据均为 0，2026-09-09 Fish 保留 1 条早餐，Venchi 黑巧克力保留为 1 条上午加餐。后续文档提交不会触发新的 Production。
 
 当前 `vercel.json`：
 

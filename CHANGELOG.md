@@ -7,6 +7,8 @@
 - 月度回顾的我 / Ta 切换移到标题行右侧，仅饮食和睡眠显示；三种视图统一使用心情月历背景，领域配色只保留在数值圆块。
 - 饮食页我 / Ta 切换移到标题右侧并加宽；首页睡眠卡移除重复月历入口。
 - 同步 AI 指令、API、数据模型、UI 规范和回归测试。
+- Production deployment `dpl_7Hg1BTDuiVqTZCWBa1j2A6iV7C6E` READY；饮食、心情与睡眠月度路由及 `/food` 返回 HTTP 200，发布后最近 30 分钟无 runtime error。
+- 主餐唯一 migration 已在 Production 执行并通过事务回滚验证：重复主餐被拒绝，同一时段两条加餐可正常创建；发布后恢复 `vercel.json -> git.deploymentEnabled=false`。
 
 ## 2026-09-10 — 统一月度回顾与睡眠交互收口
 
