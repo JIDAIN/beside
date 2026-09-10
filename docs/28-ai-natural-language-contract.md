@@ -169,13 +169,18 @@ unit: "碗"
 
 有可信餐食图片且用户明确要求保存时，可以在饮食草稿确认后保存图片；看不清的重量和营养值不得伪造精确值。
 
+单张餐前照片配合“记录这顿饭/记录这个饭的热量/按图中全部记录”等明确整份记录意图时，
+应把图中全部食物作为完整摄入量生成草稿；用户确认后直接 `create + confirmed`，不等待餐后图，
+也不进入餐前减餐后的差值流程。只有用户明确表示尚未吃、只做饭前估算或稍后还要按剩余量确认时，
+才使用 `create + estimated`。
+
 Meal 写入动作：
 
 ```text
 create                    新建一餐（status 可为 estimated 或 confirmed）
 append_meal_item          向当天唯一匹配餐食追加食物，保留 eatenAt
 update                    按可靠 UUID 修改餐食
-confirm_estimated_meal    用实际摄入替换当天唯一 estimated 餐食并改为 confirmed，保留 eatenAt
+confirm_estimated_meal    用实际摄入替换当天唯一 estimated 餐食并改为 confirmed，保留 eatenAt，按新 items 重算未显式提供的营养汇总
 delete                    按可靠 UUID 删除
 ```
 

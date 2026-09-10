@@ -20,12 +20,19 @@ describe("meal draft confirmation and before/after photo contract", () => {
 
   it("supports both single-photo intake estimates and before-after subtraction", () => {
     expect(contract).toContain("单张图片");
+    expect(contract).toContain("记录这个饭的热量");
+    expect(contract).toContain("图中全部食物");
+    expect(contract).toContain("status=confirmed");
+    expect(contract).toContain("明确表示尚未吃");
+    expect(contract).toContain("status=estimated");
     expect(contract).toContain("基本都吃完");
     expect(contract).toContain("吃了一半");
     expect(contract).toContain("两张图片");
     expect(contract).toContain("餐前量减餐后剩余量估算实际摄入");
     expect(contract).toContain("骨头、果皮、果核、包装");
     expect(contract).toContain("用户文字说明的优先级最高");
+    expect(gateway).toContain("只有一张餐前照片");
+    expect(gateway).toContain("直接按完整摄入创建 confirmed Meal");
   });
 
   it("asks the model to estimate a complete nutrition draft before confirmation", () => {

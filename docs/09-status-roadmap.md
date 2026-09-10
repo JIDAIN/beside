@@ -240,6 +240,11 @@ morning/afternoon/night、状态改为 estimated/confirmed，并为 AI Access Co
 补录与饭后确认同一 Meal 的动作。该批代码和 migration 在下一次获得明确部署授权并
 完成 Production smoke 前，不标记为已上线。
 
+同日补充单图记录边界：单张餐前照片配合明确的“记录整顿饭/全部热量”意图，草稿确认后
+直接创建 confirmed Meal；只有明确要求饭前估算并保留饭后确认流程时才使用 estimated。
+饭后确认会丢弃旧估算汇总并按实际 items 重算。2026-09-09 Fish 被误记为第二条早餐的
+Venchi 黑巧克力已核对为上午加餐，数据修复为 snack + morning。
+
 ## 8. 无感加载 / 数据同步
 
 当前流程：

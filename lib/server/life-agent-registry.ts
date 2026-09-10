@@ -543,9 +543,9 @@ async function mutateLife(args: JsonRecord, context: LifeAgentExecutionContext) 
           items: action === "append_meal_item"
             ? [...base.items, ...incomingItems]
             : incomingItems,
-          ...(action === "append_meal_item"
-            ? { totalCaloriesKcal: undefined, calorieMinKcal: undefined, calorieMaxKcal: undefined }
-            : {}),
+          totalCaloriesKcal: data.totalCaloriesKcal,
+          calorieMinKcal: data.calorieMinKcal,
+          calorieMaxKcal: data.calorieMaxKcal,
         };
       }
       const parsed = parseMealWritePayload({

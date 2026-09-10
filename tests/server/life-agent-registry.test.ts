@@ -138,6 +138,7 @@ describe("life internal AI registry guards", () => {
       partnerKey: "cat",
       mealDate: "2026-09-05",
       mealType: "lunch",
+      status: "confirmed",
       items: [
         { rawName: "牛肉面", portionDescription: "1碗" },
         { rawName: "鸡蛋", portionDescription: "1个" },
@@ -208,6 +209,9 @@ describe("life internal AI registry guards", () => {
     expect(mocks.updateMeal).toHaveBeenCalledWith(MEAL_ID, expect.objectContaining({
       eatenAt: "2026-09-05T12:00:00+08:00",
       status: "confirmed",
+      totalCaloriesKcal: 300,
+      calorieMinKcal: null,
+      calorieMaxKcal: null,
       items: [expect.objectContaining({ rawName: "米饭" })],
     }));
   });

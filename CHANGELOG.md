@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-09-10 — 单图饮食记录与历史异常修复
+
+- 明确单张餐前照片的直接记录语义：用户要求记录整顿饭或全部热量时，草稿确认后直接保存为 confirmed，不等待饭后图；只有明确要求饭前估算时才进入 estimated → confirmed 生命周期。
+- 饭后确认不再沿用饭前估算的整餐热量与区间；未显式提供新汇总时，根据实际摄入 items 重新计算。
+- 增加 2026-09-09 Fish 饮食异常的数据修复：误记为第二条早餐的 Venchi 黑巧克力更正为上午加餐，不删除真实早餐。
+
 ## 2026-09-10 — Meal V2 写入链路收口
 
 - 将饮食分类收敛为 breakfast/lunch/dinner/snack，加餐时段收敛为 morning/afternoon/night，状态收敛为 estimated/confirmed。
