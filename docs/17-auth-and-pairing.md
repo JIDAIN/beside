@@ -120,7 +120,7 @@ current partnerKey != record owner -> 403 OWN_RECORD_ONLY
 | 资源 | 读取 | 写入规则 |
 |---|---|---|
 | mood | 双方可查看 | 只能 upsert / delete 自己 |
-| sleep | 双方可查看 | 只能 upsert 自己 |
+| sleep | 双方可查看 | 只能 upsert / delete 自己 |
 | meal / photo | 双方可查看 | 只能新增、修改、删除自己的餐食和照片 |
 | weight | 双方可查看 | 只能新增、修改、删除自己的体重 |
 | activity: cat / fish | 双方可按页面语义查看 | 只有 participant 对应本人可以新增、修改、删除 |

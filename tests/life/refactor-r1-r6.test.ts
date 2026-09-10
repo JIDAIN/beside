@@ -45,7 +45,7 @@ describe("R1-R6 refactor boundaries", () => {
     const calendar = source("components/life/LifeCalendarPage.tsx");
     expect(calendar).toContain("life-today-sun");
     expect(calendar).toContain("if (!visual) return null");
-    expect(calendar).toContain("life-month:");
+    expect(calendar).toContain("life-month-bundle:");
   });
 
   it("separates Nest from My and binds mailbox writes to the signed actor", () => {

@@ -294,3 +294,82 @@
   .life-calendar-day { height: 6.25rem; }
   .life-calendar-mood { width: 2.2rem; height: 2.2rem; }
 }
+
+/* Monthly review: one shared calendar structure, with fixed domain palettes. */
+.life-calendar-view-switch {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.25rem;
+  padding: 0.2rem;
+  border-radius: 999px;
+  background: rgb(239 240 233 / 0.9);
+}
+.life-calendar-view-switch button {
+  min-height: 2.35rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--life-text-muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+.life-calendar-view-switch button[aria-selected="true"] {
+  background: #fffdf8;
+  color: var(--life-teal-strong);
+  box-shadow: 0 2px 8px rgb(78 92 85 / 0.09);
+}
+.life-review-calendar.is-food {
+  border-color: rgb(237 181 137 / 0.35);
+  background: linear-gradient(160deg, #fffdf8 0%, #fff8ef 72%, #fff1df 100%);
+}
+.life-review-calendar.is-sleep {
+  border-color: rgb(159 155 218 / 0.32);
+  background: linear-gradient(160deg, #fffdf8 0%, #faf8ff 72%, #f1effc 100%);
+}
+.life-review-calendar.is-food .life-calendar-view-switch button[aria-selected="true"],
+.life-review-calendar.is-food .life-role-switch button[aria-pressed="true"] { color: #a8653f; background: #fff7ed; }
+.life-review-calendar.is-sleep .life-calendar-view-switch button[aria-selected="true"],
+.life-review-calendar.is-sleep .life-role-switch button[aria-pressed="true"] { color: #6f63a6; background: #f5f2ff; }
+.life-review-calendar.is-food .life-round-button { color: #a8653f; background: #fff0df; }
+.life-review-calendar.is-sleep .life-round-button { color: #6f63a6; background: #efedfb; }
+.life-review-calendar.is-food .life-calendar-day,
+.life-review-calendar.is-sleep .life-calendar-day {
+  border: 1px solid rgb(112 104 93 / 0.09);
+  background: rgb(255 253 248 / 0.45);
+}
+.life-calendar-metric {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  grid-template-rows: 3.05rem auto;
+  align-items: center;
+  justify-items: center;
+}
+.life-calendar-metric-bubble {
+  display: block;
+  max-width: 3rem;
+  max-height: 3rem;
+  align-self: center;
+  border-radius: 48% 52% 45% 55%;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.45), 0 3px 10px rgb(78 92 85 / 0.06);
+}
+.is-food .life-calendar-metric-bubble { background: linear-gradient(145deg, #ffd7a8, #f3a59a); }
+.is-sleep .life-calendar-metric-bubble { background: linear-gradient(145deg, #b9cef6, #c8b5e9); }
+.life-calendar-metric-value {
+  display: inline-flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 0.08rem;
+  color: var(--life-text-body);
+  font-size: 0.62rem;
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+}
+.life-calendar-metric-value small { font-size: 0.42rem; font-weight: 800; color: var(--life-text-muted); }
+.life-calendar-metric-empty { min-height: 3.9rem; }
+
+@media (max-width: 390px) {
+  .life-calendar-metric-value { font-size: 0.58rem; }
+  .life-calendar-metric-value small { font-size: 0.38rem; }
+}

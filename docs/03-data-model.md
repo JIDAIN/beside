@@ -192,6 +192,10 @@ updated_at
 
 约束：`woke_at > fell_asleep_at`。
 
+`sleep_date` 的产品语义是起床日 / 归档日，不是入睡开始日。跨夜记录中 `fell_asleep_at` 可以属于前一自然日，`woke_at` 属于 `sleep_date`；凌晨后才入睡时两者也可以属于同一日。该交互调整不改变表结构和唯一键。
+
+睡眠删除由 service-only `delete_sleep_record` RPC 完成，并同时清理对应 write receipt；RPC 按 `couple_space_id + partner_key + id` 定位，不能跨 owner 删除。
+
 ## 9. `activity_entries`
 
 ```text

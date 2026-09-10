@@ -1,5 +1,6 @@
 import type { MoodKey, SleepRecord } from "@/lib/life/life-service";
 import { moodLabel } from "@/lib/life/mood-labels";
+import { buildWakeDateSleepTimestamps } from "@/lib/life/monthly-review";
 
 export const MOODS: Array<{ key: MoodKey; label: string; softTone: string }> = [
   { key: "tired", label: moodLabel("tired"), softTone: "#eee5df" },
@@ -67,8 +68,5 @@ export function timeInputValue(value?: string | null) {
 }
 
 export function buildSleepTimestamps(date: string, sleepAt: string, wakeAt: string) {
-  const sleep = new Date(`${date}T${sleepAt}:00`);
-  const wake = new Date(`${date}T${wakeAt}:00`);
-  if (wake.getTime() <= sleep.getTime()) wake.setDate(wake.getDate() + 1);
-  return { fellAsleepAt: sleep.toISOString(), wokeAt: wake.toISOString() };
+  return buildWakeDateSleepTimestamps(date, sleepAt, wakeAt);
 }

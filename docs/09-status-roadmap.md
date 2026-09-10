@@ -17,6 +17,8 @@ Island Life 主页面与双人生活记录              ✅ Production
 Meal CRUD / 营养 / 照片 / AI 草稿确认          ✅ Production
 Meal V2 补录 / 单图直记 / 饭前饭后生命周期     ✅ Production
 历史饮食 / 心情 / 睡眠 / 活动查看与编辑         ✅ Production
+睡眠按起床日归档 + 心情/睡眠删除                ⏳ 本轮待发布
+心情 / 饮食 / 睡眠统一月度回顾                  ⏳ 本轮待发布
 Harbor Cat / Fish direct MCP + AI Access Core  ✅ Production
 Cat / Fish 服务端身份与写权限边界              ✅ Production
 Reminder Center V1 + Reminder Engine            ✅ Production
@@ -26,6 +28,7 @@ PushPlus 双身份投递链路                         ✅ 已验收
 小信箱 V2 draft / sent 数据模型与权限           ✅ Production
 小信箱三箱 UI / 信纸分页 / 横向明信片            ✅ Production
 mood delete Web/API/MCP                         ✅ Production
+sleep delete Web/API/RPC                        ⏳ 本轮待发布
 activity / weight actor-aware 权限               ✅ Production
 Legacy Game 保留与生活域隔离                    ✅ Production
 ```

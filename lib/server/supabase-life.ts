@@ -157,6 +157,18 @@ export async function upsertSleep(payload: SleepWritePayload) {
   );
 }
 
+export async function deleteSleep(sleepId: string, partnerKey: "cat" | "fish") {
+  return callRpc<SleepRecord>(
+    "delete_sleep_record",
+    {
+      p_sleep_id: sleepId,
+      p_partner_key: partnerKey,
+      p_space_slug: coupleSpaceSlug(),
+    },
+    "write",
+  );
+}
+
 export async function createActivity(
   payload: ActivityWritePayload,
   actor?: "cat" | "fish",

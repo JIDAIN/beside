@@ -1,6 +1,6 @@
 # API、云端同步与鉴权
 
-状态：2026-09-07。
+状态：2026-09-10。
 
 ## 1. API 总览
 
@@ -18,12 +18,17 @@
 | DELETE | `/api/meals/[id]/photo` | 移除餐食照片 |
 | GET | `/api/life/day?date=YYYY-MM-DD` | 读取当天心情、睡眠、活动 |
 | PUT | `/api/life/mood` | 保存 / 修改心情 |
+| DELETE | `/api/life/mood` | 删除自己的心情 |
 | PUT | `/api/life/sleep` | 保存 / 修改睡眠 |
+| DELETE | `/api/life/sleep` | 删除自己的睡眠 |
+| GET | `/api/life/month-bundle?month=YYYY-MM` | 一次读取整月心情、睡眠、活动与餐食，供月度回顾和缓存复用 |
 | POST | `/api/life/activities` | 新增活动 |
 | PUT | `/api/life/activities/[id]` | 修改活动 |
 | DELETE | `/api/life/activities/[id]` | 删除活动 |
 
 具体生活资源还包括 weight、medicine、mailbox、reminder、settings、data-management 等 API；本页维护稳定入口与契约，不手工枚举所有 route 文件。
+
+心情 / 睡眠 DELETE body 只传记录 `id + partnerKey`。服务端先以签名 session 验证 `partnerKey` 是当前 actor，再调用只授权给 service role 的 owner-filtered RPC；不能通过请求体代删 Ta 的个人记录。
 
 ### AI / MCP 入口
 

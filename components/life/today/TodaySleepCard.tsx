@@ -4,7 +4,8 @@ import { useMemo, useState } from "react";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
 import { useLifeIdentity } from "@/components/life/LifeIdentityContext";
-import { saveSleep } from "@/lib/life/life-client";
+import Link from "next/link";
+import { deleteSleep, saveSleep } from "@/lib/life/life-client";
 import type { LifeDayRecord, LifePartnerKey, SleepRecord } from "@/lib/life/life-service";
 import { buildSleepTimestamps, durationText, formatTime, timeInputValue } from "./today-life-model";
 
@@ -60,6 +61,21 @@ export function TodaySleepCard({
     }
   }
 
+  async function removeMine() {
+    if (!mePartnerKey || !mySleep || readOnly || saving) return;
+    if (!window.confirm("确定删除这条睡眠记录吗？")) return;
+    setSaving(true);
+    try {
+      await deleteSleep(mySleep.id, mePartnerKey);
+      setEditing(false);
+      if (onChanged) await onChanged();
+    } catch (cause) {
+      onError?.(cause instanceof Error ? cause.message : "删除睡眠失败");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   if (!mePartnerKey || !taPartnerKey) {
     return <section className="life-surface life-section-card text-sm text-[var(--life-text-muted)]">正在确认当前账号…</section>;
   }
@@ -70,11 +86,14 @@ export function TodaySleepCard({
     <section className="life-surface life-section-card life-today-card">
       <div className="mb-3 flex items-center justify-between gap-3">
         <p className="text-sm font-extrabold text-[var(--life-text)]">🌙 睡眠</p>
-        {!readOnly ? (
-          <button type="button" className="life-card-action" onClick={() => setEditing((value) => !value)}>
-            {editing ? "收起" : mySleep ? "编辑" : "+ 记录"}
-          </button>
-        ) : null}
+        <div className="flex items-center gap-3">
+          <Link href={`/calendar?view=sleep&month=${date.slice(0, 7)}`} className="life-card-action">月历</Link>
+          {!readOnly ? (
+            <button type="button" className="life-card-action" onClick={() => setEditing((value) => !value)}>
+              {editing ? "收起" : mySleep ? "编辑" : "+ 记录"}
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -84,8 +103,12 @@ export function TodaySleepCard({
 
       {!readOnly && editing ? (
         <form id={formId} className="mt-4 grid gap-3 border-t border-[var(--life-border-soft)] pt-4" onSubmit={(event) => event.preventDefault()}>
-          <SleepEditor label="我" prefix="self" record={mySleep} />
-          <AppButton variant="primary" disabled={saving} onClick={() => void saveMine()}>{saving ? "保存中…" : "保存睡眠"}</AppButton>
+          <p className="text-xs leading-5 text-[var(--life-text-muted)]">按起床日归档：昨晚入睡，今天起床。</p>
+          <SleepEditor prefix="self" record={mySleep} />
+          <div className="grid grid-cols-2 gap-2">
+            {mySleep ? <AppButton variant="danger" disabled={saving} onClick={() => void removeMine()}>删除</AppButton> : <span />}
+            <AppButton variant="primary" disabled={saving} onClick={() => void saveMine()}>{saving ? "保存中…" : "保存睡眠"}</AppButton>
+          </div>
         </form>
       ) : null}
     </section>
@@ -112,13 +135,12 @@ function SleepBubble({ label, record }: { label: string; record?: SleepRecord })
   );
 }
 
-function SleepEditor({ label, prefix, record }: { label: string; prefix: string; record?: SleepRecord }) {
+function SleepEditor({ prefix, record }: { prefix: string; record?: SleepRecord }) {
   return (
-    <div className="grid grid-cols-[2.5rem_1fr_auto_1fr] items-center gap-2 rounded-[var(--life-radius-control)] bg-[var(--life-surface-soft)] p-3">
-      <strong className="text-xs text-[var(--life-text)]">{label}</strong>
-      <label className="grid gap-1 text-[10px] text-[var(--life-text-muted)]"><span>🌙 入睡</span><AppInput name={`${prefix}-sleep`} type="time" defaultValue={timeInputValue(record?.fellAsleepAt)} /></label>
+    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-[var(--life-radius-control)] bg-[var(--life-surface-soft)] p-3">
+      <label className="grid gap-1 text-[10px] text-[var(--life-text-muted)]"><span>🌙 昨晚入睡</span><AppInput name={`${prefix}-sleep`} type="time" defaultValue={timeInputValue(record?.fellAsleepAt)} /></label>
       <span className="pt-4 text-[var(--life-text-muted)]">→</span>
-      <label className="grid gap-1 text-[10px] text-[var(--life-text-muted)]"><span>☀️ 起床</span><AppInput name={`${prefix}-wake`} type="time" defaultValue={timeInputValue(record?.wokeAt)} /></label>
+      <label className="grid gap-1 text-[10px] text-[var(--life-text-muted)]"><span>☀️ 今天起床</span><AppInput name={`${prefix}-wake`} type="time" defaultValue={timeInputValue(record?.wokeAt)} /></label>
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { MoodIcon } from "@/components/ui/MoodIcon";
 import { useLifeIdentity } from "@/components/life/LifeIdentityContext";
-import { saveMood } from "@/lib/life/life-client";
+import { deleteMood, saveMood } from "@/lib/life/life-client";
 import type { LifeDayRecord, MoodKey } from "@/lib/life/life-service";
 import { localIsoDate, MOODS, moodVisual } from "./today-life-model";
 
@@ -25,7 +25,7 @@ export function TodayMoodCard({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const moodByRole = useMemo(() => {
-    const map = new Map(day.moods.map((item) => [item.partnerKey, item.moodKey] as const));
+    const map = new Map(day.moods.map((item) => [item.partnerKey, item] as const));
     return map;
   }, [day.moods]);
 
@@ -44,12 +44,28 @@ export function TodayMoodCard({
     }
   }
 
+  async function removeMine() {
+    const myRecord = mePartnerKey ? moodByRole.get(mePartnerKey) : undefined;
+    if (!mePartnerKey || !myRecord || readOnly || saving) return;
+    if (!window.confirm("确定删除这条心情记录吗？")) return;
+    setSaving(true);
+    try {
+      await deleteMood(myRecord.id, mePartnerKey);
+      setPickerOpen(false);
+      if (onChanged) await onChanged();
+    } catch (cause) {
+      onError?.(cause instanceof Error ? cause.message : "删除心情失败");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   if (!mePartnerKey || !taPartnerKey) {
     return <section className="life-surface life-section-card text-sm text-[var(--life-text-muted)]">正在确认当前账号…</section>;
   }
 
-  const myMood = moodByRole.get(mePartnerKey);
-  const taMood = moodByRole.get(taPartnerKey);
+  const myMood = moodByRole.get(mePartnerKey)?.moodKey;
+  const taMood = moodByRole.get(taPartnerKey)?.moodKey;
 
   return (
     <>
@@ -95,6 +111,11 @@ export function TodayMoodCard({
             <button type="button" disabled={saving} onClick={() => setPickerOpen(false)} className="life-mood-cancel mt-5 w-full rounded-full px-4 py-3 text-sm font-extrabold text-[var(--life-text-body)]">
               取消
             </button>
+            {myMood ? (
+              <button type="button" disabled={saving} onClick={() => void removeMine()} className="mt-2 w-full rounded-full px-4 py-2 text-xs font-extrabold text-[var(--life-danger)]">
+                删除这条心情
+              </button>
+            ) : null}
           </section>
         </div>
       ) : null}

@@ -137,7 +137,7 @@ export function LifeFoodPage({ initialDate }: { initialDate?: string }) {
   if (!partnerKey) return <AppPageShell title="饮食" subtitle="好好吃饭，也把喜欢的味道留下来。"><FoodInitialShell /></AppPageShell>;
 
   return <>
-    <AppPageShell title="饮食" subtitle="好好吃饭，也把喜欢的味道留下来。">
+    <AppPageShell title="饮食" subtitle="好好吃饭，也把喜欢的味道留下来。" actions={<Link href={`/calendar?view=food&month=${date.slice(0, 7)}`} className="life-back-link">饮食月历</Link>}>
       <div className="mb-4 grid gap-3"><AppRoleSwitch value={role} onChange={setRole} /><label className="life-surface flex items-center justify-between gap-3 px-3 py-2.5"><span className="text-xs font-bold text-[var(--life-text-body)]">查看日期</span><input type="date" value={date} onChange={(event) => setDate(event.target.value)} className="rounded-xl border border-[var(--life-border-soft)] bg-[var(--life-surface)] px-2.5 py-1.5 text-sm font-bold text-[var(--life-text)]" /></label></div>
       {error ? <div className="mb-3 rounded-[var(--life-radius-control)] bg-[color:color-mix(in_srgb,var(--life-coral)_16%,white)] px-3 py-2 text-sm text-[var(--life-danger)]">{error}</div> : null}
       <div className="grid gap-3">

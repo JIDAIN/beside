@@ -83,12 +83,28 @@ export async function saveMood(
   return result.mood;
 }
 
+export async function deleteMood(id: string, partnerKey: "cat" | "fish") {
+  const result = await fetchJson<{ ok: true; mood: MoodRecord }>("/api/life/mood", {
+    method: "DELETE",
+    body: JSON.stringify({ id, partnerKey }),
+  });
+  return result.mood;
+}
+
 export async function saveSleep(
   payload: Omit<SleepWritePayload, "source" | "idempotencyKey">,
 ) {
   const result = await fetchJson<{ ok: true; sleep: SleepRecord }>("/api/life/sleep", {
     method: "PUT",
     body: JSON.stringify(manualPayload(payload)),
+  });
+  return result.sleep;
+}
+
+export async function deleteSleep(id: string, partnerKey: "cat" | "fish") {
+  const result = await fetchJson<{ ok: true; sleep: SleepRecord }>("/api/life/sleep", {
+    method: "DELETE",
+    body: JSON.stringify({ id, partnerKey }),
   });
   return result.sleep;
 }
