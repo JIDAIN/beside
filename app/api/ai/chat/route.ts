@@ -23,7 +23,7 @@ function parseHistory(value: FormDataEntryValue | null) {
 
 export async function POST(request: Request) {
   const identity = resolveFixedLifeIdentity(request);
-  if (!identity) return jsonError("请先登录岛屿生活", 401, "AUTH_REQUIRED");
+  if (!identity) return jsonError("请先登录伴岛", 401, "AUTH_REQUIRED");
 
   let form: FormData;
   try {
