@@ -33,7 +33,7 @@ export function LifeCloudGate({ onConnected }: { onConnected: () => Promise<void
   }
 
   return (
-    <AppPageShell title="岛屿生活" subtitle="连接云端后，继续记录今天。">
+    <AppPageShell title="伴岛" subtitle="连接云端后，继续记录今天。">
       <section className="life-surface life-section-card mx-auto mt-8 max-w-md">
         <div className="mb-4 text-center">
           <div className="mx-auto mb-3 grid h-16 w-16 place-items-center rounded-full bg-[var(--life-mint)] text-3xl">🏝️</div>
