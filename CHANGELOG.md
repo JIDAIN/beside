@@ -6,6 +6,8 @@
 - 心情和睡眠补齐删除按钮、客户端调用、API 与 owner-only 权限校验；新增 service-only `delete_sleep_record` RPC，不允许代删 Ta 的个人记录。
 - 日历升级为心情 / 饮食 / 睡眠统一月度回顾。心情保持双人月历；饮食和睡眠按我 / Ta 单人查看，分别固定使用暖色与紫蓝色圆块，人物切换不改变颜色。
 - 饮食页和首页睡眠卡片增加对应月历快捷入口；日期格仍可进入该日详细记录。
+- Production deployment `dpl_A8twTjXXro2oY5jtwkgDPEQ3664m` READY；`/`、`/calendar`、饮食月历、睡眠月历与 `/food` 均为 HTTP 200，部署后最近 30 分钟无 runtime error。
+- 发布完成后已恢复 `vercel.json -> git.deploymentEnabled=false`；睡眠删除 migration 已在 Production 执行并确认仅 `service_role` 可调用。
 
 ## 2026-09-10 — 历史生活详情可编辑
 

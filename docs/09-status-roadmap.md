@@ -1,7 +1,7 @@
 # 当前状态与 Roadmap
 
 **状态日期：2026-09-10**  
-**当前结论：Meal V2 与历史生活详情编辑已经收尾并进入 Production。**
+**当前结论：统一月度回顾、睡眠起床日交互与个人记录删除已经收尾并进入 Production。**
 
 Harbor 当前 Project 指令模板：`docs/46-harbor-mcp-project-instructions.md`。
 
@@ -17,8 +17,8 @@ Island Life 主页面与双人生活记录              ✅ Production
 Meal CRUD / 营养 / 照片 / AI 草稿确认          ✅ Production
 Meal V2 补录 / 单图直记 / 饭前饭后生命周期     ✅ Production
 历史饮食 / 心情 / 睡眠 / 活动查看与编辑         ✅ Production
-睡眠按起床日归档 + 心情/睡眠删除                ⏳ 本轮待发布
-心情 / 饮食 / 睡眠统一月度回顾                  ⏳ 本轮待发布
+睡眠按起床日归档 + 心情/睡眠删除                ✅ Production
+心情 / 饮食 / 睡眠统一月度回顾                  ✅ Production
 Harbor Cat / Fish direct MCP + AI Access Core  ✅ Production
 Cat / Fish 服务端身份与写权限边界              ✅ Production
 Reminder Center V1 + Reminder Engine            ✅ Production
@@ -28,7 +28,7 @@ PushPlus 双身份投递链路                         ✅ 已验收
 小信箱 V2 draft / sent 数据模型与权限           ✅ Production
 小信箱三箱 UI / 信纸分页 / 横向明信片            ✅ Production
 mood delete Web/API/MCP                         ✅ Production
-sleep delete Web/API/RPC                        ⏳ 本轮待发布
+sleep delete Web/API/RPC                        ✅ Production
 activity / weight actor-aware 权限               ✅ Production
 Legacy Game 保留与生活域隔离                    ✅ Production
 ```
@@ -333,7 +333,7 @@ Cat -> Fish 明信片        reminder instance 已生成
 最近 30 分钟 runtime error  0
 ```
 
-最新 Production deployment 为 `dpl_PYMXPTaxy6vt4g1aU89FkZaftDbw`，构建 source commit `e2374880d601b9f1379f8e03bc1353dadc1e5e42`。发布后 `/`、`/calendar`、`/calendar/2026-09-09`、`/food?date=2026-09-09` 均返回 HTTP 200，最近 30 分钟 runtime error 为 0。后续文档提交不会触发新的 Production。
+最新 Production deployment 为 `dpl_A8twTjXXro2oY5jtwkgDPEQ3664m`，构建 source commit `39735d84e5ae88de03ecd688898970ae4df50738`（功能提交 `e2bf262dc23732b10ab68098e26ef9c8c0d701b1`）。发布后 `/`、`/calendar`、`/calendar?view=food&month=2026-09`、`/calendar?view=sleep&month=2026-09` 与 `/food` 均返回 HTTP 200，最近 30 分钟 runtime error 为 0。睡眠删除 migration 已在 Production 执行并确认仅 `service_role` 可调用；后续文档提交不会触发新的 Production。
 
 当前 `vercel.json`：
 
