@@ -128,14 +128,33 @@ describe("life seamless synchronization", () => {
     expect(chrome).toContain("router.prefetch(route)");
   });
 
-  it("registers an app-shell service worker without caching API responses", () => {
+  it("updates the service worker proactively and never caches API responses", () => {
     const register = source("components/life/LifeServiceWorker.tsx");
     const worker = source("public/life-sw.js");
     expect(register).toContain('navigator.serviceWorker.register("/life-sw.js"');
+    expect(register).toContain("await next.update()");
+    expect(register).toContain('window.addEventListener("focus", checkForUpdate)');
+    expect(register).toContain('window.addEventListener("online", checkForUpdate)');
+    expect(register).toContain('document.addEventListener("visibilitychange", handleVisibilityChange)');
     expect(worker).toContain('url.pathname.startsWith("/api/")');
-    expect(worker).toContain("NETWORK_TIMEOUT_MS = 2500");
-    expect(worker).toContain("/nest/medicine");
-    expect(worker).toContain("networkFirst(request)");
+    expect(worker).toContain('CACHE_NAME = "couple-better-life-shell-r9-v1"');
+    expect(worker).not.toContain("NETWORK_TIMEOUT_MS");
+    expect(worker).not.toContain("Promise.race");
+    expect(worker).not.toContain("CORE_ROUTES");
+    expect(worker).toContain('fetch(request, { cache: "no-store" })');
+    expect(worker).toContain('request.mode === "navigate"');
+    expect(worker).toContain('url.pathname.startsWith("/_next/static/")');
+  });
+
+  it("migrates old service-worker caches and refreshes controlled windows once on activation", () => {
+    const worker = source("public/life-sw.js");
+    expect(worker).toContain('const CACHE_PREFIX = "couple-better-life-shell-"');
+    expect(worker).toContain("obsoleteLifeCaches");
+    expect(worker).toContain("caches.delete(key)");
+    expect(worker).toContain("self.clients.claim()");
+    expect(worker).toContain('self.clients.matchAll({ type: "window", includeUncontrolled: true })');
+    expect(worker).toContain("await client.navigate(client.url)");
+    expect(worker).toContain("if (obsoleteLifeCaches.length > 0)");
   });
 
   it("does not insert visible background-refresh banners", () => {
