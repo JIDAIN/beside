@@ -18,8 +18,9 @@ describe("meal regression source contracts", () => {
   it("shows every same-slot fixed meal instead of hiding historical rows", async () => {
     const source = await readFile(foodPagePath, "utf8");
     expect(source).toContain("const extraRecords = records.slice(1)");
-    expect(source).toContain("extraRecords.map((meal, index)");
-    expect(source).toContain("均完整保留并显示");
+    expect(source).toContain("extraRecords.map((record, index)");
+    expect(source).toContain("记录 {index + 2}");
+    expect(source).toContain("key={record.id}");
   });
 
   it("applies explicit snack wording before partial-update hydration", async () => {
