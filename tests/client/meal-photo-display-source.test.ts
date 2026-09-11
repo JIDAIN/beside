@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 const root = process.cwd();
 const foodPage = readFileSync(join(root, "components/life/LifeFoodPage.tsx"), "utf8");
 const editor = readFileSync(join(root, "components/life/LifeMealEditorPage.tsx"), "utf8");
+const photoEditor = readFileSync(join(root, "components/life/MealPhotoEditorCard.tsx"), "utf8");
 const frame = readFileSync(join(root, "components/life/MealPhotoFrame.tsx"), "utf8");
 const photoRoute = readFileSync(join(root, "app/api/meals/[id]/photo/route.ts"), "utf8");
 const compression = readFileSync(join(root, "lib/server/image-compression.ts"), "utf8");
@@ -28,13 +29,17 @@ describe("meal photo orientation and framing", () => {
   });
 
   it("lets the meal editor rotate and resize photos non-destructively", () => {
-    expect(editor).toContain("rotatePhoto(-90)");
-    expect(editor).toContain("rotatePhoto(90)");
-    expect(editor).toContain('type="range"');
-    expect(editor).toContain('min="60"');
-    expect(editor).toContain('max="100"');
+    expect(editor).toContain("function rotatePhoto");
+    expect(editor).toContain("function resizePhoto");
+    expect(editor).toContain("onRotatePhoto={rotatePhoto}");
+    expect(editor).toContain("onResizePhoto={resizePhoto}");
+    expect(photoEditor).toContain("onRotatePhoto(-90)");
+    expect(photoEditor).toContain("onRotatePhoto(90)");
+    expect(photoEditor).toContain('type="range"');
+    expect(photoEditor).toContain('min="60"');
+    expect(photoEditor).toContain('max="100"');
     expect(editor).toContain("updateMealPhotoDisplay");
-    expect(editor).toContain("调整照片");
-    expect(editor).not.toContain("竖着显示也会完整保留照片内容");
+    expect(photoEditor).toContain("调整照片");
+    expect(photoEditor).not.toContain("竖着显示也会完整保留照片内容");
   });
 });
