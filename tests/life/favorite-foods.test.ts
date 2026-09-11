@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { parseFavoriteFoodWritePayload } from "@/lib/nutrition/favorite-food-service";
+import { parseFavoriteFoodWritePayload } from "../../lib/nutrition/favorite-food-service";
 
 function source(path: string) {
   return readFileSync(resolve(process.cwd(), path), "utf8");
