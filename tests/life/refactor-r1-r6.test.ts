@@ -41,10 +41,10 @@ describe("R1-R6 refactor boundaries", () => {
     expect(source("app/api/meals/[id]/photo/route.ts")).toContain("authorizePhotoWrite");
   });
 
-  it("keeps empty mood dates visually empty and today sun-marked", () => {
+  it("keeps unrecorded mood slots visually empty and today sun-marked", () => {
     const calendar = source("components/life/LifeCalendarPage.tsx");
     expect(calendar).toContain("life-today-sun");
-    expect(calendar).toContain("if (!visual) return null");
+    expect(calendar).toContain("life-calendar-mood is-empty");
     expect(calendar).toContain("life-month-bundle:");
   });
 
