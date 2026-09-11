@@ -15,12 +15,29 @@ describe("historical life record editing", () => {
     expect(page).toContain("syncLifeDayCaches(date, next)");
   });
 
-  it("keeps the selected historical date through meal view and editing", () => {
+  it("uses the same three Today cards on historical detail and leaves food on its independent page", () => {
     const day = source("components/life/LifeCalendarDayPage.tsx");
+    const today = source("components/life/TodayLifePage.tsx");
+    const calendar = source("components/life/LifeCalendarPage.tsx");
     const food = source("components/life/LifeFoodPage.tsx");
     const editor = source("components/life/LifeMealEditorPage.tsx");
-    expect(day).toContain("/food?date=${encodeURIComponent(date)}");
-    expect(day).toContain("查看 / 编辑");
+
+    for (const card of ["TodayMoodCard", "TodaySleepCard", "TodayActivityCard"]) {
+      expect(day).toContain(`<${card}`);
+      expect(today).toContain(`<${card}`);
+    }
+
+    expect(day).not.toContain("DailyNutritionSummary");
+    expect(day).not.toContain("fetchMeals");
+    expect(day).not.toContain("preloadMealPhotos");
+    expect(day).not.toContain("life-calendar-food-card");
+    expect(day).not.toContain("life-calendar-food-person");
+    expect(day).not.toContain("🍚 饮食");
+    expect(day).not.toContain('/food?date=');
+    expect(calendar).not.toContain("fetchMeals");
+    expect(calendar).not.toContain("preloadMealPhotos");
+    expect(calendar).toContain("mealCaloriesForPartner(day, selectedPartner)");
+
     expect(food).toContain("initialDate || localIsoDate()");
     expect(food).toContain("mealHref(date, partnerKey");
     expect(editor).toContain("/food?date=${encodeURIComponent(saved.mealDate)}");
