@@ -1,6 +1,6 @@
 # 数据模型与 Source of Truth
 
-状态：2026-09-07。
+状态：2026-09-11。
 
 ## 1. 核心原则
 
@@ -16,20 +16,23 @@ Supabase 是正式数据 Source of Truth，但同一个 Supabase project 内存�
 当前产品关系：
 
 ```text
-Couple Better Game（当前主程序 / Island Life）
+伴岛 / Beside（当前主程序）
 └─ 游戏
    └─ 变瘦变美大作战（Legacy Game 子项目）
 ```
 
-旧版“变瘦变美大作战”现已成为新程序「游戏」中的独立子项目。它保留自己的历史和规则，但不属于当前生活记录字段。
+`couple-better-game` 仅保留为历史名称、数据库兼容 slug 或生产兼容地址，不再是当前正式项目名称。
+
+旧版“变瘦变美大作战”现已成为伴岛「游戏」中的独立子项目。它保留自己的历史和规则，但不属于当前生活记录字段。
 
 ## 2. 三个数据域
 
-### Island Life：当前主程序生活事实
+### Island Life：伴岛当前生活事实
 
 ```text
 meals
 meal_items
+favorite_food_templates
 mood_entries
 sleep_records
 activity_entries
@@ -131,6 +134,8 @@ snack_period morning / afternoon / night（仅 snack，可为空）
 status       estimated / confirmed
 ```
 
+用户界面统一展示六个餐次：早餐 / 上午加餐 / 午餐 / 下午加餐 / 晚餐 / 晚上加餐。三个加餐只在前端映射为 `meal_type=snack + snack_period`，没有改变 canonical 数据结构。
+
 历史 `other` 会迁移为 `snack`，历史 `evening / late_night` 合并为 `night`，历史 `draft` 迁移为 `estimated`。
 
 当前正式 meal 只有一个 `photo_path`；`photo_rotation_degrees` 与 `photo_scale` 是显示元数据。
@@ -160,7 +165,43 @@ AI 记录时应尽量补全实际摄入量、重量和宏量营养，但数据�
 
 正式 meal 默认应保存可识别的食物详细 items，并同时保存整餐汇总；总热量不能代替详细项。
 
-## 6. 单图持久化 vs 多图分析
+## 6. `favorite_food_templates`
+
+常吃食物是按用户隔离的复用模板，不是某一天的餐食记录。
+
+```text
+id
+couple_space_id
+partner_key
+name
+portion_description nullable
+calories_kcal nullable
+carbs_g nullable
+protein_g nullable
+fat_g nullable
+created_at
+updated_at
+```
+
+数据原则：
+
+```text
+模板
+→ 复制字段
+→ 独立 meal_item
+```
+
+`meal_items` 不保存 template id，也没有指向 `favorite_food_templates` 的外键。因此：
+
+- 修改本次餐食 item 不会修改模板；
+- 修改或删除模板不会修改历史餐食；
+- 模板加入餐食后仍按普通 `meal_items` 保存；
+- Fish / Cat 通过应用层固定身份授权只能管理自己的模板；
+- 数据库启用 RLS，浏览器角色没有直接表权限，服务端 service role 通过 API 访问。
+
+模板已纳入 Life backup/export/restore payload，与其他 Life 用户数据一起备份恢复。
+
+## 7. 单图持久化 vs 多图分析
 
 聊天层可以同时分析餐前 / 餐后多图，但当前持久化模型为：
 
@@ -170,7 +211,7 @@ meal -> one photo_path
 
 多图可共同参与推断；默认保存餐前图；当前没有 `before_photo_path / after_photo_path`。
 
-## 7. `mood_entries`
+## 8. `mood_entries`
 
 一天每个角色一条当前心情。唯一键：
 
@@ -178,7 +219,7 @@ meal -> one photo_path
 couple_space_id + partner_key + mood_date
 ```
 
-## 8. `sleep_records`
+## 9. `sleep_records`
 
 ```text
 partner_key
@@ -196,7 +237,7 @@ updated_at
 
 睡眠删除由 service-only `delete_sleep_record` RPC 完成，并同时清理对应 write receipt；RPC 按 `couple_space_id + partner_key + id` 定位，不能跨 owner 删除。
 
-## 9. `activity_entries`
+## 10. `activity_entries`
 
 ```text
 activity_date
@@ -213,7 +254,7 @@ deleted_at
 
 活动是一对多事件流，删除使用 soft delete。
 
-## 10. `weight_measurements`
+## 11. `weight_measurements`
 
 ```text
 partner_key
@@ -229,7 +270,7 @@ idempotency_key nullable
 
 AI 记体重写这里，不自动覆盖旧游戏体重快照。
 
-## 11. Reminder / Notification 系统模型
+## 12. Reminder / Notification 系统模型
 
 提醒系统属于 Shared / System，不属于具体生活事实表。
 
@@ -326,13 +367,13 @@ snooze 后会清空 instance `notified_at`，新的 effective due time 会形成
 
 完整提醒架构见 [`14-wechat-reminders.md`](14-wechat-reminders.md)。
 
-## 12. 外部写入与幂等
+## 13. 外部写入与幂等
 
 跨域 AI / import 写入使用稳定幂等边界。`record_write_receipts` 可用于部分外部写入回执语义。
 
 这些控制记录不是生活事实本身。
 
-## 13. 主要 Meal RPC
+## 14. 主要 Meal RPC
 
 ```text
 list_meals
@@ -345,9 +386,7 @@ replace_meal_photo_state
 update_meal_photo_display
 ```
 
-AI Access Core 在这些 canonical RPC 之上提供 `append_meal_item` 与
-`confirm_estimated_meal` 语义：自动定位唯一目标 Meal、复用 update transaction，
-并在补录和饭后确认时保留原 `eaten_at`。
+AI Access Core 在这些 canonical RPC 之上提供 `append_meal_item` 与 `confirm_estimated_meal` 语义：自动定位唯一目标 Meal、复用 update transaction，并在补录和饭后确认时保留原 `eaten_at`。
 
 Meal 数量约束：
 
@@ -355,7 +394,7 @@ Meal 数量约束：
 - snack 不进入该唯一索引，同一 morning / afternoon / night 可有多条独立事件；
 - 软删除后的主餐槽可以重新创建；每条 snack 独立持有自己的 `photo_path` 与 items。
 
-## 14. Source / AI 写入
+## 15. Source / AI 写入
 
 统一来源词汇：
 
@@ -369,11 +408,13 @@ AI 入口不获得任意 SQL。AI Access Core 负责 identity / permission / nor
 
 饮食“先草稿、后确认”属于 AI 对话层规则，不对应数据库 draft 表。
 
+常吃食物只是人工 UI 的复用模板；AI / MCP 继续写 canonical `meals + meal_items`，不依赖模板，也不会修改模板。
+
 `legacy_home` 是旧版游戏兼容入口，不属于普通 Island Life resource。
 
-## 15. Fact vs Derived
+## 16. Fact vs Derived
 
-Island Life 事实包括 meal、weight、mood、sleep、activity、medicine、mailbox。
+Island Life 事实包括 meal、meal item、favorite food template、weight、mood、sleep、activity、medicine、mailbox。
 
 Legacy Game 事实包括 daily record、exchange、wallet ledger；它们只在游戏子项目内解释。
 
@@ -381,7 +422,7 @@ Reminder rule / instance / notification delivery 属于系统编排事实，不�
 
 派生 / 快照包括 wallet current balance、heatmap、nutrition summary、sleep duration、月度心情展示与 UI stale cache。
 
-## 16. Migration 规则
+## 17. Migration 规则
 
 - Production schema / function / view / grant / RLS 变化必须新增 migration；
 - 已执行 migration 不回改；
