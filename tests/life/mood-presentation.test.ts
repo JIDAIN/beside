@@ -115,4 +115,22 @@ describe("mood presentation contract", () => {
     expect(icons.match(/width=\{256\} height=\{256\}/g)).toHaveLength(2);
     expect(css).toContain(".life-person-state-orb img, .life-mood-orb img, .life-calendar-mood img { width: 100%; height: 100%; }");
   });
+
+  it("keeps excited mood artwork transparent on the isolated left edge", async () => {
+    const path = resolve(process.cwd(), "public/illustrations/life/mood-excited.png");
+    const metadata = await sharp(path).metadata();
+
+    expect(metadata.format).toBe("png");
+    expect(metadata.hasAlpha).toBe(true);
+    expect([metadata.width, metadata.height]).toEqual([256, 256]);
+
+    const { data, info } = await sharp(path).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    let leftEdgeVisiblePixels = 0;
+    for (let y = 0; y < info.height; y += 1) {
+      for (let x = 0; x < 40; x += 1) {
+        if (data[(y * info.width + x) * info.channels + 3] !== 0) leftEdgeVisiblePixels += 1;
+      }
+    }
+    expect(leftEdgeVisiblePixels).toBe(0);
+  });
 });
