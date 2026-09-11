@@ -56,6 +56,15 @@ describe("relative me / Ta identity", () => {
     expect(mailbox).toContain('item.status === "sent" && item.recipientKey === mePartnerKey');
   });
 
+  it("renders mood calendar as two identity-owned slots even when one is empty", () => {
+    const calendar = source("components/life/LifeCalendarPage.tsx");
+    expect(calendar).toContain("moodCalendarSlots(day?.day.moods ?? [], mePartnerKey, taPartnerKey)");
+    expect(calendar).toContain('<MoodStamp moodKey={slots.currentUserMood?.moodKey} label="我" />');
+    expect(calendar).toContain('<MoodStamp moodKey={slots.partnerMood?.moodKey} label="Ta" offset />');
+    expect(calendar).toContain("life-calendar-mood is-empty");
+    expect(calendar).not.toContain("orderedMoods.map");
+  });
+
   it("uses relative identity on key life pages", () => {
     for (const path of [
       "components/life/today/TodayMoodCard.tsx",
