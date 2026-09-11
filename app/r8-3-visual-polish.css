@@ -52,7 +52,7 @@
   box-shadow: none;
 }
 
-/* Daily nutrition summary shared by Food and Calendar Day. */
+/* Daily nutrition summary used by Food. */
 .life-daily-nutrition-summary {
   border: 1px solid var(--life-border-soft);
   border-radius: 18px;
@@ -101,8 +101,6 @@
 .life-daily-nutrition-item > span:nth-child(2) { overflow: hidden; color: var(--life-text-muted); font-size: .55rem; font-weight: 730; text-overflow: ellipsis; white-space: nowrap; }
 .life-daily-nutrition-item strong { grid-column: 1 / -1; color: var(--life-text); font-size: .66rem; font-weight: 850; font-variant-numeric: tabular-nums; }
 .life-daily-nutrition-item small { grid-column: 1 / -1; min-height: .7rem; color: var(--life-text-muted); font-size: .5rem; }
-.life-calendar-food-person { display: grid; gap: .5rem; }
-.life-calendar-food-list { border-radius: 14px; background: var(--life-surface-soft); padding: .72rem; }
 
 /* Profile: nickname first, system explanation gone. */
 .life-account-hero-v3 {
