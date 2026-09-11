@@ -23,12 +23,24 @@ describe("meal editor reliability", () => {
     expect(editor).not.toContain("new Date().toISOString().slice(0, 10)");
   });
 
-  it("supports category correction, explicit labels and unsaved-change protection", () => {
-    expect(editor).toContain("<AppSelect value={mealType}");
-    expect(editor).toContain("加餐时段");
-    expect(editor).toContain("实际份量");
-    expect(editor).toContain("重量与三大营养素");
+  it("uses one six-slot meal selector and protects unsaved changes", () => {
+    for (const label of ["早餐", "上午加餐", "午餐", "下午加餐", "晚餐", "晚上加餐"]) {
+      expect(editor).toContain(`label: "${label}"`);
+    }
+    expect(editor).toContain("MEAL_SLOT_OPTIONS");
+    expect(editor).toContain("<AppSelect value={currentSlot}");
+    expect(editor).not.toContain("加餐时段<AppSelect");
     expect(editor).toContain("beforeunload");
     expect(editor).toContain("这餐还有未保存的修改");
+  });
+
+  it("keeps food editing in compact sheets instead of expanded page forms", () => {
+    expect(editor).toContain("添加食物");
+    expect(editor).toContain("新的食物");
+    expect(editor).toContain("常吃食物");
+    expect(editor).toContain("新增食物");
+    expect(editor).toContain("编辑食物");
+    expect(editor).toContain("三大营养素");
+    expect(editor).not.toContain("life-food-item-editor");
   });
 });
