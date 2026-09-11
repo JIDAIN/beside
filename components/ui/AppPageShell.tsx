@@ -1,19 +1,27 @@
 import type { ReactNode } from "react";
 
+type AppPageShellVariant = "default" | "meal-editor";
+
 export function AppPageShell({
   children,
   title,
   subtitle,
   actions,
+  variant = "default",
 }: {
   children: ReactNode;
   title?: ReactNode;
   subtitle?: ReactNode;
   actions?: ReactNode;
+  variant?: AppPageShellVariant;
 }) {
+  const pageClassName = variant === "meal-editor"
+    ? "life-page-shell life-page-shell--meal-editor"
+    : "life-page-shell";
+
   return (
     <main className="island-life-v2 min-h-screen">
-      <div className="life-page-shell">
+      <div className={pageClassName}>
         {(title || subtitle || actions) && (
           <header className="life-page-header flex items-start justify-between gap-3">
             <div className="min-w-0">
