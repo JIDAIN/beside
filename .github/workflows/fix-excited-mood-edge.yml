@@ -31,4 +31,6 @@ jobs:
           git add public/illustrations/life/mood-excited.png .github/workflows/fix-excited-mood-edge.yml scripts/fix-excited-mood-edge.mjs
           git diff --cached --quiet && { echo "No asset change produced"; exit 1; }
           git commit -m "fix(life): finish excited mood asset cleanup"
+          git fetch origin main
+          git rebase origin/main
           git push origin HEAD:main
