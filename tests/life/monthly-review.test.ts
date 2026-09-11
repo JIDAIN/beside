@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { LifeMonthBundleDay } from "../../lib/life/month-bundle";
 import type { LifePartnerKey, MoodRecord } from "../../lib/life/life-service";
-import { buildWakeDateSleepTimestamps, mealCaloriesForPartner, metricBubbleRem, orderMoodsForViewer, parseCalendarMonth, parseCalendarView, sleepHoursForPartner } from "../../lib/life/monthly-review";
+import { buildWakeDateSleepTimestamps, mealCaloriesForPartner, metricBubbleRem, moodCalendarSlots, parseCalendarMonth, parseCalendarView, sleepHoursForPartner } from "../../lib/life/monthly-review";
 
 function bundleDay(): LifeMonthBundleDay {
   return {
@@ -24,7 +24,7 @@ function bundleDay(): LifeMonthBundleDay {
   } as LifeMonthBundleDay;
 }
 
-function mood(partnerKey: LifePartnerKey, createdAt: string, updatedAt = createdAt): MoodRecord {
+function mood(partnerKey: LifePartnerKey, createdAt = "2026-09-10T08:00:00.000Z", updatedAt = createdAt): MoodRecord {
   return {
     id: `${partnerKey}-${createdAt}`,
     partnerKey,
@@ -36,6 +36,11 @@ function mood(partnerKey: LifePartnerKey, createdAt: string, updatedAt = created
   };
 }
 
+function slotKeys(moods: MoodRecord[], me: LifePartnerKey, partner: LifePartnerKey) {
+  const slots = moodCalendarSlots(moods, me, partner);
+  return [slots.currentUserMood?.partnerKey ?? null, slots.partnerMood?.partnerKey ?? null];
+}
+
 describe("monthly life review", () => {
   it("keeps the three supported views and falls back to mood", () => {
     expect(parseCalendarView("food")).toBe("food");
@@ -45,39 +50,44 @@ describe("monthly life review", () => {
     expect(parseCalendarMonth("2026-13", "2026-01")).toBe("2026-01");
   });
 
-  it("always orders mood records as current viewer then partner", () => {
-    const fishFirst = [
-      mood("fish", "2026-09-10T08:00:00.000Z"),
-      mood("cat", "2026-09-10T09:00:00.000Z"),
-    ];
-    const catFirst = [
-      mood("cat", "2026-09-10T08:00:00.000Z"),
-      mood("fish", "2026-09-10T09:00:00.000Z"),
-    ];
-
-    expect(orderMoodsForViewer(fishFirst, "fish").map((item) => item.partnerKey)).toEqual(["fish", "cat"]);
-    expect(orderMoodsForViewer(catFirst, "fish").map((item) => item.partnerKey)).toEqual(["fish", "cat"]);
-    expect(orderMoodsForViewer(fishFirst, "cat").map((item) => item.partnerKey)).toEqual(["cat", "fish"]);
-    expect(orderMoodsForViewer(catFirst, "cat").map((item) => item.partnerKey)).toEqual(["cat", "fish"]);
+  it("keeps Fish in slot 1 and Cat in slot 2 for all Fish-login record combinations", () => {
+    const fish = mood("fish");
+    const cat = mood("cat");
+    expect(slotKeys([fish, cat], "fish", "cat")).toEqual(["fish", "cat"]);
+    expect(slotKeys([fish], "fish", "cat")).toEqual(["fish", null]);
+    expect(slotKeys([cat], "fish", "cat")).toEqual([null, "cat"]);
+    expect(slotKeys([], "fish", "cat")).toEqual([null, null]);
   });
 
-  it("keeps single-person mood days unchanged", () => {
-    const fishOnly = [mood("fish", "2026-09-10T08:00:00.000Z")];
-    const catOnly = [mood("cat", "2026-09-10T08:00:00.000Z")];
-
-    expect(orderMoodsForViewer(fishOnly, "cat")).toEqual(fishOnly);
-    expect(orderMoodsForViewer(catOnly, "fish")).toEqual(catOnly);
+  it("keeps Cat in slot 1 and Fish in slot 2 for all Cat-login record combinations", () => {
+    const fish = mood("fish");
+    const cat = mood("cat");
+    expect(slotKeys([fish, cat], "cat", "fish")).toEqual(["cat", "fish"]);
+    expect(slotKeys([cat], "cat", "fish")).toEqual(["cat", null]);
+    expect(slotKeys([fish], "cat", "fish")).toEqual([null, "fish"]);
+    expect(slotKeys([], "cat", "fish")).toEqual([null, null]);
   });
 
-  it("ignores created and updated timestamps when ordering moods", () => {
-    const records = [
-      mood("cat", "2026-09-10T10:00:00.000Z", "2026-09-10T12:00:00.000Z"),
-      mood("fish", "2026-09-10T07:00:00.000Z", "2026-09-10T13:00:00.000Z"),
-    ];
+  it("ignores API array order and created/updated timestamps when assigning fixed slots", () => {
+    const fish = mood("fish", "2026-09-10T11:00:00.000Z", "2026-09-10T13:00:00.000Z");
+    const cat = mood("cat", "2026-09-10T06:00:00.000Z", "2026-09-10T15:00:00.000Z");
+    expect(slotKeys([cat, fish], "fish", "cat")).toEqual(["fish", "cat"]);
+    expect(slotKeys([fish, cat], "fish", "cat")).toEqual(["fish", "cat"]);
+    expect(slotKeys([fish, cat], "cat", "fish")).toEqual(["cat", "fish"]);
+    expect(slotKeys([cat, fish], "cat", "fish")).toEqual(["cat", "fish"]);
+  });
 
-    expect(orderMoodsForViewer(records, "fish").map((item) => item.partnerKey)).toEqual(["fish", "cat"]);
-    expect(orderMoodsForViewer([...records].reverse(), "fish").map((item) => item.partnerKey)).toEqual(["fish", "cat"]);
-    expect(orderMoodsForViewer(records, "cat").map((item) => item.partnerKey)).toEqual(["cat", "fish"]);
+  it("keeps slot identity stable across fresh arrays and mood edits", () => {
+    const initial = [mood("cat"), mood("fish")];
+    const refreshed = initial.map((item) => ({ ...item }));
+    const edited = refreshed.map((item) => item.partnerKey === "fish"
+      ? { ...item, moodKey: "excited" as const, updatedAt: "2026-09-10T20:00:00.000Z" }
+      : item);
+
+    expect(slotKeys(initial, "fish", "cat")).toEqual(["fish", "cat"]);
+    expect(slotKeys(refreshed, "fish", "cat")).toEqual(["fish", "cat"]);
+    expect(slotKeys(edited, "fish", "cat")).toEqual(["fish", "cat"]);
+    expect(moodCalendarSlots(edited, "fish", "cat").currentUserMood?.moodKey).toBe("excited");
   });
 
   it("aggregates only the selected person's active meals", () => {
