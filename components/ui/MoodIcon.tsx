@@ -12,6 +12,12 @@ const MOOD_ASSETS: Record<MoodKey, string> = {
   happy: "/illustrations/life/mood-happy.png",
 };
 
+const UNRECORDED_MOOD_ASSET = "/illustrations/life/mood-unrecorded.png";
+
 export function MoodIcon({ moodKey, label, className = "" }: { moodKey: MoodKey; label: string; className?: string }) {
   return <Image unoptimized loading="eager" src={MOOD_ASSETS[moodKey]} alt={label} width={256} height={256} className={`select-none object-contain ${className}`.trim()} draggable={false} />;
+}
+
+export function UnrecordedMoodIcon({ label = "未记录", className = "" }: { label?: string; className?: string }) {
+  return <Image unoptimized loading="eager" src={UNRECORDED_MOOD_ASSET} alt={label} width={256} height={256} className={`select-none object-contain ${className}`.trim()} draggable={false} />;
 }
