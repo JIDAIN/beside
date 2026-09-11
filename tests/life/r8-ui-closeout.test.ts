@@ -62,7 +62,7 @@ describe("R8.3 visual polish and interaction closeout", () => {
     expect(activity).not.toContain("默认使用小叶子");
   });
 
-  it("adds a reusable daily nutrition summary to Food and historical Calendar Day", () => {
+  it("keeps the reusable daily nutrition summary on Food without duplicating it in historical Calendar Day", () => {
     const summary = source("components/life/DailyNutritionSummary.tsx");
     const food = source("components/life/LifeFoodPage.tsx");
     const calendar = source("components/life/LifeCalendarDayPage.tsx");
@@ -71,7 +71,8 @@ describe("R8.3 visual polish and interaction closeout", () => {
     expect(summary).toContain("protein * 4");
     expect(summary).toContain("fat * 9");
     expect(food).toContain("<DailyNutritionSummary meals={meals}");
-    expect(calendar).toContain("<DailyNutritionSummary meals={meals} label={person.label}");
+    expect(calendar).not.toContain("DailyNutritionSummary");
+    expect(calendar).not.toContain("life-calendar-food-card");
   });
 
   it("uses pencil icons for existing meal editing and keeps add actions textual", () => {
