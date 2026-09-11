@@ -1,31 +1,32 @@
-# Island Life / Legacy Game 数据边界
+# 伴岛 / Legacy Game 数据边界
 
-状态：2026-09-07。
+状态：2026-09-11。
 
 ## 1. 产品关系
 
-当前 `couple-better-game` 已经不是旧版“变瘦变美”程序本身。
+当前正式产品是 **伴岛 / Beside**。`couple-better-game` 只保留为历史名称或生产兼容标识，不再代表当前正式产品名称。
 
 现在的产品关系是：
 
 ```text
-Couple Better Game（当前主程序 / Island Life）
+伴岛 / Beside（当前主程序）
 ├─ 今日、饮食、日历、小窝等生活模块
 └─ 游戏
    └─ 变瘦变美大作战（Legacy Game）
 ```
 
-也就是说：**旧版“变瘦变美大作战”已经被保留下来，并收纳为当前新程序「游戏」中的一个子项目。**
+也就是说：**旧版“变瘦变美大作战”已经被保留下来，并收纳为伴岛「游戏」中的一个子项目。**
 
 它仍然可以继续运行和保留历史，但不再代表整个应用，也不属于当前生活记录的数据域。
 
 ## 2. 三个数据域
 
-### A. Island Life：当前主程序生活数据
+### A. Island Life：伴岛当前生活数据
 
 ```text
 meals
 meal_items
+favorite_food_templates
 mood_entries
 sleep_records
 activity_entries
@@ -34,7 +35,7 @@ medicine_items
 mailbox_letters
 ```
 
-这些表承载当前生活系统的事实数据。
+这些表承载当前生活系统的事实数据。`favorite_food_templates` 是按 Cat / Fish 隔离的常吃食物模板；模板加入餐食时只复制字段到普通 `meal_items`，两者没有持续引用关系，因此以后编辑模板不会改写历史餐食。
 
 ### B. Legacy Game：游戏子项目数据
 
@@ -49,7 +50,7 @@ wallet_ledger
 
 这些字段只属于「游戏 → 变瘦变美大作战」。
 
-其中金币、宝石、钱包、兑换记录、旧版每日打卡都只是游戏资产和游戏历史，不属于 Island Life 的生活字段。
+其中金币、宝石、钱包、兑换记录、旧版每日打卡都只是游戏资产和游戏历史，不属于伴岛生活字段。
 
 ### C. Shared / System：共享基础设施
 
@@ -124,9 +125,13 @@ Legacy Game 历史
 
 AI 不得因为用户说“清生活数据”“清测试数据”而自动把 `legacy_home` 或 Legacy Game tables 纳入操作。
 
+常吃食物只增加了 UI / API 的模板复用能力；现有 AI / MCP 的餐食创建、补录、确认、图片分析仍写 canonical `meals + meal_items`，不依赖模板，也不会因模板变化改写既有餐食。
+
 ## 6. Import / Export / Backup
 
 Life export、Life import、Life backup、Life restore 默认只处理当前生活域和明确的共享配置，不应携带 Legacy Game payload。
+
+`favorite_food_templates` 已纳入 Life user payload、快照和 restore；恢复时与其他 Life 用户数据一起按快照恢复，但不会通过模板反向改写 `meal_items`。
 
 Legacy Game 的导入、覆盖、备份如需执行，必须走明确的游戏流程。
 
@@ -134,7 +139,7 @@ Legacy Game 的导入、覆盖、备份如需执行，必须走明确的游戏�
 
 ## 7. 工程维护规则
 
-- 新增 Life 表时，同时更新 `ISLAND_LIFE_TABLES` 和本文件；
+- 新增 Life 表时，同时更新 `ISLAND_LIFE_TABLES`、备份/恢复 payload 和本文件；
 - 新增 Legacy Game 表时，同时更新 `LEGACY_GAME_TABLES` 和本文件；
 - 旧游戏未来即使新增小游戏，也不能默认并入 Life cleanup；
 - 不因为两套数据位于同一个 Supabase project，就把它们视为同一业务域；
@@ -143,4 +148,4 @@ Legacy Game 的导入、覆盖、备份如需执行，必须走明确的游戏�
 
 ## 8. 一句话原则
 
-**当前主程序是 Island Life；旧版“变瘦变美大作战”是新程序「游戏」里的独立子项目。生活数据操作默认绝不能碰旧游戏数据。**
+**当前主程序是伴岛 / Beside；旧版“变瘦变美大作战”是伴岛「游戏」里的独立子项目。生活数据操作默认绝不能碰旧游戏数据。**
