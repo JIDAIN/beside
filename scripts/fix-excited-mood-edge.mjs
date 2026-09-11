@@ -13,12 +13,13 @@ if (metadata.format !== "png" || metadata.width !== 256 || metadata.height !== 2
 
 const { data, info } = await sharp(assetPath).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
 const { width, height, channels } = info;
+const original = Buffer.from(data);
 const visited = new Uint8Array(width * height);
 const components = [];
 const neighbors = [-1, 0, 1];
 
 function alphaAt(index) {
-  return data[index * channels + 3];
+  return original[index * channels + 3];
 }
 
 for (let y = 0; y < height; y += 1) {
@@ -71,16 +72,17 @@ console.log(JSON.stringify(summary, null, 2));
 
 const candidates = components.filter((component) => {
   const touchesLeftCanvasEdge = component.minX === 0 && component.count <= 5000;
-  const narrowLeftResidue = component.minX <= 24
+  const narrowLeftResidue = component.minX <= 40
     && component.width <= 8
     && component.height >= 20
     && component.height / component.width >= 4
     && component.count <= 2000;
-  return touchesLeftCanvasEdge || narrowLeftResidue;
+  const isolatedSpeck = component.count <= 2 && component.maxX < 54;
+  return touchesLeftCanvasEdge || narrowLeftResidue || isolatedSpeck;
 });
 
 if (candidates.length === 0) {
-  throw new Error("No isolated left-edge vertical residue was detected; refusing to alter the artwork automatically.");
+  throw new Error("No isolated left-edge residue was detected; refusing to alter the artwork automatically.");
 }
 
 const removed = new Set();
@@ -114,7 +116,7 @@ for (let index = 0; index < width * height; index += 1) {
     continue;
   }
   for (let channel = 0; channel < channels; channel += 1) {
-    if (repaired[offset + channel] !== data[offset + channel]) {
+    if (repaired[offset + channel] !== original[offset + channel]) {
       unexpectedDiffs += 1;
       break;
     }
