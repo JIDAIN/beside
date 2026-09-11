@@ -132,5 +132,6 @@ describe("mood presentation contract", () => {
       }
     }
     expect(leftEdgeVisiblePixels).toBe(0);
+    expect(data[(146 * info.width + 53) * info.channels + 3]).toBe(0);
   });
 });
