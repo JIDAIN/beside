@@ -14,6 +14,7 @@ import "./r8-3-visual-polish.css";
 import "./r8-3-hotfix.css";
 import "./mailbox-visual-closeout.css";
 import "./food-compact.css";
+import "./food-editor-closeout.css";
 
 export const metadata: Metadata = {
   applicationName: "伴岛",
