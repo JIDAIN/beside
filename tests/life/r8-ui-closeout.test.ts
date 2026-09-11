@@ -86,8 +86,13 @@ describe("R8.3 visual polish and interaction closeout", () => {
 
   it("keeps meal photo/macros readable in separate compact mobile sections", () => {
     const editor = source("components/life/LifeMealEditorPage.tsx");
+    const photo = source("components/life/MealPhotoEditorCard.tsx");
     expect(editor).not.toContain("grid-cols-[minmax(0,0.95fr)_minmax(0,1.25fr)]");
-    expect(editor).toContain("＋ 上传照片");
+    expect(editor).toContain("<MealPhotoEditorCard");
+    expect(photo).toContain("上传照片");
+    expect(photo).toContain("更换照片");
+    expect(photo).toContain("调整照片");
+    expect(photo).toContain("life-meal-photo-row");
     expect(editor).toContain("nutritionPreview.proteinG.value");
     expect(editor).toContain("nutritionPreview.fatG.value");
     expect(editor).toContain("nutritionPreview.carbsG.value");
