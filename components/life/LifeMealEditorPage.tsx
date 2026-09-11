@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { MealPhotoFrame } from "@/components/life/MealPhotoFrame";
+import { MealPhotoEditorCard } from "@/components/life/MealPhotoEditorCard";
 import { useLifeIdentity } from "@/components/life/LifeIdentityContext";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
@@ -558,36 +558,39 @@ export function LifeMealEditorPage() {
   if (loading) return <AppPageShell title="编辑饮食"><section className="life-surface life-section-card min-h-40" aria-label="正在读取餐食" /></AppPageShell>;
 
   return <>
-    <AppPageShell title={meal ? `编辑${title}` : `添加${title}`}>
-      <div className="grid gap-3 pb-3">
-        <button type="button" onClick={() => setMetaOpen(true)} className="life-surface flex min-h-12 items-center justify-between gap-3 rounded-[var(--life-radius-card)] px-4 py-3 text-left">
+    <AppPageShell variant="meal-editor" title={meal ? `编辑${title}` : `添加${title}`}>
+      <div className="life-meal-editor grid gap-3 pb-3">
+        <button type="button" onClick={() => setMetaOpen(true)} className="life-meal-editor-meta life-surface flex min-h-12 items-center justify-between gap-3 rounded-[var(--life-radius-card)] px-4 py-3 text-left">
           <span className="min-w-0 truncate text-sm font-extrabold text-[var(--life-text)]">{compactDate(date)} · {time || "--:--"}</span>
           <span className="shrink-0 text-sm font-extrabold text-[var(--life-teal-strong)]">{title} ›</span>
         </button>
 
         {error ? <div ref={errorRef} role="alert" aria-live="assertive" className="rounded-[var(--life-radius-control)] bg-[color:color-mix(in_srgb,var(--life-coral)_16%,white)] px-3 py-2.5 text-sm font-bold text-[var(--life-danger)]">{error}</div> : null}
 
-        <section className="life-surface life-section-card">
-          <div className="mb-2.5 flex items-center justify-between gap-3"><p className="text-sm font-extrabold text-[var(--life-text)]">餐食照片</p>{customPhotoVisible ? <button type="button" onClick={clearPhoto} className="text-xs font-bold text-[var(--life-danger)]">删除</button> : null}</div>
-          <label className="relative block cursor-pointer">
-            {customPhotoVisible ? <MealPhotoFrame src={photoSrc} alt="当前餐食照片" rotationDegrees={photoRotationDegrees} scale={photoScale}><span className="life-meal-photo-action">更换照片</span></MealPhotoFrame> : <div className="life-meal-photo-empty flex h-24 items-center justify-center rounded-[var(--life-radius-control)] bg-[var(--life-surface-warm)] text-sm font-extrabold text-[var(--life-teal-strong)]">＋ 上传照片</div>}
-            <input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" className="sr-only" disabled={saving} onChange={(event) => choosePhoto(event.target.files?.[0] ?? null)} />
-          </label>
-          {customPhotoVisible ? <details className="mt-2.5 rounded-xl bg-[var(--life-surface-soft)] px-3 py-2"><summary className="cursor-pointer text-xs font-extrabold text-[var(--life-teal-strong)]">调整照片</summary><div className="mt-2.5"><div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => rotatePhoto(-90)} className="rounded-lg bg-[var(--life-surface)] px-2 py-2 text-xs font-bold text-[var(--life-text-body)]">↶ 左转 90°</button><button type="button" onClick={() => rotatePhoto(90)} className="rounded-lg bg-[var(--life-surface)] px-2 py-2 text-xs font-bold text-[var(--life-text-body)]">右转 90° ↷</button></div><label className="mt-2 grid gap-1 text-[10px] font-bold text-[var(--life-text-muted)]"><span className="flex justify-between"><span>照片大小</span><span>{Math.round(photoScale * 100)}%</span></span><input type="range" min="60" max="100" step="5" value={Math.round(photoScale * 100)} onChange={(event) => resizePhoto(Number(event.target.value))} /></label></div></details> : null}
-        </section>
+        <MealPhotoEditorCard
+          visible={customPhotoVisible}
+          src={photoSrc}
+          rotationDegrees={photoRotationDegrees}
+          scale={photoScale}
+          disabled={saving}
+          onChoosePhoto={choosePhoto}
+          onClearPhoto={clearPhoto}
+          onRotatePhoto={rotatePhoto}
+          onResizePhoto={resizePhoto}
+        />
 
-        <section className="life-surface life-section-card">
+        <section className="life-surface life-section-card life-meal-nutrition-card">
           <div className="mb-2 flex items-center justify-between gap-3"><p className="text-sm font-extrabold text-[var(--life-text)]">营养合计</p><strong className="text-base tabular-nums text-[var(--life-text)]">{caloriePreview == null ? "—" : `${Math.round(caloriePreview)} kcal`}</strong></div>
           <div className="grid grid-cols-3 gap-2 text-center"><div className="rounded-xl bg-[var(--life-surface-soft)] px-2 py-2"><span className="block text-[10px] font-bold text-[var(--life-text-muted)]">碳水</span><strong className="mt-0.5 block text-xs text-[var(--life-text)]">{displayNutrition(nutritionPreview.carbsG.value, "g")}</strong></div><div className="rounded-xl bg-[var(--life-surface-soft)] px-2 py-2"><span className="block text-[10px] font-bold text-[var(--life-text-muted)]">蛋白质</span><strong className="mt-0.5 block text-xs text-[var(--life-text)]">{displayNutrition(nutritionPreview.proteinG.value, "g")}</strong></div><div className="rounded-xl bg-[var(--life-surface-soft)] px-2 py-2"><span className="block text-[10px] font-bold text-[var(--life-text-muted)]">脂肪</span><strong className="mt-0.5 block text-xs text-[var(--life-text)]">{displayNutrition(nutritionPreview.fatG.value, "g")}</strong></div></div>
         </section>
 
-        <section className="life-surface overflow-hidden rounded-[var(--life-radius-card)]">
+        <section className="life-meal-food-list life-surface overflow-hidden rounded-[var(--life-radius-card)]">
           <div className="px-4 pb-2 pt-3"><p className="text-sm font-extrabold text-[var(--life-text)]">食物</p></div>
           {items.map((item) => <button key={item.key} type="button" onClick={() => openEditItem(item)} className="flex w-full items-center gap-3 border-t border-[var(--life-border-soft)] px-4 py-3 text-left"><span className="min-w-0 flex-1"><strong className="block truncate text-sm font-extrabold text-[var(--life-text)]">{item.displayName || item.rawName}</strong><span className="mt-0.5 block truncate text-xs text-[var(--life-text-muted)]">{itemSummary(item)}</span></span><span className="text-xl text-[var(--life-text-muted)]">›</span></button>)}
           <button type="button" onClick={() => setAddChooserOpen(true)} className="flex w-full items-center border-t border-[var(--life-border-soft)] px-4 py-3 text-sm font-extrabold text-[var(--life-teal-strong)]">＋ 添加食物</button>
         </section>
 
-        <section className="life-surface life-section-card"><p className="mb-2 text-sm font-extrabold text-[var(--life-text)]">备注</p><AppTextarea rows={2} value={note} onChange={(event) => { setNote(event.target.value); markDirty(); }} /></section>
+        <section className="life-meal-note-card life-surface life-section-card"><p className="mb-2 text-sm font-extrabold text-[var(--life-text)]">备注</p><AppTextarea rows={2} value={note} onChange={(event) => { setNote(event.target.value); markDirty(); }} /></section>
 
         <div className="life-meal-editor-actions sticky bottom-2 z-20 grid gap-2 rounded-[var(--life-radius-card)] border border-[var(--life-border-soft)] bg-[color:rgb(255_253_248/0.94)] p-2.5 shadow-[var(--life-shadow-float)] backdrop-blur-md">
           <AppButton variant="primary" disabled={saving || loading} onClick={() => void save()}>{saving ? "保存中…" : photoSaveFailed ? "重试保存照片" : "保存"}</AppButton>
