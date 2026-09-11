@@ -32,3 +32,5 @@ jobs:
           git diff --cached --quiet && { echo "No asset change produced"; exit 1; }
           git commit -m "fix(life): clean excited mood edge artifact"
           git push origin HEAD:main
+
+# Retry after inspecting the source component bounds.
