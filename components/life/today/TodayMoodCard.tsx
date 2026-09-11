@@ -80,8 +80,8 @@ export function TodayMoodCard({
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <MoodFace label="我" moodKey={myMood} showUnrecordedIcon={isToday} />
-          <MoodFace label="Ta" moodKey={taMood} showUnrecordedIcon={isToday} />
+          <MoodFace label="我" moodKey={myMood} />
+          <MoodFace label="Ta" moodKey={taMood} />
         </div>
       </section>
 
@@ -123,12 +123,12 @@ export function TodayMoodCard({
   );
 }
 
-function MoodFace({ label, moodKey, showUnrecordedIcon }: { label: string; moodKey?: MoodKey; showUnrecordedIcon: boolean }) {
+function MoodFace({ label, moodKey }: { label: string; moodKey?: MoodKey }) {
   const visual = moodVisual(moodKey);
   return (
     <div className="life-person-state">
       <div className="life-person-state-orb">
-        {visual ? <MoodIcon moodKey={visual.key} label={visual.label} /> : showUnrecordedIcon ? <UnrecordedMoodIcon /> : <span aria-hidden>○</span>}
+        {visual ? <MoodIcon moodKey={visual.key} label={visual.label} /> : <UnrecordedMoodIcon />}
       </div>
       <p className="mt-2 text-xs font-bold text-[var(--life-text-muted)]">{label}</p>
       <p className="mt-0.5 text-sm font-extrabold text-[var(--life-text)]">{visual?.label ?? "未记录"}</p>
