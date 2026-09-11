@@ -1,5 +1,5 @@
 import type { LifeMonthBundleDay } from "./month-bundle";
-import type { LifePartnerKey } from "./life-service";
+import type { LifePartnerKey, MoodRecord } from "./life-service";
 
 export const CALENDAR_VIEWS = ["mood", "food", "sleep"] as const;
 export type CalendarView = (typeof CALENDAR_VIEWS)[number];
@@ -10,6 +10,15 @@ export function parseCalendarView(value: unknown): CalendarView {
 
 export function parseCalendarMonth(value: unknown, fallback: string) {
   return typeof value === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(value) ? value : fallback;
+}
+
+export function orderMoodsForViewer(moods: MoodRecord[], viewerPartnerKey: LifePartnerKey) {
+  return [...moods].sort((left, right) => {
+    const leftPriority = left.partnerKey === viewerPartnerKey ? 0 : 1;
+    const rightPriority = right.partnerKey === viewerPartnerKey ? 0 : 1;
+    if (leftPriority !== rightPriority) return leftPriority - rightPriority;
+    return left.partnerKey.localeCompare(right.partnerKey);
+  });
 }
 
 export function mealCaloriesForPartner(day: LifeMonthBundleDay | undefined, partnerKey: LifePartnerKey) {
