@@ -19,13 +19,14 @@ const REAL_MOOD_ASSETS = [
 ];
 
 describe("mood presentation contract", () => {
-  it("uses the dedicated unrecorded artwork on Today but never on the monthly calendar", () => {
+  it("uses the dedicated unrecorded artwork on Today but not on historical empty states or the monthly calendar", () => {
     const today = source("components/life/today/TodayMoodCard.tsx");
     const calendar = source("components/life/LifeCalendarPage.tsx");
     const icons = source("components/ui/MoodIcon.tsx");
 
     expect(today).toContain("MoodIcon, UnrecordedMoodIcon");
-    expect(today).toContain("visual ? <MoodIcon moodKey={visual.key} label={visual.label} /> : <UnrecordedMoodIcon />");
+    expect(today).toContain('showUnrecordedIcon={isToday}');
+    expect(today).toContain("visual ? <MoodIcon moodKey={visual.key} label={visual.label} /> : showUnrecordedIcon ? <UnrecordedMoodIcon /> : <span aria-hidden>○</span>");
     expect(icons).toContain('const UNRECORDED_MOOD_ASSET = "/illustrations/life/mood-unrecorded.png"');
     expect(calendar).not.toContain("UnrecordedMoodIcon");
     expect(calendar).not.toContain("mood-unrecorded.png");
@@ -40,14 +41,15 @@ describe("mood presentation contract", () => {
     expect(today).toContain("await deleteMood(myRecord.id, mePartnerKey)");
     expect(today.match(/if \(onChanged\) await onChanged\(\);/g)).toHaveLength(2);
     expect(today).toContain("{visual ? <MoodIcon");
-    expect(today).toContain(": <UnrecordedMoodIcon />}");
+    expect(today).toContain("showUnrecordedIcon ? <UnrecordedMoodIcon />");
   });
 
-  it("keeps the supplied unrecorded artwork the same square source size as all eight real mood assets", async () => {
+  it("keeps the supplied unrecorded artwork transparent and the same square source size as all eight real mood assets", async () => {
     const assetDir = resolve(process.cwd(), "public/illustrations/life");
     const unrecorded = await sharp(resolve(assetDir, "mood-unrecorded.png")).metadata();
 
     expect(unrecorded.format).toBe("png");
+    expect(unrecorded.hasAlpha).toBe(true);
     expect([unrecorded.width, unrecorded.height]).toEqual([256, 256]);
 
     for (const filename of REAL_MOOD_ASSETS) {
