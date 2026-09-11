@@ -1,0 +1,248 @@
+/* Meal editor closeout: explicit classes only. Food home spacing remains in food-compact.css. */
+
+.life-page-shell--meal-editor {
+  padding-top: .52rem;
+}
+.life-page-shell--meal-editor > .life-page-header {
+  min-height: 2.9rem;
+  margin-bottom: .42rem;
+  align-items: center;
+  padding-top: 0;
+}
+.life-page-shell--meal-editor .life-meal-editor {
+  gap: .62rem;
+  padding-bottom: .35rem;
+}
+.life-page-shell--meal-editor .life-meal-editor-meta {
+  min-height: 2.65rem;
+  border-radius: 14px;
+  background: rgb(255 254 250 / .78);
+  padding: .48rem .7rem;
+  box-shadow: 0 1px 5px rgb(78 92 85 / .04);
+  transition: background var(--life-motion-fast) ease, border-color var(--life-motion-fast) ease, transform var(--life-motion-fast) ease;
+}
+.life-page-shell--meal-editor .life-meal-editor-meta > span:last-child {
+  display: inline-flex;
+  min-height: 1.9rem;
+  align-items: center;
+  border-radius: 10px;
+  background: var(--life-surface-soft);
+  padding: 0 .52rem;
+}
+.life-page-shell--meal-editor .life-meal-editor-meta:active {
+  background: var(--life-surface-soft);
+  transform: translateY(1px);
+}
+
+.life-page-shell--meal-editor .life-meal-photo-card {
+  padding: .72rem;
+}
+.life-meal-photo-card-title {
+  margin-bottom: .5rem;
+}
+.life-meal-photo-row {
+  display: grid;
+  grid-template-columns: minmax(0, 45%) minmax(0, 1fr);
+  align-items: center;
+  gap: .72rem;
+  min-width: 0;
+}
+.life-meal-photo-preview {
+  display: block;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--life-radius-control);
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  transition: transform var(--life-motion-fast) ease;
+}
+.life-meal-photo-preview:active {
+  transform: scale(.985);
+}
+.life-meal-photo-thumb,
+.life-meal-photo-empty {
+  width: 100%;
+  aspect-ratio: 4 / 3 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border-radius: var(--life-radius-control);
+}
+.life-meal-photo-empty {
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--life-border-soft);
+  background: var(--life-surface-warm);
+  color: var(--life-text-muted);
+  box-shadow: none;
+  font-size: .68rem;
+  font-weight: 800;
+}
+.life-meal-photo-controls {
+  display: grid;
+  min-width: 0;
+  align-content: center;
+  gap: .4rem;
+}
+.life-meal-photo-secondary,
+.life-meal-photo-danger {
+  display: inline-flex;
+  width: 100%;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--life-border-soft);
+  border-radius: 11px;
+  background: rgb(255 255 255 / .52);
+  padding: .42rem .55rem;
+  color: var(--life-text-body);
+  font-size: .72rem;
+  font-weight: 850;
+  line-height: 1.1;
+  text-align: center;
+  transition: background var(--life-motion-fast) ease, border-color var(--life-motion-fast) ease, transform var(--life-motion-fast) ease;
+}
+.life-meal-photo-secondary {
+  color: var(--life-teal-strong);
+}
+.life-meal-photo-secondary:active,
+.life-meal-photo-danger:active {
+  transform: translateY(1px);
+}
+.life-meal-photo-secondary:disabled,
+.life-meal-photo-danger:disabled {
+  opacity: .5;
+}
+.life-meal-photo-danger {
+  border-color: color-mix(in srgb, var(--life-danger) 20%, var(--life-border-soft));
+  background: color-mix(in srgb, var(--life-coral) 4%, white);
+  color: color-mix(in srgb, var(--life-danger) 84%, var(--life-text-body));
+  font-weight: 760;
+}
+
+.life-photo-adjust-sheet {
+  max-height: min(86dvh, 40rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.life-photo-adjust-preview {
+  width: 100%;
+  height: min(15rem, 42vh) !important;
+  aspect-ratio: auto !important;
+  margin-top: .8rem;
+}
+.life-photo-adjust-turns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .5rem;
+  margin-top: .7rem;
+}
+.life-photo-adjust-range {
+  display: grid;
+  gap: .45rem;
+  margin-top: .8rem;
+  border-radius: 12px;
+  background: var(--life-surface-soft);
+  padding: .65rem .7rem;
+  color: var(--life-text-body);
+  font-size: .68rem;
+  font-weight: 800;
+}
+.life-photo-adjust-range > span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+}
+.life-photo-adjust-range strong {
+  color: var(--life-teal-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.life-page-shell--meal-editor .life-meal-nutrition-card {
+  padding: .68rem .72rem;
+}
+.life-page-shell--meal-editor .life-meal-nutrition-card > div:first-child {
+  margin-bottom: .42rem !important;
+}
+.life-page-shell--meal-editor .life-meal-food-list > div:first-child {
+  padding-bottom: .35rem;
+  padding-top: .62rem;
+}
+.life-page-shell--meal-editor .life-meal-food-list > button {
+  min-height: 3.05rem;
+  padding-block: .55rem;
+  transition: background var(--life-motion-fast) ease, transform var(--life-motion-fast) ease;
+}
+.life-page-shell--meal-editor .life-meal-food-list > button:hover {
+  background: color-mix(in srgb, var(--life-surface-soft) 74%, white);
+}
+.life-page-shell--meal-editor .life-meal-food-list > button:active {
+  background: var(--life-surface-soft);
+  transform: translateY(1px);
+}
+.life-page-shell--meal-editor .life-meal-food-list > button:last-child {
+  min-height: 2.7rem;
+  justify-content: center;
+  border-top: 1px solid var(--life-border-soft);
+  background: color-mix(in srgb, var(--life-mint) 10%, white);
+}
+.life-page-shell--meal-editor .life-meal-note-card {
+  padding: .68rem .72rem;
+}
+.life-page-shell--meal-editor .life-meal-note-card > p {
+  margin-bottom: .38rem !important;
+}
+.life-page-shell--meal-editor .life-meal-note-card textarea.app-textarea {
+  field-sizing: content;
+  min-height: 2.7rem;
+  max-height: 8rem;
+  padding: .52rem .68rem;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .life-page-shell--meal-editor .life-meal-editor-meta:hover,
+  .life-meal-photo-secondary:hover {
+    border-color: color-mix(in srgb, var(--life-mint-strong) 34%, var(--life-border-soft));
+    background: var(--life-surface-soft);
+  }
+  .life-meal-photo-danger:hover {
+    border-color: color-mix(in srgb, var(--life-danger) 34%, var(--life-border-soft));
+    background: color-mix(in srgb, var(--life-coral) 8%, white);
+  }
+}
+
+@media (max-width: 480px) {
+  .life-page-shell--meal-editor {
+    padding-top: .42rem;
+  }
+  .life-meal-photo-row {
+    gap: .58rem;
+  }
+  .life-meal-photo-secondary,
+  .life-meal-photo-danger {
+    min-height: 2.42rem;
+    font-size: .69rem;
+  }
+  .life-photo-adjust-sheet {
+    max-height: 84dvh;
+    padding-bottom: max(.9rem, env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-width: 360px) {
+  .life-meal-photo-row {
+    grid-template-columns: minmax(0, 44%) minmax(0, 1fr);
+    gap: .48rem;
+  }
+  .life-meal-photo-secondary,
+  .life-meal-photo-danger {
+    min-height: 2.35rem;
+    padding-inline: .4rem;
+    font-size: .66rem;
+  }
+}
