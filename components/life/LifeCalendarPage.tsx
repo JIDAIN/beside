@@ -9,7 +9,7 @@ import { useLifeIdentity } from "@/components/life/LifeIdentityContext";
 import { peekStaleQuery, prefetchStaleQuery, useStaleQuery } from "@/lib/client/use-stale-query";
 import { fetchLifeDay, fetchLifeMonthBundle, LifeApiError } from "@/lib/life/life-client";
 import { hydrateLifeMonthBundle, type LifeMonthBundle, type LifeMonthBundleDay } from "@/lib/life/month-bundle";
-import { mealCaloriesForPartner, metricBubbleRem, sleepHoursForPartner, type CalendarView } from "@/lib/life/monthly-review";
+import { mealCaloriesForPartner, metricBubbleRem, orderMoodsForViewer, sleepHoursForPartner, type CalendarView } from "@/lib/life/monthly-review";
 import { fetchMeals } from "@/lib/nutrition/meal-client";
 import { preloadMealPhotos } from "@/lib/nutrition/meal-photo-cache";
 import type { MealRecord, NutritionPartnerKey } from "@/lib/nutrition/meal-service";
@@ -84,10 +84,19 @@ export function LifeCalendarPage({ initialView = "mood", initialMonth }: { initi
 
   function dayContent(day: LifeMonthBundleDay | undefined) {
     if (view === "mood") {
-      const moods = day?.day.moods ?? [];
-      const meMood = mePartnerKey ? moods.find((item) => item.partnerKey === mePartnerKey)?.moodKey : undefined;
-      const taMood = taPartnerKey ? moods.find((item) => item.partnerKey === taPartnerKey)?.moodKey : undefined;
-      return <span className="life-calendar-moods"><MoodStamp moodKey={meMood} label="我" /><MoodStamp moodKey={taMood} label="Ta" offset={Boolean(meMood && taMood)} /></span>;
+      const orderedMoods = mePartnerKey ? orderMoodsForViewer(day?.day.moods ?? [], mePartnerKey).slice(0, 2) : [];
+      return (
+        <span className="life-calendar-moods">
+          {orderedMoods.map((mood, index) => (
+            <MoodStamp
+              key={mood.id}
+              moodKey={mood.moodKey}
+              label={mood.partnerKey === mePartnerKey ? "我" : "Ta"}
+              offset={index === 1}
+            />
+          ))}
+        </span>
+      );
     }
     if (!selectedPartner) return null;
     const value = view === "food" ? mealCaloriesForPartner(day, selectedPartner) : sleepHoursForPartner(day, selectedPartner);
