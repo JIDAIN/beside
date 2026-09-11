@@ -1,6 +1,8 @@
+/* Food module visual closeout: compact density + one quiet interaction language. */
+
 .life-food-form-sheet,
 .life-favorite-food-picker-sheet {
-  max-height: min(86dvh, 42rem);
+  max-height: min(84dvh, 40rem);
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -9,10 +11,457 @@
   box-shadow: inset 0 0 0 1px var(--life-border-soft);
 }
 
+/* Food home: keep the title, role switch and date actions in the first screen. */
+.life-page-shell:has(input[aria-label="查看日期"]) {
+  padding-top: .52rem;
+}
+.life-page-shell:has(input[aria-label="查看日期"]) > .life-page-header {
+  min-height: 2.9rem;
+  margin-bottom: .42rem;
+  align-items: center;
+  padding-top: 0;
+}
+.life-page-shell:has(input[aria-label="查看日期"]) .life-header-role-switch {
+  width: 7.15rem;
+}
+.life-page-shell:has(input[aria-label="查看日期"]) .life-header-role-switch .life-role-switch button {
+  min-height: 2rem;
+}
+
+.life-page-shell > .life-surface:has(input[aria-label="查看日期"]) {
+  margin-bottom: .65rem !important;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0 !important;
+}
+.life-page-shell > .life-surface:has(input[aria-label="查看日期"]) > label,
+.life-page-shell > .life-surface:has(input[aria-label="查看日期"]) > a {
+  display: inline-flex;
+  min-height: 2.55rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--life-border-soft);
+  border-radius: 13px;
+  background: rgb(255 254 250 / .76);
+  padding: .5rem .72rem;
+  box-shadow: 0 1px 4px rgb(78 92 85 / .035);
+  font-size: .76rem;
+  font-weight: 850;
+  line-height: 1;
+  transition: background var(--life-motion-fast) ease, border-color var(--life-motion-fast) ease, transform var(--life-motion-fast) ease;
+}
+.life-page-shell > .life-surface:has(input[aria-label="查看日期"]) > label {
+  flex: 1 1 auto;
+  justify-content: space-between;
+  color: var(--life-text);
+}
+.life-page-shell > .life-surface:has(input[aria-label="查看日期"]) > label::after {
+  content: "⌄";
+  margin-left: .45rem;
+  color: var(--life-text-muted);
+  font-size: .82rem;
+  transform: translateY(-.08rem);
+}
+.life-page-shell > .life-surface:has(input[aria-label="查看日期"]) > a {
+  flex: 0 0 auto;
+  color: var(--life-teal-strong);
+}
+.life-page-shell > .life-surface:has(input[aria-label="查看日期"]) > label:active,
+.life-page-shell > .life-surface:has(input[aria-label="查看日期"]) > a:active {
+  background: var(--life-surface-soft);
+  transform: translateY(1px);
+}
+
+/* Home meal cards stay structurally identical, only slightly denser. */
+.life-page-shell:has(input[aria-label="查看日期"]) .life-meal-card {
+  padding: .76rem;
+}
+.life-page-shell:has(input[aria-label="查看日期"]) .life-meal-card > div:first-child {
+  margin-bottom: .58rem !important;
+}
+.life-page-shell:has(input[aria-label="查看日期"]) .life-meal-card > div[class*="grid-cols-"] > :first-child,
+.life-page-shell:has(input[aria-label="查看日期"]) .life-meal-card article > div[class*="grid-cols-"] > :first-child {
+  height: 6.55rem;
+  max-height: 6.55rem;
+  aspect-ratio: auto !important;
+}
+.life-meal-edit-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 12px;
+  transition: background var(--life-motion-fast) ease, border-color var(--life-motion-fast) ease, transform var(--life-motion-fast) ease;
+}
+.life-meal-add-link {
+  min-height: 2.25rem;
+  border-radius: 12px;
+  padding-inline: .72rem;
+  transition: background var(--life-motion-fast) ease, border-color var(--life-motion-fast) ease, transform var(--life-motion-fast) ease;
+}
+.life-meal-edit-icon:hover,
+.life-meal-add-link:hover {
+  border-color: color-mix(in srgb, var(--life-mint-strong) 42%, var(--life-border-soft));
+  background: var(--life-surface-soft);
+}
+.life-meal-add-link:active {
+  transform: translateY(1px);
+}
+
+/* Meal editor: compact metadata entry, photo preview, food rows, note and actions. */
+.life-page-shell > div:has(> .life-meal-editor-actions) {
+  gap: .62rem;
+  padding-bottom: .35rem;
+}
+.life-page-shell > div:has(> .life-meal-editor-actions) > button:first-child {
+  min-height: 2.65rem;
+  border-radius: 14px;
+  background: rgb(255 254 250 / .78);
+  padding: .48rem .7rem;
+  box-shadow: 0 1px 5px rgb(78 92 85 / .04);
+  transition: background var(--life-motion-fast) ease, transform var(--life-motion-fast) ease;
+}
+.life-page-shell > div:has(> .life-meal-editor-actions) > button:first-child > span:last-child {
+  display: inline-flex;
+  min-height: 1.9rem;
+  align-items: center;
+  border-radius: 10px;
+  background: var(--life-surface-soft);
+  padding: 0 .52rem;
+}
+.life-page-shell > div:has(> .life-meal-editor-actions) > button:first-child:active {
+  background: var(--life-surface-soft);
+  transform: translateY(1px);
+}
+
+.life-page-shell > div:has(> .life-meal-editor-actions) > section:first-of-type {
+  padding: .72rem;
+}
+.life-page-shell > div:has(> .life-meal-editor-actions) > section:first-of-type > div:first-child {
+  margin-bottom: .5rem !important;
+}
+.life-page-shell > div:has(> .life-meal-editor-actions) > section:first-of-type label > div {
+  height: 7.35rem !important;
+  aspect-ratio: auto !important;
+  transition: height var(--life-motion-normal) ease;
+}
+.life-page-shell > div:has(> .life-meal-editor-actions) > section:first-of-type:has(details[open]) label > div {
+  height: min(13rem, 42vh) !important;
+}
+.life-page-shell > div:has(> .life-meal-editor-actions) > section:first-of-type details {
+  margin-top: .48rem !important;
+  border: 1px solid var(--life-border-soft);
+  border-radius: 12px;
+  padding: .44rem .62rem;
+}
+.life-page-shell > div:has(> .life-meal-editor-actions) > section:first-of-type details > div {
+  margin-top: .48rem !important;
+}
+.life-meal-photo-action {
+  min-height: 2rem;
+  border-radius: 10px;
+}
+
+.life-page-shell > div:has(> .life-meal-editor-actions) > section:nth-of-type(2) {
+  padding: .68rem .72rem;
+}
+.life-page-shell > div:has(> .life-meal-editor-actions) > section:nth-of-type(2) > div:first-child {
+  margin-bottom: .42rem !important;
+}
+
+.life-page-shell > div:has(> .life-meal-editor-actions) > section:nth-of-type(3) > div:first-child {
+  padding-bottom: .35rem;
+  padding-top: .62rem;
+}
+.life-page-shell > div:has(> .life-meal-editor-actions) > section:nth-of-type(3) > button {
+  min-height: 3.05rem;
+  padding-block: .55rem;
+  transition: background var(--life-motion-fast) ease, transform var(--life-motion-fast) ease;
+}
+.life-page-shell > div:has(> .life-meal-editor-actions) > section:nth-of-type(3) > button:hover {
+  background: color-mix(in srgb, var(--life-surface-soft) 74%, white);
+}
+.life-page-shell > div:has(> .life-meal-editor-actions) > section:nth-of-type(3) > button:active {
+  background: var(--life-surface-soft);
+  transform: translateY(1px);
+}
+.life-page-shell > div:has(> .life-meal-editor-actions) > section:nth-of-type(3) > button:last-child {
+  min-height: 2.7rem;
+  justify-content: center;
+  border-top: 1px solid var(--life-border-soft);
+  background: color-mix(in srgb, var(--life-mint) 10%, white);
+}
+
+.life-page-shell > div:has(> .life-meal-editor-actions) > section:has(textarea.app-textarea) {
+  padding: .68rem .72rem;
+}
+.life-page-shell > div:has(> .life-meal-editor-actions) > section:has(textarea.app-textarea) > p {
+  margin-bottom: .38rem !important;
+}
+.life-page-shell > div:has(> .life-meal-editor-actions) textarea.app-textarea {
+  field-sizing: content;
+  min-height: 2.7rem;
+  max-height: 8rem;
+  padding: .52rem .68rem;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+.life-meal-editor-actions {
+  bottom: .35rem;
+  gap: .38rem;
+  border-radius: 15px;
+  padding: .42rem;
+  box-shadow: 0 6px 20px rgb(78 92 85 / .09);
+}
+.life-meal-editor-actions > .app-ref-host {
+  display: block;
+}
+.life-meal-editor-actions > .app-ref-host > button {
+  width: 100%;
+  min-height: 2.48rem;
+}
+.life-meal-editor-actions > div {
+  gap: .38rem;
+}
+.life-meal-editor-actions > div > a,
+.life-meal-editor-actions > div > button {
+  min-height: 2.18rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--life-border-soft);
+  border-radius: 11px;
+  background: rgb(255 255 255 / .42);
+  padding: .38rem .65rem;
+  transition: background var(--life-motion-fast) ease, transform var(--life-motion-fast) ease;
+}
+.life-meal-editor-actions > div > button {
+  border-color: color-mix(in srgb, var(--life-danger) 26%, var(--life-border-soft));
+  background: color-mix(in srgb, var(--life-coral) 6%, white);
+}
+.life-meal-editor-actions > div > a:active,
+.life-meal-editor-actions > div > button:active {
+  transform: translateY(1px);
+}
+
+/* Add-food and snack choice sheets use the same card-choice language. */
+.life-mood-sheet:has(#add-food-title),
+.life-mood-sheet:has(#snack-picker-title) {
+  padding: .82rem .9rem max(.9rem, env(safe-area-inset-bottom));
+}
+.life-mood-sheet:has(#add-food-title) > div:first-child,
+.life-mood-sheet:has(#snack-picker-title) > div:first-child {
+  margin-bottom: .55rem !important;
+}
+#add-food-title + div,
+#snack-picker-title + div {
+  margin-top: .72rem !important;
+  gap: .46rem !important;
+}
+#add-food-title + div > button,
+#snack-picker-title + div > a {
+  display: grid;
+  min-height: 3.6rem;
+  grid-template-columns: 2.35rem minmax(0,1fr) auto;
+  align-items: center;
+  gap: .68rem;
+  border: 1px solid var(--life-border-soft);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--life-surface-soft) 78%, white);
+  padding: .52rem .68rem;
+  color: var(--life-text);
+  font-size: .8rem;
+  font-weight: 850;
+  text-align: left;
+  transition: background var(--life-motion-fast) ease, border-color var(--life-motion-fast) ease, transform var(--life-motion-fast) ease;
+}
+#add-food-title + div > button::before {
+  display: grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  place-items: center;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--life-mint) 24%, white);
+  color: #607f74;
+  font-size: 1.18rem;
+  font-weight: 800;
+}
+#add-food-title + div > button:first-child::before { content: "＋"; }
+#add-food-title + div > button:last-child::before { content: "▤"; font-size: 1rem; }
+#add-food-title + div > button > span,
+#snack-picker-title + div > a > span:last-child {
+  float: none !important;
+  justify-self: end;
+  color: var(--life-text-muted);
+  font-size: 1.15rem;
+  line-height: 1;
+}
+#add-food-title + div > button:hover,
+#snack-picker-title + div > a:hover {
+  border-color: color-mix(in srgb, var(--life-mint-strong) 36%, var(--life-border-soft));
+  background: var(--life-surface-soft);
+}
+#add-food-title + div > button:active,
+#snack-picker-title + div > a:active {
+  transform: translateY(1px);
+}
+.life-mood-sheet:has(#add-food-title) > button:last-child,
+.life-mood-sheet:has(#snack-picker-title) > button:last-child,
+.life-favorite-food-picker-sheet > button:last-child {
+  min-height: 2.5rem;
+  margin-top: .7rem !important;
+  border: 1px solid var(--life-border-soft);
+  border-radius: 12px;
+  background: rgb(255 255 255 / .42);
+}
+
+/* New/edit food and favorite-template forms stay short on phones. */
+.life-food-form-sheet {
+  padding: .78rem .86rem max(.86rem, env(safe-area-inset-bottom));
+}
+.life-food-form-sheet > div:first-child {
+  margin-bottom: .5rem !important;
+}
+.life-food-form-sheet h2 {
+  font-size: 1rem !important;
+}
+.life-food-form-sheet > div.mt-4.grid,
+.life-food-form-sheet > h2 + div {
+  margin-top: .68rem !important;
+  gap: .48rem !important;
+}
+.life-food-form-sheet label {
+  gap: .2rem !important;
+}
+.life-food-form-sheet label > .app-ref-host {
+  display: block;
+  width: 100%;
+}
+.life-food-form-sheet .app-input {
+  width: 100%;
+  min-height: 2.24rem !important;
+  padding-block: .32rem !important;
+}
+.life-food-form-sheet details {
+  border: 1px solid var(--life-border-soft);
+  border-radius: 11px !important;
+  padding: .42rem .62rem !important;
+}
+.life-food-form-sheet details > div {
+  margin-top: .46rem !important;
+  gap: .42rem !important;
+}
+.life-food-form-sheet > button[type="button"] {
+  min-height: 2.18rem;
+  margin-top: .62rem !important;
+  border: 1px solid color-mix(in srgb, var(--life-danger) 25%, var(--life-border-soft));
+  border-radius: 11px;
+  background: transparent;
+  padding: .38rem .65rem;
+}
+.life-food-form-sheet > div:last-child {
+  margin-top: .62rem !important;
+  gap: .42rem !important;
+}
+.life-food-form-sheet > div:last-child .app-ref-host,
+.life-food-form-sheet > div:last-child .app-ref-host > button {
+  width: 100%;
+}
+.life-food-form-sheet > div:last-child .app-ref-host > button {
+  min-height: 2.35rem;
+}
+
+/* Favorite picker/list: clear rows, compact search, same pressed treatment. */
+.life-favorite-food-picker-sheet {
+  padding: .82rem .9rem max(.9rem, env(safe-area-inset-bottom));
+}
+.life-favorite-food-picker-sheet .app-input {
+  min-height: 2.3rem !important;
+}
+.life-favorite-food-picker-sheet button:not(:last-child) {
+  min-height: 3rem;
+  transition: background var(--life-motion-fast) ease, transform var(--life-motion-fast) ease;
+}
+.life-favorite-food-picker-sheet button:not(:last-child):active {
+  background: color-mix(in srgb, var(--life-mint) 10%, white);
+  transform: translateY(1px);
+}
+
+/* Favorite-food management is still a separate page, but follows the same entry affordance. */
+.life-page-shell:has(a[href="/food"].life-inline-link) > .life-page-header a[href="/food"] {
+  display: inline-flex;
+  min-height: 2.3rem;
+  align-items: center;
+  border: 1px solid var(--life-border-soft);
+  border-radius: 12px;
+  background: rgb(255 255 255 / .5);
+  padding: 0 .68rem;
+}
+.life-page-shell:has(a[href="/food"].life-inline-link) > div > button:first-child {
+  min-height: 2.75rem;
+  border-style: solid !important;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--life-mint) 9%, white);
+}
+.life-page-shell:has(a[href="/food"].life-inline-link) section.life-surface > button {
+  min-height: 3.2rem;
+  transition: background var(--life-motion-fast) ease, transform var(--life-motion-fast) ease;
+}
+.life-page-shell:has(a[href="/food"].life-inline-link) section.life-surface > button:active {
+  background: var(--life-surface-soft);
+  transform: translateY(1px);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .life-page-shell > .life-surface:has(input[aria-label="查看日期"]) > label:hover,
+  .life-page-shell > .life-surface:has(input[aria-label="查看日期"]) > a:hover,
+  .life-page-shell > div:has(> .life-meal-editor-actions) > button:first-child:hover {
+    border-color: color-mix(in srgb, var(--life-mint-strong) 34%, var(--life-border-soft));
+    background: var(--life-surface-soft);
+  }
+}
+
 @media (max-width: 480px) {
   .life-food-form-sheet,
   .life-favorite-food-picker-sheet {
-    max-height: 84dvh;
-    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    max-height: 82dvh;
+    padding-bottom: max(.86rem, env(safe-area-inset-bottom));
+  }
+  .life-page-shell:has(input[aria-label="查看日期"]) {
+    padding-top: .42rem;
+  }
+  .life-page-shell > .life-surface:has(input[aria-label="查看日期"]) {
+    gap: .45rem !important;
+  }
+  .life-page-shell > .life-surface:has(input[aria-label="查看日期"]) > label,
+  .life-page-shell > .life-surface:has(input[aria-label="查看日期"]) > a {
+    min-height: 2.5rem;
+    padding-inline: .62rem;
+  }
+  .life-page-shell:has(input[aria-label="查看日期"]) .life-meal-card > div[class*="grid-cols-"] > :first-child,
+  .life-page-shell:has(input[aria-label="查看日期"]) .life-meal-card article > div[class*="grid-cols-"] > :first-child {
+    height: 6.15rem;
+    max-height: 6.15rem;
+  }
+  .life-page-shell > div:has(> .life-meal-editor-actions) > section:first-of-type label > div {
+    height: 6.7rem !important;
+  }
+  .life-page-shell > div:has(> .life-meal-editor-actions) > section:first-of-type:has(details[open]) label > div {
+    height: min(12rem, 40vh) !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .life-page-shell > .life-surface:has(input[aria-label="查看日期"]) > label,
+  .life-page-shell > .life-surface:has(input[aria-label="查看日期"]) > a {
+    font-size: .7rem;
+    padding-inline: .52rem;
+  }
+  #add-food-title + div > button,
+  #snack-picker-title + div > a {
+    min-height: 3.45rem;
+  }
+  .life-food-form-sheet details > div {
+    grid-template-columns: 1fr !important;
   }
 }
