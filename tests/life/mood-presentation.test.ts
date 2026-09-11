@@ -34,55 +34,81 @@ async function visibleBounds(path: string, alphaThreshold = 16) {
       maxY = Math.max(maxY, y);
     }
   }
-  return maxX < minX
-    ? { width: 0, height: 0, area: 0, minX: 0, minY: 0, maxX: 0, maxY: 0 }
-    : { width: maxX - minX + 1, height: maxY - minY + 1, area: (maxX - minX + 1) * (maxY - minY + 1), minX, minY, maxX, maxY };
+  if (maxX < minX) return { width: 0, height: 0, area: 0 };
+  const width = maxX - minX + 1;
+  const height = maxY - minY + 1;
+  return { width, height, area: width * height };
+}
+
+function median(values: number[]) {
+  const sorted = [...values].sort((left, right) => left - right);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
 }
 
 describe("mood presentation contract", () => {
-  it("uses the dedicated unrecorded artwork on Today but not on historical empty states or the monthly calendar", () => {
-    const today = source("components/life/today/TodayMoodCard.tsx");
+  it("uses one unrecorded artwork contract on Today and historical day while keeping monthly cells blank", () => {
+    const todayPage = source("components/life/TodayLifePage.tsx");
+    const historyPage = source("components/life/LifeCalendarDayPage.tsx");
+    const moodCard = source("components/life/today/TodayMoodCard.tsx");
     const calendar = source("components/life/LifeCalendarPage.tsx");
     const icons = source("components/ui/MoodIcon.tsx");
 
-    expect(today).toContain("MoodIcon, UnrecordedMoodIcon");
-    expect(today).toContain('showUnrecordedIcon={isToday}');
-    expect(today).toContain("visual ? <MoodIcon moodKey={visual.key} label={visual.label} /> : showUnrecordedIcon ? <UnrecordedMoodIcon /> : <span aria-hidden>○</span>");
+    expect(todayPage).toContain("<TodayMoodCard");
+    expect(historyPage).toContain("<TodayMoodCard");
+    expect(moodCard).toContain("MoodIcon, UnrecordedMoodIcon");
+    expect(moodCard).toContain("visual ? <MoodIcon moodKey={visual.key} label={visual.label} /> : <UnrecordedMoodIcon />");
+    expect(moodCard).not.toContain("showUnrecordedIcon");
+    expect(moodCard).not.toContain("<span aria-hidden>○</span>");
     expect(icons).toContain('const UNRECORDED_MOOD_ASSET = "/illustrations/life/mood-unrecorded.png"');
+
     expect(calendar).not.toContain("UnrecordedMoodIcon");
     expect(calendar).not.toContain("mood-unrecorded.png");
     expect(calendar).toContain("life-calendar-mood is-empty");
+    expect(calendar).toContain("moodCalendarSlots(day?.day.moods ?? [], mePartnerKey, taPartnerKey)");
+    expect(calendar).toContain('<MoodStamp moodKey={slots.currentUserMood?.moodKey} label="我" />');
+    expect(calendar).toContain('<MoodStamp moodKey={slots.partnerMood?.moodKey} label="Ta" offset />');
   });
 
-  it("switches Today from unrecorded to a real mood and back after deletion through refreshed day data", () => {
-    const today = source("components/life/today/TodayMoodCard.tsx");
+  it("switches unrecorded to a real mood and back after deletion through refreshed day data", () => {
+    const moodCard = source("components/life/today/TodayMoodCard.tsx");
 
-    expect(today).toContain("const myMood = moodByRole.get(mePartnerKey)?.moodKey");
-    expect(today).toContain("await saveMood({ partnerKey: mePartnerKey, moodDate: date, moodKey })");
-    expect(today).toContain("await deleteMood(myRecord.id, mePartnerKey)");
-    expect(today.match(/if \(onChanged\) await onChanged\(\);/g)).toHaveLength(2);
-    expect(today).toContain("{visual ? <MoodIcon");
-    expect(today).toContain("showUnrecordedIcon ? <UnrecordedMoodIcon />");
+    expect(moodCard).toContain("const myMood = moodByRole.get(mePartnerKey)?.moodKey");
+    expect(moodCard).toContain("await saveMood({ partnerKey: mePartnerKey, moodDate: date, moodKey })");
+    expect(moodCard).toContain("await deleteMood(myRecord.id, mePartnerKey)");
+    expect(moodCard.match(/if \(onChanged\) await onChanged\(\);/g)).toHaveLength(2);
+    expect(moodCard).toContain("{visual ? <MoodIcon");
+    expect(moodCard).toContain(": <UnrecordedMoodIcon />}");
   });
 
-  it("keeps the supplied unrecorded artwork transparent and the same square source size as all eight real mood assets", async () => {
+  it("matches unrecorded visible artwork bounds to the real mood family instead of only matching canvas size", async () => {
     const assetDir = resolve(process.cwd(), "public/illustrations/life");
     const unrecordedPath = resolve(assetDir, "mood-unrecorded.png");
-    const unrecorded = await sharp(unrecordedPath).metadata();
+    const unrecordedMetadata = await sharp(unrecordedPath).metadata();
+    const unrecordedBounds = await visibleBounds(unrecordedPath);
 
-    expect(unrecorded.format).toBe("png");
-    expect(unrecorded.hasAlpha).toBe(true);
-    expect([unrecorded.width, unrecorded.height]).toEqual([256, 256]);
+    expect(unrecordedMetadata.format).toBe("png");
+    expect(unrecordedMetadata.hasAlpha).toBe(true);
+    expect([unrecordedMetadata.width, unrecordedMetadata.height]).toEqual([256, 256]);
 
-    const bounds: Record<string, Awaited<ReturnType<typeof visibleBounds>>> = {};
-    bounds["mood-unrecorded.png"] = await visibleBounds(unrecordedPath);
+    const realBounds = [];
     for (const filename of REAL_MOOD_ASSETS) {
       const path = resolve(assetDir, filename);
       const metadata = await sharp(path).metadata();
       expect([metadata.width, metadata.height]).toEqual([256, 256]);
-      bounds[filename] = await visibleBounds(path);
+      realBounds.push(await visibleBounds(path));
     }
-    console.log("MOOD_VISIBLE_BOUNDS", JSON.stringify(bounds));
+
+    const medianWidth = median(realBounds.map((bounds) => bounds.width));
+    const medianHeight = median(realBounds.map((bounds) => bounds.height));
+    const medianArea = median(realBounds.map((bounds) => bounds.area));
+
+    expect(unrecordedBounds.width / medianWidth).toBeGreaterThanOrEqual(0.9);
+    expect(unrecordedBounds.width / medianWidth).toBeLessThanOrEqual(1.1);
+    expect(unrecordedBounds.height / medianHeight).toBeGreaterThanOrEqual(0.9);
+    expect(unrecordedBounds.height / medianHeight).toBeLessThanOrEqual(1.1);
+    expect(unrecordedBounds.area / medianArea).toBeGreaterThanOrEqual(0.85);
+    expect(unrecordedBounds.area / medianArea).toBeLessThanOrEqual(1.15);
 
     const icons = source("components/ui/MoodIcon.tsx");
     const css = source("app/island-life-refactor.css");
