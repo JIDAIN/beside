@@ -31,7 +31,8 @@ describe("R1-R6 refactor boundaries", () => {
     expect(food).toContain("SNACK_OPTIONS");
     expect(food).toContain("+ 新增加餐");
     expect(editor).not.toContain("AppRoleSwitch");
-    expect(editor).toContain("餐次<AppSelect");
+    expect(editor).toContain("MEAL_SLOT_OPTIONS");
+    expect(editor).toContain("<AppSelect value={currentSlot}");
     expect(editor).not.toContain("记录这一餐的时间、照片和食物");
   });
 
@@ -69,6 +70,7 @@ describe("R1-R6 refactor boundaries", () => {
     expect(source("app/layout.tsx")).toContain("island-life-refactor.css");
     expect(source("app/layout.tsx")).toContain("r8-ui-closeout.css");
     expect(source("app/layout.tsx")).toContain("r8-3-visual-polish.css");
+    expect(source("app/layout.tsx")).toContain("food-compact.css");
     const vercel = JSON.parse(source("vercel.json")) as { git?: { deploymentEnabled?: boolean } };
     expect(vercel.git?.deploymentEnabled).toBe(false);
   });
