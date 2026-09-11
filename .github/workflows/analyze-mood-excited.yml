@@ -1,0 +1,48 @@
+name: Analyze mood excited asset
+
+on:
+  push:
+    paths:
+      - .github/workflows/analyze-mood-excited.yml
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Inspect PNG alpha components
+        run: |
+          node <<'NODE'
+          const sharp = require('sharp');
+          const path = 'public/illustrations/life/mood-excited.png';
+          (async () => {
+            const meta = await sharp(path).metadata();
+            console.log('metadata', JSON.stringify({format:meta.format,width:meta.width,height:meta.height,hasAlpha:meta.hasAlpha,channels:meta.channels}));
+            const {data, info} = await sharp(path).ensureAlpha().raw().toBuffer({resolveWithObject:true});
+            for (const threshold of [1, 16, 64]) {
+              const W=info.width,H=info.height,C=info.channels;
+              const seen=new Uint8Array(W*H); const comps=[];
+              const alpha=(x,y)=>data[(y*W+x)*C+3];
+              for(let y=0;y<H;y++) for(let x=0;x<W;x++) {
+                const idx=y*W+x; if(seen[idx]||alpha(x,y)<threshold) continue;
+                const q=[[x,y]]; seen[idx]=1; let qi=0,count=0,minX=x,maxX=x,minY=y,maxY=y,touches=false;
+                while(qi<q.length){ const [cx,cy]=q[qi++]; count++; minX=Math.min(minX,cx);maxX=Math.max(maxX,cx);minY=Math.min(minY,cy);maxY=Math.max(maxY,cy); if(cx<=20) touches=true;
+                  for(const [nx,ny] of [[cx-1,cy],[cx+1,cy],[cx,cy-1],[cx,cy+1]]){ if(nx<0||ny<0||nx>=W||ny>=H) continue; const ni=ny*W+nx; if(seen[ni]||alpha(nx,ny)<threshold) continue; seen[ni]=1;q.push([nx,ny]); }
+                }
+                comps.push({count,minX,maxX,minY,maxY,width:maxX-minX+1,height:maxY-minY+1,touchesLeft20:touches});
+              }
+              comps.sort((a,b)=>b.count-a.count);
+              console.log(`components threshold=${threshold}`, JSON.stringify(comps.filter(c=>c.count>=2).slice(0,30)));
+              const cols=[]; for(let x=0;x<80;x++){let count=0,minY=H,maxY=-1;for(let y=0;y<H;y++){if(alpha(x,y)>=threshold){count++;minY=Math.min(minY,y);maxY=Math.max(maxY,y);}} if(count) cols.push({x,count,minY,maxY});}
+              console.log(`left columns threshold=${threshold}`, JSON.stringify(cols));
+            }
+          })().catch(err=>{console.error(err);process.exit(1)});
+          NODE
