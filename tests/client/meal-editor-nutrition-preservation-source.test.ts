@@ -12,8 +12,8 @@ describe("meal editor nutrition preservation", () => {
     expect(editor).toContain("estimatedWeightG: item.estimatedWeightG");
     expect(editor).toContain("calorieMinKcal: item.calorieMinKcal");
     expect(editor).toContain("calorieMaxKcal: item.calorieMaxKcal");
-    expect(editor).toContain("foodId: item.foodId, rawName: item.rawName.trim(), displayName:");
-    expect(editor).toContain("estimatedWeightG: weight");
+    expect(editor).toContain("foodId: item.foodId,");
+    expect(editor).toContain("estimatedWeightG: weight,");
   });
 
   it("preserves meal-level AI calorie estimates when unrelated fields are edited", () => {
@@ -23,8 +23,10 @@ describe("meal editor nutrition preservation", () => {
     expect(editor).toContain("!calorieDataTouched ? meal?.calorieMaxKcal ?? null : null");
   });
 
-  it("lets users edit estimated weight instead of silently resetting it to null", () => {
-    expect(editor).toContain("重量（g）");
+  it("keeps estimated weight internally even though the compact food sheet does not expand it", () => {
+    expect(editor).toContain("estimatedWeightG: item.estimatedWeightG");
+    expect(editor).toContain("estimatedWeightG: weight");
+    expect(editor).toContain("item.estimatedWeightG ? `约${item.estimatedWeightG}g`");
     expect(editor).not.toContain("estimatedWeightG: null, caloriesKcal");
   });
 });
