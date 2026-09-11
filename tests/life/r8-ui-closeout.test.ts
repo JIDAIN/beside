@@ -84,13 +84,13 @@ describe("R8.3 visual polish and interaction closeout", () => {
     expect(food).toContain("+ 添加{label}");
   });
 
-  it("keeps meal photo/macros readable in separate mobile sections", () => {
+  it("keeps meal photo/macros readable in separate compact mobile sections", () => {
     const editor = source("components/life/LifeMealEditorPage.tsx");
     expect(editor).not.toContain("grid-cols-[minmax(0,0.95fr)_minmax(0,1.25fr)]");
     expect(editor).toContain("＋ 上传照片");
-    expect(editor).toContain('label="蛋白质"');
-    expect(editor).toContain('label="脂肪"');
-    expect(editor).toContain('label="碳水"');
+    expect(editor).toContain("nutritionPreview.proteinG.value");
+    expect(editor).toContain("nutritionPreview.fatG.value");
+    expect(editor).toContain("nutritionPreview.carbsG.value");
     expect(editor).not.toContain("和饮食列表使用同样的紧凑构图");
     expect(editor).toContain("营养合计");
   });
