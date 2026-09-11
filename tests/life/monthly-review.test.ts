@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { LifeMonthBundleDay } from "../../lib/life/month-bundle";
-import { buildWakeDateSleepTimestamps, mealCaloriesForPartner, metricBubbleRem, parseCalendarMonth, parseCalendarView, sleepHoursForPartner } from "../../lib/life/monthly-review";
+import type { LifePartnerKey, MoodRecord } from "../../lib/life/life-service";
+import { buildWakeDateSleepTimestamps, mealCaloriesForPartner, metricBubbleRem, orderMoodsForViewer, parseCalendarMonth, parseCalendarView, sleepHoursForPartner } from "../../lib/life/monthly-review";
 
 function bundleDay(): LifeMonthBundleDay {
   return {
@@ -23,6 +24,18 @@ function bundleDay(): LifeMonthBundleDay {
   } as LifeMonthBundleDay;
 }
 
+function mood(partnerKey: LifePartnerKey, createdAt: string, updatedAt = createdAt): MoodRecord {
+  return {
+    id: `${partnerKey}-${createdAt}`,
+    partnerKey,
+    moodDate: "2026-09-10",
+    moodKey: partnerKey === "fish" ? "happy" : "calm",
+    source: "manual",
+    createdAt,
+    updatedAt,
+  };
+}
+
 describe("monthly life review", () => {
   it("keeps the three supported views and falls back to mood", () => {
     expect(parseCalendarView("food")).toBe("food");
@@ -30,6 +43,41 @@ describe("monthly life review", () => {
     expect(parseCalendarView("unknown")).toBe("mood");
     expect(parseCalendarMonth("2026-09", "2026-01")).toBe("2026-09");
     expect(parseCalendarMonth("2026-13", "2026-01")).toBe("2026-01");
+  });
+
+  it("always orders mood records as current viewer then partner", () => {
+    const fishFirst = [
+      mood("fish", "2026-09-10T08:00:00.000Z"),
+      mood("cat", "2026-09-10T09:00:00.000Z"),
+    ];
+    const catFirst = [
+      mood("cat", "2026-09-10T08:00:00.000Z"),
+      mood("fish", "2026-09-10T09:00:00.000Z"),
+    ];
+
+    expect(orderMoodsForViewer(fishFirst, "fish").map((item) => item.partnerKey)).toEqual(["fish", "cat"]);
+    expect(orderMoodsForViewer(catFirst, "fish").map((item) => item.partnerKey)).toEqual(["fish", "cat"]);
+    expect(orderMoodsForViewer(fishFirst, "cat").map((item) => item.partnerKey)).toEqual(["cat", "fish"]);
+    expect(orderMoodsForViewer(catFirst, "cat").map((item) => item.partnerKey)).toEqual(["cat", "fish"]);
+  });
+
+  it("keeps single-person mood days unchanged", () => {
+    const fishOnly = [mood("fish", "2026-09-10T08:00:00.000Z")];
+    const catOnly = [mood("cat", "2026-09-10T08:00:00.000Z")];
+
+    expect(orderMoodsForViewer(fishOnly, "cat")).toEqual(fishOnly);
+    expect(orderMoodsForViewer(catOnly, "fish")).toEqual(catOnly);
+  });
+
+  it("ignores created and updated timestamps when ordering moods", () => {
+    const records = [
+      mood("cat", "2026-09-10T10:00:00.000Z", "2026-09-10T12:00:00.000Z"),
+      mood("fish", "2026-09-10T07:00:00.000Z", "2026-09-10T13:00:00.000Z"),
+    ];
+
+    expect(orderMoodsForViewer(records, "fish").map((item) => item.partnerKey)).toEqual(["fish", "cat"]);
+    expect(orderMoodsForViewer([...records].reverse(), "fish").map((item) => item.partnerKey)).toEqual(["fish", "cat"]);
+    expect(orderMoodsForViewer(records, "cat").map((item) => item.partnerKey)).toEqual(["cat", "fish"]);
   });
 
   it("aggregates only the selected person's active meals", () => {
