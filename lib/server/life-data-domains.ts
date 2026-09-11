@@ -1,6 +1,7 @@
 export const ISLAND_LIFE_TABLES = [
   "meals",
   "meal_items",
+  "favorite_food_templates",
   "mood_entries",
   "sleep_records",
   "activity_entries",
