@@ -9,7 +9,7 @@ import { useLifeIdentity } from "@/components/life/LifeIdentityContext";
 import { peekStaleQuery, prefetchStaleQuery, useStaleQuery } from "@/lib/client/use-stale-query";
 import { fetchLifeDay, fetchLifeMonthBundle, LifeApiError } from "@/lib/life/life-client";
 import { hydrateLifeMonthBundle, type LifeMonthBundle, type LifeMonthBundleDay } from "@/lib/life/month-bundle";
-import { mealCaloriesForPartner, metricBubbleRem, orderMoodsForViewer, sleepHoursForPartner, type CalendarView } from "@/lib/life/monthly-review";
+import { mealCaloriesForPartner, metricBubbleRem, moodCalendarSlots, sleepHoursForPartner, type CalendarView } from "@/lib/life/monthly-review";
 import { fetchMeals } from "@/lib/nutrition/meal-client";
 import { preloadMealPhotos } from "@/lib/nutrition/meal-photo-cache";
 import type { MealRecord, NutritionPartnerKey } from "@/lib/nutrition/meal-service";
@@ -39,7 +39,7 @@ function monthCells(month: string) {
 
 function MoodStamp({ moodKey, label, offset = false }: { moodKey?: MoodKey; label: "我" | "Ta"; offset?: boolean }) {
   const visual = moodVisual(moodKey);
-  if (!visual) return null;
+  if (!visual) return <span className={`life-calendar-mood is-empty ${offset ? "is-offset" : ""}`} aria-hidden />;
   return <span title={`${label} · ${visual.label}`} className={`life-calendar-mood ${offset ? "is-offset" : ""}`} aria-label={`${label}：${visual.label}`}><MoodIcon moodKey={visual.key} label="" /></span>;
 }
 
@@ -84,17 +84,13 @@ export function LifeCalendarPage({ initialView = "mood", initialMonth }: { initi
 
   function dayContent(day: LifeMonthBundleDay | undefined) {
     if (view === "mood") {
-      const orderedMoods = mePartnerKey ? orderMoodsForViewer(day?.day.moods ?? [], mePartnerKey).slice(0, 2) : [];
+      const slots = mePartnerKey && taPartnerKey
+        ? moodCalendarSlots(day?.day.moods ?? [], mePartnerKey, taPartnerKey)
+        : { currentUserMood: null, partnerMood: null };
       return (
         <span className="life-calendar-moods">
-          {orderedMoods.map((mood, index) => (
-            <MoodStamp
-              key={mood.id}
-              moodKey={mood.moodKey}
-              label={mood.partnerKey === mePartnerKey ? "我" : "Ta"}
-              offset={index === 1}
-            />
-          ))}
+          <MoodStamp moodKey={slots.currentUserMood?.moodKey} label="我" />
+          <MoodStamp moodKey={slots.partnerMood?.moodKey} label="Ta" offset />
         </span>
       );
     }
