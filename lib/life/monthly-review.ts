@@ -12,13 +12,15 @@ export function parseCalendarMonth(value: unknown, fallback: string) {
   return typeof value === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(value) ? value : fallback;
 }
 
-export function orderMoodsForViewer(moods: MoodRecord[], viewerPartnerKey: LifePartnerKey) {
-  return [...moods].sort((left, right) => {
-    const leftPriority = left.partnerKey === viewerPartnerKey ? 0 : 1;
-    const rightPriority = right.partnerKey === viewerPartnerKey ? 0 : 1;
-    if (leftPriority !== rightPriority) return leftPriority - rightPriority;
-    return left.partnerKey.localeCompare(right.partnerKey);
-  });
+export function moodCalendarSlots(
+  moods: readonly MoodRecord[],
+  currentPartnerKey: LifePartnerKey,
+  partnerKey: LifePartnerKey,
+) {
+  return {
+    currentUserMood: moods.find((item) => item.partnerKey === currentPartnerKey) ?? null,
+    partnerMood: moods.find((item) => item.partnerKey === partnerKey) ?? null,
+  };
 }
 
 export function mealCaloriesForPartner(day: LifeMonthBundleDay | undefined, partnerKey: LifePartnerKey) {
