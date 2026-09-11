@@ -54,22 +54,24 @@ describe("R8.7 non-blocking startup and prewarm", () => {
     expect(identity).toContain("}, 1200)");
   });
 
-  it("hydrates every opened calendar month and warms a tapped day's real meal photos", () => {
+  it("hydrates every opened calendar month and warms only the tapped day's life record", () => {
     const calendar = source("components/life/LifeCalendarPage.tsx");
     expect(calendar).toContain("fetchLifeMonthBundle(month)");
     expect(calendar).toContain("hydrateLifeMonthBundle(bundle, mePartnerKey, taPartnerKey)");
     expect(calendar).toContain("const warmDay = useCallback");
-    expect(calendar).toContain("preloadMealPhotos");
+    expect(calendar).toContain("prefetchStaleQuery({ key: `life-day:${date}`");
+    expect(calendar).not.toContain("preloadMealPhotos");
+    expect(calendar).not.toContain("fetchMeals");
     expect(calendar).toContain("onPointerDown={() => warmDay(date)}");
     expect(calendar).toContain("onPointerEnter={() => warmDay(date)}");
   });
 
-  it("calendar detail reuses the same life-day and meals cache keys as Today/Food instead of a private bundle key", () => {
+  it("calendar detail keeps the canonical life-day cache but no longer owns meal caches", () => {
     const detail = source("components/life/LifeCalendarDayPage.tsx");
     expect(detail).toContain("key: `life-day:${date}`");
-    expect(detail).toContain("key: `meals:${mePartnerKey ?? \"pending\"}:${date}`");
-    expect(detail).toContain("key: `meals:${taPartnerKey ?? \"pending\"}:${date}`");
-    expect(detail).toContain("preloadMealPhotos");
+    expect(detail).not.toContain("key: `meals:");
+    expect(detail).not.toContain("fetchMeals");
+    expect(detail).not.toContain("preloadMealPhotos");
     expect(detail).not.toContain("calendar-day:");
   });
 
