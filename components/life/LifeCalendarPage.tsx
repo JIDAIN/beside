@@ -6,13 +6,10 @@ import { AppPageShell } from "@/components/ui/AppPageShell";
 import { AppRoleSwitch, type AppRoleSwitchValue } from "@/components/ui/AppRoleSwitch";
 import { MoodIcon } from "@/components/ui/MoodIcon";
 import { useLifeIdentity } from "@/components/life/LifeIdentityContext";
-import { peekStaleQuery, prefetchStaleQuery, useStaleQuery } from "@/lib/client/use-stale-query";
+import { prefetchStaleQuery, useStaleQuery } from "@/lib/client/use-stale-query";
 import { fetchLifeDay, fetchLifeMonthBundle, LifeApiError } from "@/lib/life/life-client";
 import { hydrateLifeMonthBundle, type LifeMonthBundle, type LifeMonthBundleDay } from "@/lib/life/month-bundle";
 import { mealCaloriesForPartner, metricBubbleRem, moodCalendarSlots, sleepHoursForPartner, type CalendarView } from "@/lib/life/monthly-review";
-import { fetchMeals } from "@/lib/nutrition/meal-client";
-import { preloadMealPhotos } from "@/lib/nutrition/meal-photo-cache";
-import type { MealRecord, NutritionPartnerKey } from "@/lib/nutrition/meal-service";
 import type { MoodKey } from "@/lib/life/life-service";
 import { moodVisual } from "@/components/life/today/today-life-model";
 
@@ -70,17 +67,8 @@ export function LifeCalendarPage({ initialView = "mood", initialMonth }: { initi
   const error = query.error instanceof LifeApiError ? query.error.message : query.error?.message ?? null;
 
   const warmDay = useCallback((date: string) => {
-    if (!mePartnerKey || !taPartnerKey) return;
-    const me = mePartnerKey as NutritionPartnerKey;
-    const ta = taPartnerKey as NutritionPartnerKey;
-    const cachedMeals = [...(peekStaleQuery<MealRecord[]>(`meals:${me}:${date}`) ?? []), ...(peekStaleQuery<MealRecord[]>(`meals:${ta}:${date}`) ?? [])];
-    if (cachedMeals.length) void preloadMealPhotos(cachedMeals);
-    void Promise.allSettled([
-      prefetchStaleQuery({ key: `life-day:${date}`, fetcher: () => fetchLifeDay(date), staleMs: 60_000 }),
-      prefetchStaleQuery({ key: `meals:${me}:${date}`, fetcher: async () => (await fetchMeals({ mealDate: date, partnerKey: me })).filter((meal) => !meal.deletedAt), staleMs: 60_000 }).then(preloadMealPhotos),
-      prefetchStaleQuery({ key: `meals:${ta}:${date}`, fetcher: async () => (await fetchMeals({ mealDate: date, partnerKey: ta })).filter((meal) => !meal.deletedAt), staleMs: 60_000 }).then(preloadMealPhotos),
-    ]);
-  }, [mePartnerKey, taPartnerKey]);
+    void prefetchStaleQuery({ key: `life-day:${date}`, fetcher: () => fetchLifeDay(date), staleMs: 60_000 });
+  }, []);
 
   function dayContent(day: LifeMonthBundleDay | undefined) {
     if (view === "mood") {
