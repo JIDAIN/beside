@@ -1,140 +1,173 @@
 # V2 生活系统重构设计
 
-**状态：2026-09-07，当前产品关系已确定**
+状态：2026-09-14。V2 主体已经完成，本文件保留“为什么这样分层”的当前设计结论，不再维护早期阶段 checklist。
 
 ## 0. 当前产品关系
 
-旧版“变瘦变美大作战”已经不再代表整个应用。
-
-现在的正式关系是：
+正式产品是 **伴岛 / Beside**。
 
 ```text
-Couple Better Game（当前主程序 / Island Life）
+伴岛 / Beside
 ├─ 今日
 ├─ 饮食
 ├─ 日历
 ├─ 小窝
+├─ 我的
 └─ 游戏
    └─ 变瘦变美大作战（Legacy Game）
 ```
 
-也就是说，**旧程序现在是新程序「游戏」中的一个独立子项目**。旧游戏的历史数据、金币、宝石、钱包、兑换和旧版每日打卡继续保留，但它们只属于这个游戏子项目，不属于当前生活系统的数据字段。
+旧“变瘦变美大作战”不再代表整个应用，而是伴岛「游戏」中的独立 Legacy Game 子项目。
+
+`couple-better-game` 只在历史名称、兼容 slug、内部 key 或 Production 兼容地址中保留。
 
 具体数据隔离见 [`48-life-legacy-game-data-boundary.md`](48-life-legacy-game-data-boundary.md)。
 
-## 1. 产品方向
-
-V2 将产品主入口从“变美变瘦大作战”调整为双人生活记录系统。
-
-核心原则：
+## 1. 重构后的产品原则
 
 ```text
 生活记录负责保存事实；
-旧游戏继续作为明确、可进入、可退出的独立游戏子项目；
-生活数据默认不参与旧游戏评分、奖励或排名。
+Legacy Game 负责自己的游戏规则；
+两者可以关联展示，但不互相自动改值。
 ```
 
-旧游戏不删除，原 deficit / 运动 / 金币 / 宝石 / 成长地图 / 兑换规则和历史继续保留。
+旧游戏继续保留历史、deficit、运动奖励、金币、宝石、钱包、兑换、成长地图和旧版每日打卡。
 
-## 2. 目标信息架构
+当前生活系统保存心情、睡眠、活动、饮食、体重、药箱、小信箱等真实生活事实。
+
+因此始终满足：
 
 ```text
-生活系统
+intake != deficit != weight != exercise / activity
+```
+
+## 2. 当前信息架构
+
+```text
+伴岛
 ├─ 今日
 │  ├─ 心情
 │  ├─ 睡眠
 │  └─ 活动
 ├─ 饮食
+│  ├─ 早餐 / 午餐 / 晚餐 / 加餐
+│  ├─ 营养与照片
+│  └─ 常吃食物
 ├─ 日历
-└─ 小窝
-   ├─ 体重
-   ├─ 日记 / 小信箱
-   ├─ 家庭药箱
-   ├─ 心情月度回顾（Later）
-   ├─ 游戏机
-   │  ├─ 变美变瘦大作战（Legacy Game 子项目）
-   │  └─ Future Mini Games
+│  ├─ 心情月度回顾
+│  ├─ 饮食月度回顾
+│  ├─ 睡眠月度回顾
+│  └─ 历史日期详情
+├─ 小窝
+│  ├─ 体重
+│  ├─ 家庭药箱
+│  ├─ 小信箱
+│  └─ 游戏机
+│     └─ Legacy Game
+└─ 我的
+   ├─ 身份
+   ├─ Reminder Center
+   ├─ 通知设置
    └─ 数据管理
-
-/game
-└─ 现有完整变美变瘦游戏
 ```
 
-第一版首页只暴露心情、睡眠、活动三个高频记录入口。饮食、体重、日记/留言、药箱分别维护自己的页面或低频入口，不重新塞回首页。
+首页保持轻量，只承担心情、睡眠、活动三个高频记录入口；饮食、体重、药箱、小信箱各自维护独立页面。
 
-## 3. V2-P0 的工程目标
+## 3. 工程边界
 
-V2-P0 只建立新旧边界，不改生产数据库，不改旧游戏规则：
-
-1. 从稳定生产 HEAD 建立 `v2/life-foundation` 分支；
-2. 新增 `/game`，让现有 `HomeScreen` 可以作为完整旧游戏独立运行；
-3. 根 `/` 暂时继续保持当前生产行为，直到新生活 App Shell 具备最小可用能力；
-4. 建立 `components/life/` 代码边界；
-5. 将 CI Node 版本与 Vercel production 的 Node 24 对齐；
-6. 后续在本阶段继续把 Nutrition 对 `HomeResourcesProvider` 的直接依赖移出纯饮食组件。
-
-## 4. 领域边界
-
-目标代码归属：
+当前主要代码归属：
 
 ```text
-components/home        旧游戏业务 UI / Provider
-components/life        新生活系统 UI
-components/nutrition   饮食 UI
-components/weight      真实体重 UI（后续）
-components/medicine    家庭药箱 UI（后续）
-components/ui          公共 App* / animal-island-ui wrapper
+components/life        生活系统 UI
+components/home        Legacy Game UI / Provider
+components/ui          共享 App* / shell / wrapper
 
-lib/home               旧游戏规则、状态、同步
-lib/life               心情 / 睡眠 / 活动领域（后续）
-lib/nutrition          饮食领域
-lib/weight             真实体重领域（后续）
-lib/medicine           家庭药箱领域（后续）
+lib/life               心情 / 睡眠 / 活动等生活 domain
+lib/nutrition          饮食 domain
+lib/home               Legacy Game 规则与状态
+lib/server             server-only 鉴权、RPC、AI、通知、Supabase adapter
 ```
 
-`HomeResourcesProvider` 继续只属于旧游戏，不作为 V2 整个应用的全局 Provider。
+`HomeResourcesProvider` 继续只属于 Legacy Game，不作为整个伴岛的全局事实 Provider。
 
-## 5. 后续数据方向
+表级边界由 `lib/server/life-data-domains.ts` 与 `48-life-legacy-game-data-boundary.md` 共同约束。
 
-V2-P1 预计新增：
+## 4. 数据事实层
+
+生活系统当前正式数据包括：
 
 ```text
 mood_entries
 sleep_records
 activity_entries
+meals / meal_items
+favorite_food_templates
+weight_measurements
+medicine_items
+mailbox_letters
+life_reminder_rules / life_reminder_instances
 ```
 
-UI 首版保持轻量，但表和 API 需要预留 `source` / `idempotency_key` 等字段，方便未来 Web、ChatGPT 和导入流程共用同一领域服务。
+Legacy Game 则继续使用自己的：
 
-饮食继续复用现有 `meals / meal_items`；后续单独 migration 把 kcal 改为可选，不能用 0 表示“未估算”。
+```text
+daily_records / daily_record_sides
+wallets / wallet_ledger
+exchange_categories / exchange_records
+```
 
-真实体重继续以 `weight_measurements` 为真相源。
+Supabase 是正式事实源；浏览器 local/stale cache 只负责读取体验。
 
-家庭药箱等收到实际 Excel 后再最终确定字段，真实药品库存不得写入 Git migration。
+## 5. 饮食在 V2 中的定位
+
+饮食是生活事实域，不是游戏输入层。
+
+- breakfast / lunch / dinner 每人每日各最多一条；
+- snack 是独立事件，可同一时段多条；
+- estimated / confirmed 区分饭前估算与实际摄入；
+- 常吃食物是独立模板，不与历史 Meal 持续绑定；
+- meal calories 不自动生成 Legacy Game deficit；
+- 真实餐食照片存 private Storage。
 
 ## 6. AI 接入原则
 
-未来所有 AI 写入都复用正式领域服务 / 受限 RPC：
+所有 AI 入口复用同一个正式领域层：
 
 ```text
 Web UI ───────┐
-              ├─ Domain API / service ─> Supabase
-ChatGPT ──────┤
-Excel import ─┘
+MCP / ChatGPT ├─ canonical domain services / AI Access Core -> Supabase
+数据恢复 ─────┘
 ```
 
-AI 不获得通用 SQL 写权限。修改类动作继续遵循明确保存意图、幂等、必要时读回确认和审计边界。
+AI 不获得任意 SQL；修改类动作继续经过 normalization、permission、idempotency 和必要的 read-back。
 
-## 7. 当前不做
+新增 `cycle` 等生活 domain 时，只扩展 canonical service、AI registry、备份 / 提醒边界，不重做一套 transport 或数据库。
 
-V2-P0 不做：
+## 7. Reminder Engine
 
-- 不新增 mood / sleep / activity 表；
-- 不修改 meal kcal nullable；
-- 不重做旧游戏 UI；
-- 不改金币、宝石、兑换规则；
-- 不切换根 `/` 到新首页；
-- 不创建家庭药箱表；
-- 不开发动物岛记录可视化或新小游戏框架。
+提醒是生活系统横向基础设施，不属于某一个页面：
 
-这些都在新旧代码边界验证通过后分阶段实施。
+```text
+业务模块
+-> reminder instance
+-> Supabase pg_cron
+-> delivery
+-> 微信 provider
+```
+
+药箱、纪念日、小信箱、每日记录完整性等都复用同一 Reminder Engine。
+
+## 8. 当前明确不做
+
+- 不让生活记录自动改变旧游戏奖励；
+- 不把 Legacy Game Provider 扩散到整个生活系统；
+- 不为每个新 domain 创建独立鉴权或独立 AI 数据层；
+- 不让浏览器直接持有 Supabase service role；
+- 不因为历史内部标识含旧项目名就破坏兼容性；
+- 不在没有用户当次授权时自动部署 Production。
+
+## 9. 历史说明
+
+本文件最早用于 V2-P0 / V2-P1 分阶段设计。那些“尚未新增 mood / sleep / activity”“根 `/` 暂未切换”等早期计划已经完成，不再属于当前事实。
+
+如果需要追溯阶段实施过程，应查看 `docs/archive/` 和 Git 历史，而不是把旧阶段状态重新写回当前主文档。
