@@ -1,7 +1,7 @@
 ---
 name: beside-maintainer
 description: JIDAIN/beside 的项目专属维护 Skill。用于伴岛 / Beside / Island Life 的功能开发、UI 修改、Supabase/API、AI 写入、生活数据、Legacy Game、测试和发布安全。任何项目修改都应先读 AGENTS.md；本 Skill 负责把项目事实和执行顺序收敛成可重复工作流。
-version: 3.1.0
+version: 3.1.1
 ---
 
 # Beside Maintainer
@@ -9,6 +9,8 @@ version: 3.1.0
 ## 定位
 
 这是**项目专属 Skill**。它回答“伴岛 / Beside 这个产品应该怎样安全地修改”，不替代 Obsidian 中的通用 UI / 编码 Skill。
+
+正式产品名是 **伴岛 / Beside**，日常称呼 **小岛**。`couple-better-game` 只在历史名称、兼容 slug、缓存 key、内部标识或 Production 兼容地址中保留。
 
 优先级：
 
@@ -62,6 +64,7 @@ Island Life 当前主要生活域：
 
 ```text
 meals / meal_items
+favorite_food_templates
 mood_entries
 sleep_records
 activity_entries
@@ -81,7 +84,7 @@ wallets
 wallet_ledger
 ```
 
-普通 Life 清理、导入、恢复不得顺手修改 Legacy Game。关联展示不等于跨域自动写回。
+普通 Life 清理、导入、恢复不得顺手修改 Legacy Game。关联展示不等于跨域自动写回。代码级表边界以 `lib/server/life-data-domains.ts` 为准。
 
 ## UI / 视觉协议
 
@@ -170,7 +173,7 @@ Browser → Next.js API → server-only Supabase
 
 ## Legacy Game
 
-Legacy Game 是新程序“游戏”中的独立子项目，不代表整个 Island Life。
+Legacy Game 是伴岛“游戏”中的独立子项目，不代表整个正式产品。
 
 修改金币、宝石、结算、兑换、成长地图等规则前必须读 `docs/05-business-rules.md` 和对应 pure service；不要凭 legacy 变量名猜用户可见语义。
 
