@@ -1,16 +1,16 @@
 # 当前架构
 
-状态：2026-09-07 / R11.5。
+状态：2026-09-14。
 
 ## 1. 一句话架构
 
-Couple Better Game 是一个 Next.js 一体化 Web 应用：
+**伴岛 / Beside** 是一个 Next.js 一体化 Web 应用：
 
 ```text
 浏览器 UI / AI Client
-→ Next.js / Vercel API
-→ canonical domain services / AI Access Core
-→ Supabase PostgreSQL + Private Storage
+-> Next.js / Vercel API
+-> canonical domain services / AI Access Core
+-> Supabase PostgreSQL + Private Storage
 ```
 
 AI 与 Web 共享同一个业务事实层，不维护第二套数据库。
@@ -18,12 +18,18 @@ AI 与 Web 共享同一个业务事实层，不维护第二套数据库。
 当前产品关系：
 
 ```text
-Couple Better Game（当前主程序 / Island Life）
+伴岛 / Beside（正式产品）
+├─ Island Life / 生活域
+│  ├─ 今日
+│  ├─ 饮食
+│  ├─ 日历
+│  ├─ 小窝
+│  └─ 我的
 └─ 游戏
-   └─ 变瘦变美大作战（Legacy Game 子项目）
+   └─ 变瘦变美大作战（Legacy Game）
 ```
 
-旧版“变瘦变美大作战”已经被收纳为新程序「游戏」中的独立子项目，不再代表整个应用。
+`couple-better-game` 继续作为数据库 slug、缓存 key、MCP 内部标识或 Production 兼容地址时不需要机械改名。
 
 ## 2. 主要运行入口
 
@@ -31,79 +37,74 @@ Couple Better Game（当前主程序 / Island Life）
 
 ```text
 Browser
-→ Next.js API
-→ session identity
-→ domain service
-→ service-role RPC / Storage
-→ Supabase
+-> Next.js API
+-> signed session identity
+-> domain service
+-> service-role / actor-aware RPC / Storage
+-> Supabase
 ```
 
-### Harbor ChatGPT Project
+### MCP / ChatGPT Project
 
 ```text
 Harbor Cat
-→ Harbor-Cat MCP
-→ OAuth = cat
-→ /mcp
-→ life_query / life_mutate
-→ AI Access Core
-→ Supabase
+-> Harbor-Cat MCP
+-> OAuth cat
+-> /mcp
+-> life_query / life_mutate
+-> AI Access Core
+-> Supabase
 
 Harbor Fish
-→ Harbor-Fish MCP
-→ OAuth = fish
-→ /mcp
-→ life_query / life_mutate
-→ AI Access Core
-→ Supabase
+-> Harbor-Fish MCP
+-> OAuth fish
+-> /mcp
+-> life_query / life_mutate
+-> AI Access Core
+-> Supabase
 ```
 
-Cat / Fish 身份由 OAuth token 绑定，不能由聊天中的昵称、自称或 `person` 文本切换。
+其他支持的 MCP client 走同一个 `/mcp` 与 AI Access Core。
 
-### 其他 MCP client
-
-```text
-MCP client
-→ OAuth / fixed access identity
-→ /mcp
-→ life_query / life_mutate
-→ AI Access Core
-→ Supabase
-```
+Cat / Fish 身份由 OAuth token / 服务端签名上下文绑定，不能由昵称、自称或 `person` 文本切换。
 
 ### 程序内置 AI
 
 ```text
 /ai
-→ /api/ai/chat
-→ Vercel AI Gateway
-→ life-agent-registry
-→ AI Access Core
-→ Supabase
+-> /api/ai/chat
+-> Vercel AI Gateway
+-> life-agent-registry
+-> AI Access Core
+-> Supabase
 ```
 
 ## 3. Source of Truth
 
 正式生活数据事实源始终是 Supabase。
 
-浏览器 stale cache、Service Worker cache 等只属于可重建读模型，不是第二数据库。
+浏览器 stale cache、Service Worker cache 等只属于可重建读模型，不是第二数据库，也不参与权限判断。
+
+文档事实优先级见 `docs/README.md`；特别要区分 Production Web、GitHub main 与已经独立执行的 Supabase migration。
 
 ## 4. 领域边界
 
-主要 Island Life 领域：
+主要生活域：
 
 ```text
 meal
+favorite_food
 weight
 mood
 sleep
 activity
 medicine
 mailbox
+reminder
 settings
 ```
 
-Legacy Game 是「游戏」里的独立旧程序子项目：
+Legacy Game 独立保留：
 
 ```text
 daily_records / daily_record_sides
@@ -114,13 +115,13 @@ exchange / settlement
 核心关系：
 
 ```text
-intake ≠ deficit ≠ weight ≠ exercise
-Island Life maintenance ≠ Legacy Game maintenance
+intake != deficit != weight != exercise / activity
+Island Life maintenance != Legacy Game maintenance
 ```
 
-Meal calories 不自动生成 deficit，不自动修改金币、宝石、钱包或 heatmap。
+Meal calories 不自动生成 deficit，不自动修改金币、宝石、钱包或旧游戏 heatmap。
 
-任何 Life 测试数据清理、Life import / restore 都默认不得碰 Legacy Game。完整表级 allowlist 与维护规则见 [`48-life-legacy-game-data-boundary.md`](48-life-legacy-game-data-boundary.md)。
+任何普通 Life 测试清理、import / restore 默认不得触碰 Legacy Game。完整 allowlist 见 `48-life-legacy-game-data-boundary.md`。
 
 ## 5. 饮食数据流
 
@@ -128,48 +129,49 @@ Meal calories 不自动生成 deficit，不自动修改金币、宝石、钱包�
 
 ```text
 LifeFoodPage / LifeMealEditorPage
-→ meal-client
-→ /api/meals + /api/meals/:id/photo
-→ auth
-→ supabase-nutrition
-→ canonical RPC / Storage
-→ meals + meal_items
+-> meal-client
+-> /api/meals + /api/meals/:id/photo
+-> auth
+-> supabase-nutrition
+-> canonical RPC / Storage
+-> meals + meal_items
 ```
+
+主餐每天每人 breakfast / lunch / dinner 各最多一条；snack 是独立事件，同一时段允许多条。
+
+### 常吃食物
+
+```text
+LifeFavoriteFoodsPage / meal editor chooser
+-> /api/favorite-foods
+-> supabase-favorite-foods
+-> favorite_food_templates
+```
+
+常吃食物是用户隔离模板。加入餐食时只复制模板字段到普通 `meal_items`，历史餐食与模板之间没有持续引用。
 
 ### AI
 
 ```text
 用户文字 / 图片
-→ AI 在聊天里给草稿
-→ 用户修改 / 确认
-→ life_mutate
-→ meal adapter
-→ canonical meal service
-→ Supabase
+-> AI 在聊天里给草稿
+-> 用户修改 / 确认
+-> life_mutate
+-> meal adapter
+-> canonical meal service
+-> Supabase
 ```
 
-饮食草稿不是后台对象。服务端不通过确认关键词判断 meal create 是否允许执行。
+饮食草稿不是后台对象。单图实际记录与 `estimated -> confirmed` 生命周期的语义以 `44-meal-draft-before-after-contract.md` 为准。
 
-## 6. 餐前 / 餐后与图片持久化
-
-AI 可以同时利用餐前、餐后多图分析：
-
-```text
-实际摄入 = 餐前估计量 - 餐后剩余可食量
-```
-
-用户文字优先于视觉差分。
-
-当前正式 meal 仍只绑定一张 `photo_path`。多图可参与分析；默认保存餐前图，用户明确指定时可改存餐后图。
-
-## 7. 餐食照片架构
+## 6. 餐食图片
 
 ```text
 原图
-→ EXIF normalize
-→ 600px WebP compression
-→ Private Storage meal-photos
-→ meals.photo_path
+-> EXIF normalize
+-> 最长边 600px WebP
+-> Private Storage meal-photos
+-> meals.photo_path
 ```
 
 显示元数据：
@@ -179,11 +181,36 @@ photo_rotation_degrees
 photo_scale
 ```
 
-真实照片使用 `MealPhotoFrame + object-contain`，留白优先于裁切。
+当前正式 Meal 只绑定一张展示图；多图可以参与 AI 分析，但没有多图持久化模型。
+
+如果 MCP 客户端无法传真实图片字节：
+
+```text
+life_mutate attachPhoto=true
+-> MEDIA_ATTACHMENT_REQUIRED
+-> recovery.uploadUrl
+-> browser upload
+-> 服务端完成同一次业务写入
+```
+
+## 7. 生活读写与同步
+
+页面采用 scope-aware stale cache：
+
+```text
+先显示本地可用快照
+-> mount 后后台校验
+-> focus / visibilitychange 后校验
+-> online 后校验
+```
+
+mutation 成功后同步相关 day / month / month-bundle cache，避免返回页面时旧快照覆盖新记录。
+
+首页“今天”的业务日期由服务端按 `Asia/Shanghai` 每次请求计算并传给客户端；这一修复当前在 `main`，在下一次获得 Production 授权后发布。
 
 ## 8. AI 写入架构
 
-稳定工具：
+稳定工具面：
 
 ```text
 life_capabilities
@@ -191,56 +218,58 @@ life_query
 life_mutate
 ```
 
-普通已知业务 query/mutate 不先调用 `life_capabilities`。
+AI Access Core 负责身份、权限、归一化、幂等、媒体边界与 canonical resource dispatch；模型负责对话语义，但不能替代服务端权限。
 
-AI Access Core 负责身份、权限、归一化、幂等、媒体边界与 canonical resource dispatch；模型负责对话语义和草稿交互，但不能替代服务端权限。
+`legacy_home` 属于 Legacy Game 兼容入口，不是普通生活 resource。
 
-`legacy_home` 属于 Legacy Game 兼容入口，不是普通 Island Life resource；旧游戏覆盖只能在用户明确要求游戏操作时执行。
-
-## 9. 图片恢复路径
-
-MCP 客户端不能传真实图片字节时：
+## 9. Reminder Engine 与通知 Provider
 
 ```text
-life_mutate attachPhoto=true
-→ MEDIA_ATTACHMENT_REQUIRED
-→ recovery.uploadUrl
-→ browser upload
-→ 服务端完成原操作
+业务模块 / 自定义提醒
+-> Reminder Engine
+-> life_reminder_rules / life_reminder_instances
+-> pg_cron
+-> life_notification_deliveries
+-> provider
 ```
 
-ChatGPT Custom MCP 已支持 OpenAI 临时文件地址直传；能直接取得附件时不进入 recovery。
+当前 provider 选择：
 
-## 10. 目录职责
+```text
+mailbox -> 微信公众平台测试号 -> PushPlus fallback
+其他提醒 -> PushPlus
+```
 
-### `components/life/`
-生活系统页面与交互组件。
+业务模块不直接调用微信 API。每日 21:00 完整性提醒由 Supabase 云端判断并投递，不依赖网站是否打开。
 
-### `lib/nutrition/`
-Meal service / client / protocol。
+## 10. 身份与安全
 
-### `lib/server/`
-AI Access Core、MCP、canonical server adapters、Supabase services、图片压缩。
+- Web 使用签名 session；
+- MCP OAuth token 绑定 `partnerKey`；
+- 个人记录 owner-only 写入；
+- couple-space 共享数据按明确共享规则维护；
+- 浏览器不持有 service-role / secret；
+- 微信和 PushPlus secret 只在服务端 / Vault；
+- RLS server-only 表不为了消除 Advisor INFO 而开放客户端 policy。
 
-### `lib/ai/`
-自然语言输入规范与 AI 行为 contract。
+完整矩阵见 `17-auth-and-pairing.md`。
 
-### `supabase/migrations/`
-Production schema / RPC / grant 的不可回写历史。
+## 11. 目录职责
 
-### `lib/server/life-data-domains.ts`
-Island Life / Legacy Game / Shared System 的表级 allowlist 与维护保护。
+```text
+components/life/        生活系统页面与交互
+components/home/        Legacy Game UI
+lib/life/               生活 domain client / service
+lib/nutrition/          Meal service / protocol
+lib/server/             鉴权、AI、通知、Supabase adapters
+lib/ai/                 自然语言 normalization / contract
+supabase/migrations/    不可回写的 schema / RPC / grant 历史
+```
 
-## 11. Harbor Project 指令
-
-当前有效模板：
-
-`docs/46-harbor-mcp-project-instructions.md`
-
-Harbor Cat 只使用 `Harbor-Cat`，Harbor Fish 只使用 `Harbor-Fish`。
+表级维护边界由 `lib/server/life-data-domains.ts` 约束。
 
 ## 12. Migration 与 Production
 
 数据库结构变化必须新增 migration，已执行 migration 不回改。
 
-Vercel Git 自动部署保持默认关闭。每次 Production deployment 都必须获得用户当次明确授权，完成后立即恢复 `deploymentEnabled=false`。
+Vercel Git 自动部署长期关闭。任何 Preview / Production deployment 都必须获得用户对该次发布的明确授权；完成后继续保持 `deploymentEnabled=false`。
