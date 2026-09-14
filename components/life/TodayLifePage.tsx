@@ -12,7 +12,6 @@ import { syncLifeDayCaches } from "@/lib/life/month-bundle";
 import { TodayActivityCard } from "./today/TodayActivityCard";
 import { TodayMoodCard } from "./today/TodayMoodCard";
 import { TodaySleepCard } from "./today/TodaySleepCard";
-import { localIsoDate } from "./today/today-life-model";
 
 function dayHeading(date: string) {
   const value = new Date(`${date}T12:00:00`);
@@ -29,9 +28,9 @@ function TodayInitialShell() {
   );
 }
 
-export function TodayLifePage() {
+export function TodayLifePage({ initialDate }: { initialDate: string }) {
   const router = useRouter();
-  const [date] = useState(() => localIsoDate());
+  const date = initialDate;
   const [actionError, setActionError] = useState<string | null>(null);
   const fetcher = useCallback(() => fetchLifeDay(date), [date]);
   const query = useStaleQuery<LifeDayRecord>({
