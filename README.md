@@ -1,38 +1,30 @@
 # 伴岛 Beside
 
-> 正式中文名：**伴岛**｜英文名：**Beside**｜小名：**小岛**
+> 正式中文名：**伴岛**｜英文名：**Beside**｜日常称呼：**小岛**
 >
-> 当前 GitHub 仓库：`JIDAIN/beside`｜当前 Vercel 项目：`beside`
+> GitHub：`JIDAIN/beside`｜Vercel Project：`beside`
 >
-> Production 域名继续保留 `https://couple-better-game.vercel.app`，作为现有 MCP、微信提醒、OAuth 与生产链接兼容地址，不因品牌改名迁移。
->
-> `Island Life` 继续作为当前生活域 / 架构术语保留；`Legacy Game` 继续作为旧游戏子系统术语保留。
+> Production：`https://couple-better-game.vercel.app`
 
-给两个人共同使用的生活记录与陪伴 Web App。当前正式产品品牌是 **伴岛 / Beside**；早期“变美变瘦大作战”游戏继续作为保留子系统存在，但不再代表整个产品。
+`couple_better_game`、`couple-better-game` 等旧名称只在历史记录、数据库兼容 slug、缓存 key、MCP 内部标识或既有 Production 地址中继续保留，不再代表当前正式产品名称。
 
-> 当前正式架构：**Next.js + React + TypeScript + Vercel + Supabase**。Supabase 是生活数据的云端事实源；浏览器本地缓存只负责无感加载与离线体验，不是权限或事实来源。
+伴岛是给两个人共同使用的私人生活记录与陪伴 Web App。当前技术栈为 **Next.js + React + TypeScript + Vercel + Supabase**；Supabase 是生活数据事实源，本地 stale cache / Service Worker 只负责体验优化，不是第二数据库。
 
 ## 当前状态
 
-2026-09-10 本轮核心改造已经收尾并进入 Production：
+截至 2026-09-14：
 
-- 今日：心情、睡眠、活动与轻量提醒；睡眠按起床日归档为“昨晚入睡到今天起床”，心情和睡眠都支持删除自己的记录；
-- 饮食：Meal V2 CRUD、营养字段、照片上传与压缩、AI 餐食草稿确认、补录与饭后确认；
-- 日历：统一的心情 / 饮食 / 睡眠月度回顾；饮食与睡眠一次查看一人，并可继续进入历史日期维护详细记录；
-- 小窝：体重、家庭药箱、小信箱、游戏机；
-- 小信箱 V2：收信箱 / 已寄出 / 待寄出、手札 / 明信片、月份归档、草稿可编辑、寄出后永久只读；
-- 小信箱来信提醒：手札 / 明信片真正寄出时，为收件人生成 `mailbox` Reminder Center 实例，并通过现有 PushPlus 链路推送到对应微信；
-- Reminder Center V1：自定义提醒、药箱到期、纪念日、完成 / 忽略 / snooze、PushPlus 微信投递；
-- Cat / Fish 双身份权限边界：Web、API、MCP 与核心 RPC 都按服务端签名身份处理；
-- AI Access Core：ChatGPT / MCP 可以查询和写入受控生活数据，未来新增生活 domain 继续复用这一层；
-- 无感加载：scope-aware stale cache + mount / focus / visibility / online 后台校验，避免首屏和图片明显闪烁；
-- Legacy Game：金币、宝石、成长地图、兑换等旧游戏能力继续保留。
+- **Production Web**：当前正式线上版本来自 2026-09-11 的受控发布；Vercel 项目与兼容域名工作正常；
+- **Supabase**：当前 Production 数据库已包含常吃食物模板、每日 21:00 记录完整性提醒等最新 migration；
+- **GitHub main**：允许领先 Production；未获得当次明确授权时不自动发布；
+- **自动部署**：长期保持 `vercel.json -> git.deploymentEnabled=false`；
+- **当前 main 待下一次授权发布的 Web 修复**：首页业务日期改为按请求、按 `Asia/Shanghai` 计算，避免静态 HTML 固定为部署日。
 
-完整现场状态、Production 版本与已知边界以 [`docs/09-status-roadmap.md`](docs/09-status-roadmap.md) 为准。
+完整的 Production / main / Supabase 边界以 [`docs/09-status-roadmap.md`](docs/09-status-roadmap.md) 为准。
 
 ## 产品入口
 
-底部主导航当前固定为五个入口：
+底部主导航固定为：
 
 ```text
 今日 / 饮食 / 日历 / 小窝 / 我的
@@ -42,65 +34,90 @@
 
 - 我 / Ta 的心情、睡眠；
 - 当日活动；
-- 最近提醒；
-- 本地缓存立即显示，后台自动校验最新数据。
+- 睡眠按起床日归档：今天记录“昨晚入睡 → 今天起床”；
+- 当前账号可以删除自己的心情和睡眠；
+- stale cache 先显示，mount / focus / visibility / online 后后台校验最新数据。
 
 ### 饮食
 
-- Meal 列表与当日总摄入；早餐、午餐、晚餐每天各一条，加餐按每次进食独立保留；
-- 营养摘要；
-- 手动新增 / 编辑 / 删除；
-- 编辑页支持纠正餐次和加餐时段，移动端按基础字段 / 高级营养分层，并在离开前保护未保存内容；
-- 私有餐食照片；
-- AI 草稿确认后持久化。
+当前饮食采用 Meal V2：
+
+```text
+mealType: breakfast | lunch | dinner | snack
+snackPeriod: morning | afternoon | night
+status: estimated | confirmed
+```
+
+核心规则：
+
+- 早餐 / 午餐 / 晚餐：每人每天各最多 1 条有效主餐；
+- 加餐：独立事件，同一时段允许多条；
+- 正式 meal 保存食物 items 与整餐营养汇总，不能只保存一个总热量占位；
+- 单图“记录这顿饭 / 全部记录”经草稿确认后直接创建 `confirmed`；
+- 只有明确饭前估算时才进入 `estimated -> confirmed`；
+- 补充已有餐食更新原 Meal，不新建第二条；
+- 饭后确认替换实际 items / 汇总，但保留原 `mealDate / eatenAt`；
+- 正式 meal 当前绑定 1 张展示照片，多图可以用于 AI 分析。
+
+### 常吃食物
+
+常吃食物是按 Cat / Fish 隔离的复用模板，适合咖啡、酸奶、饼干等固定食品：
+
+- 独立维护页；
+- 新增 / 编辑 / 删除模板；
+- 餐食编辑时可以直接选用；
+- 加入餐食时复制模板字段到普通 `meal_items`；
+- 当日临时份量不会反向覆盖模板；
+- 后续修改模板不会改写历史餐食。
 
 ### 日历
 
-- 顶部切换心情 / 饮食 / 睡眠月历；
-- 心情保持双人月历；饮食和睡眠在“月度回顾”标题右侧使用我 / Ta 单人切换；心情视图隐藏该切换；
-- 三种月历共用心情月历的纸张背景和日期排布；
-- 饮食用固定暖色圆块表示每日总热量并显示 kcal，睡眠用固定紫蓝圆块表示每日时长并显示小时数；
-- 按日期查看当天生活记录与营养信息；
-- 在历史日期详情中维护当前账号的心情、睡眠和饮食，并按权限维护活动；Ta 的个人记录保持只读；
-- 页面恢复后自动后台同步。
+统一月度回顾包含：
+
+```text
+心情 / 饮食 / 睡眠
+```
+
+- 心情保持双人月历；
+- 饮食 / 睡眠使用我 / Ta 单人切换；
+- 饮食显示每日 kcal；
+- 睡眠显示每日时长；
+- 可以进入任意历史日期查看并维护自己有权限修改的生活记录。
 
 ### 小窝
 
 - 体重趋势；
 - 家庭药箱；
 - 小信箱；
-- 游戏机 / Legacy Game 入口。
+- 游戏机 / Legacy Game。
 
 ### 我的
 
-- 当前身份与昵称；
-- Reminder Center / PushPlus；
-- 数据导出、导入、备份和恢复。
+- 当前身份；
+- Reminder Center；
+- 通知设置；
+- 数据导出、导入、备份与恢复。
 
-## 小信箱 V2
+## 小信箱
+
+小信箱使用三箱模型：
 
 ```text
 收信箱 / 已寄出 / 待寄出
 ```
 
-核心规则：
+数据规则：
 
 ```text
 draft -> 只有寄件人可见，可编辑 / 删除 / 寄出
 sent  -> 寄件人与收件人可见，永久只读
 ```
 
-UI 使用纸张与邮寄视觉语言：
-
-- 手札：整页信纸阅读与编辑，支持翻页；
-- 明信片：始终水平横向，带邮票 / 邮戳 / 地址线与风景装饰；
-- 收信箱、已寄出支持手札 / 明信片与月份筛选；
-- 三个箱子的时间戳语义分别对应收到、寄出与最后编辑时间；
-- 信件真正从 `draft` 变为 `sent`（或直接以 `sent` 创建）时，只为收件人生成一次 `mailbox` 来信提醒；保存草稿和编辑草稿不会触发提醒，微信提醒不包含信件正文。
+手札使用信纸阅读 / 编辑与分页；明信片始终水平横向。信件第一次真正进入 `sent` 时，只为 recipient 生成一次 mailbox reminder；保存或编辑草稿不提醒，微信通知不包含正文。
 
 ## Reminder Center / 微信提醒
 
-当前提醒链路：
+统一 Reminder Engine 负责生成提醒实例，通知通道与业务规则解耦：
 
 ```text
 生活模块 / 自定义提醒
@@ -109,96 +126,85 @@ Reminder Engine
         ↓
 life_reminder_rules / life_reminder_instances
         ↓
-网页提醒中心 + Supabase pg_cron
+Supabase pg_cron
         ↓
-PushPlus
-        ↓
-Cat / Fish 对应微信
+life_notification_deliveries
 ```
 
-Reminder Engine 与 PushPlus 解耦。当前已接入自定义提醒、药箱到期、纪念日和小信箱来信等来源；以后新增生理期等提醒继续复用同一套实例与投递层。
+当前通道策略：
+
+```text
+mailbox
+  -> 微信公众平台测试号（主通道）
+  -> 发送失败时 PushPlus fallback
+
+自定义提醒 / 药箱 / 纪念日 / 每日记录完整性
+  -> PushPlus
+```
+
+每日记录完整性提醒已经在 Production Supabase 启用：Cat / Fish 各自每天 `21:00 Asia/Shanghai` 检查当天的心情、睡眠、confirmed 早餐、午餐、晚餐；五项都完成则静默，否则只发送 1 条汇总缺项提醒。`estimated` 与 `snack` 不计入必填完整性。
 
 详细说明见 [`docs/14-wechat-reminders.md`](docs/14-wechat-reminders.md)。
 
 ## AI 接入
 
-当前正式入口：
+当前所有 AI 入口共享同一业务事实层：
 
 ```text
-Harbor Cat Project  → Harbor-Cat MCP  → OAuth cat  → /mcp
-Harbor Fish Project → Harbor-Fish MCP → OAuth fish → /mcp
-程序内置 AI                              → /api/ai/chat
-                                      ↓
-                              AI Access Core
-                                      ↓
-                              canonical services
-                                      ↓
-                                  Supabase
-```
-
-AI 昵称、用户自称或普通文本中的 `cat / fish` 不参与鉴权；真正身份来自登录 / OAuth / 服务端签名上下文。
-
-AI 可以在权限范围内读写已接入的生活 domain。新增生理期等模块时，应扩展 domain service + AI Access Core / MCP tool，而不是重做整套 AI 接入。
-
-## 饮食与照片
-
-饮食分析遵守：
-
-```text
-讨论 / 估算 / 修正 ≠ 自动保存
-明确确认保存 -> 才持久化
-```
-
-图片处理：
-
-```text
-EXIF normalize
-→ 最长边 600px
-→ WebP quality 70
-→ 超过 120 KB 再逐步降低质量
-→ 最低 quality 55
-→ 一般目标 50～100 KB
-```
-
-当前一条正式 meal 绑定 1 张展示照片；多图可以参与 AI 分析，但暂不做多图持久化模型。
-
-## 数据与权限
-
-生活系统主要采用：
-
-```text
-Browser / MCP
-    ↓
-Next.js server / AI Access Core
-    ↓
-actor-aware canonical RPC / service
-    ↓
+Harbor Cat / Fish MCP
+其他受支持 MCP client
+程序内置 AI
+        ↓
+AI Access Core
+        ↓
+canonical domain services / restricted RPC
+        ↓
 Supabase
 ```
 
-原则：
+身份来自登录、OAuth token 或服务端签名上下文，不从聊天中的昵称、自称或 `cat / fish` 文本猜测。AI 不获得任意 SQL，也不能绕过 owner / shared 权限。
 
-- Supabase 是生活数据事实源；
-- 浏览器不持有 `service_role`；
-- Web session 与 MCP token 都绑定 Cat / Fish 身份；
-- 个人数据默认 owner-only 写入；
-- 药箱、纪念日等明确的 couple-space 数据可由双方共同维护；
-- PushPlus token 加密存入 Supabase Vault，不读回客户端；
-- RLS 与 service-only RPC 共同限制直接表访问。
+新增生理期等生活 domain 时，应扩展 canonical domain service + AI Access Core / Reminder Engine，而不是复制第二套鉴权、数据库或 AI transport。
 
-详细权限矩阵见 [`docs/17-auth-and-pairing.md`](docs/17-auth-and-pairing.md)。
+## 数据与权限
 
-## Legacy Game 与生活数据
+核心原则：
 
-生活系统与旧游戏系统继续隔离维护。尤其：
+- Supabase 是正式生活数据事实源；
+- 浏览器不持有 `service_role` / secret key；
+- Web session 与 MCP token 绑定 Cat / Fish 身份；
+- mood / sleep / meal / weight 等个人记录默认 owner-only 写入；
+- medicine、纪念日等 couple-space 数据按共享规则维护；
+- mailbox sender / recipient 由签名身份和服务端规则确定；
+- PushPlus token、微信公众号 secret / OpenID 等只保存在服务端 / Supabase Vault；
+- RLS + service-only / actor-aware RPC 限制直接表访问。
+
+权限矩阵见 [`docs/17-auth-and-pairing.md`](docs/17-auth-and-pairing.md)。
+
+## Legacy Game 边界
+
+伴岛中的旧“变瘦变美大作战”继续作为 Legacy Game 子项目存在：
 
 ```text
-实际饮食摄入 ≠ Legacy Game deficit ≠ 真实体重 ≠ 运动
+实际饮食摄入 ≠ Legacy Game deficit ≠ 真实体重 ≠ 运动 / 活动
 ```
 
-展示层可以按 `partnerKey + date` 关联，但一个 domain 不得擅自覆盖另一个 domain 的事实数据。
+展示层可以关联，但一个 domain 不自动覆盖另一个 domain。普通 Life 清理、导入、恢复不得顺手修改 Legacy Game 数据。
 
 详见 [`docs/48-life-legacy-game-data-boundary.md`](docs/48-life-legacy-game-data-boundary.md)。
+
+## 餐食图片
+
+```text
+EXIF normalize
+-> 最长边 600px
+-> WebP quality 70
+-> >120 KB 再逐级降低质量
+-> 最低 quality 55
+-> 一般目标 50~100 KB
+```
+
+正式照片存放在 private Storage；当前每条 meal 只保存 1 张展示图。
 
 ## 开发与验证
 
@@ -210,50 +216,41 @@ npm run lint
 npm run build
 ```
 
-Production 发布前至少要求：
+代码改动进入 `main` 后由 GitHub Actions 执行 Test / Lint / Build。CI 通过不等于允许部署。
 
-```text
-Test ✅
-Lint ✅
-Build ✅
-```
-
-Production 自动部署长期保持关闭；每次 Production deployment 都必须获得用户当次明确授权，完成后继续保持 `vercel.json -> git.deploymentEnabled=false`。
+任何 Preview / Production deployment 都必须获得用户针对该次发布的明确授权；完成后继续保持自动部署关闭。
 
 ## 目录
 
 ```text
 app/                     Next.js 页面与 API Routes
-components/life/         Island Life 业务 UI
+components/life/         生活系统 UI
 components/home/         Legacy Game UI / Provider
 components/ui/           共享 UI shell / wrapper
 lib/life/                生活 domain client / service
-lib/server/              服务端鉴权、AI、通知与 Supabase 访问
+lib/server/              鉴权、AI、通知、Supabase server adapters
 lib/nutrition/           Meal / nutrition 逻辑
 lib/home/                Legacy Game 领域逻辑
-supabase/migrations/     Production 数据库迁移历史
+supabase/migrations/     Production migration 历史
 tests/                   Test / source contract / service tests
-docs/                    当前有效主文档
-docs/adr/                长期架构决策（为什么这样设计）
-docs/archive/            历史实施、迁移与阶段验收记录
+docs/                    当前有效文档
+docs/adr/                长期架构决策
+docs/archive/            历史实施与阶段验收
 ```
 
 ## 文档入口
 
-第一次接手项目建议依次阅读：
+第一次接手建议依次阅读：
 
 1. [`docs/README.md`](docs/README.md)
-2. [`docs/01-product.md`](docs/01-product.md)
-3. [`docs/02-architecture.md`](docs/02-architecture.md)
-4. [`docs/03-data-model.md`](docs/03-data-model.md)
-5. [`docs/04-api-and-sync.md`](docs/04-api-and-sync.md)
-6. [`docs/08-deployment-security.md`](docs/08-deployment-security.md)
-7. [`docs/15-configuration-reference.md`](docs/15-configuration-reference.md)
-8. [`docs/16-operations-runbook.md`](docs/16-operations-runbook.md)
-9. [`docs/09-status-roadmap.md`](docs/09-status-roadmap.md)
-10. [`docs/11-ai-write-architecture.md`](docs/11-ai-write-architecture.md)
-11. [`docs/14-wechat-reminders.md`](docs/14-wechat-reminders.md)
-12. [`docs/17-auth-and-pairing.md`](docs/17-auth-and-pairing.md)
-13. [`docs/adr/README.md`](docs/adr/README.md)
+2. [`docs/09-status-roadmap.md`](docs/09-status-roadmap.md)
+3. [`docs/01-product.md`](docs/01-product.md)
+4. [`docs/02-architecture.md`](docs/02-architecture.md)
+5. [`docs/03-data-model.md`](docs/03-data-model.md)
+6. [`docs/04-api-and-sync.md`](docs/04-api-and-sync.md)
+7. [`docs/08-deployment-security.md`](docs/08-deployment-security.md)
+8. [`docs/11-ai-write-architecture.md`](docs/11-ai-write-architecture.md)
+9. [`docs/14-wechat-reminders.md`](docs/14-wechat-reminders.md)
+10. [`docs/17-auth-and-pairing.md`](docs/17-auth-and-pairing.md)
 
-AI / 自动化修改前必须先读 [`AGENTS.md`](AGENTS.md)。
+AI / 自动化修改前必须先读 [`AGENTS.md`](AGENTS.md) 与 `.agents/skills/beside-maintainer/SKILL.md`。
