@@ -1,5 +1,26 @@
 # Changelog
 
+## 2026-09-14 — 文档事实源收口与首页业务日期修复
+
+- 修复首页静态首屏把部署日固定为“今天”的问题：根页面改为每次请求按 `Asia/Shanghai` 计算业务日期，并作为 `initialDate` 传给 `TodayLifePage`；新增回归测试，禁止重新退化为 `useState(() => localIsoDate())` 的 build-time 日期。
+- 统一当前正式项目身份为 **伴岛 / Beside（小岛）**；`couple-better-game` 仅保留为历史名称、兼容 slug、缓存 key、MCP 内部标识或 Production 兼容地址。
+- 重建 `README.md`、`docs/01-product.md`、`docs/02-architecture.md`、`docs/09-status-roadmap.md`、`docs/10-v2-life-redesign.md`、`docs/11-ai-write-architecture.md` 的当前事实口径。
+- `docs/09-status-roadmap.md` 现在明确区分 Production Web、GitHub main 与 Supabase schema/runtime，避免数据库 migration 已生效却被误写成 Web 已部署。
+- 当前文档纳入常吃食物、微信公众号测试号主通道 + PushPlus fallback、每日 21:00 记录完整性提醒等已生效能力。
+- 将 2026-09-11 的“饮食编辑页与 Service Worker 收口”阶段报告移入 `docs/archive/v2-evolution/`，并在文档索引中补充长期有效的 Meal V2 lifecycle。
+- 本轮**未获得 Production 部署授权，因此不发布 Web**；首页日期修复等待下一次明确授权。Supabase 每日完整性提醒已在本轮之前独立生效。
+- `vercel.json` 继续保持 `git.deploymentEnabled=false`。
+
+## 2026-09-11 — 常吃食物、紧凑饮食编辑器与 Service Worker 收口
+
+- 新增按 Cat / Fish 隔离的 `favorite_food_templates`：独立维护常吃食物，餐食编辑时直接复用，加入 Meal 时复制模板字段，不与历史餐食建立持续引用。
+- 饮食页增加常吃食物独立入口；新增食物先选择“新的食物 / 常吃食物”，固定食品不必重复录入名称、图片和营养信息。
+- 餐食编辑页收口为更紧凑的移动端结构；照片使用左侧缩略图 + 右侧操作，旋转 / 缩放移入独立 bottom sheet。
+- Service Worker 停止在慢网下优先回退旧导航 HTML，清理旧 life-shell cache，并在注册、focus、online、visibilitychange 时主动检查更新，减少旧页面长期驻留。
+- 对应常吃食物 schema 已进入 Production Supabase；Web 能力已完成受控 Production 发布。
+- 当前最新 2026-09-11 Production deployment：`dpl_99YXhXyGijb6oqSTeDEt7u9qNSfc`，source commit `5ab2b82eba7246a8b14bd3a2e7ede4df44282f42`，READY。
+- 发布完成后自动 Git 部署重新关闭。
+
 ## 2026-09-10 — 饮食编辑页可靠性与移动端收口
 
 - 修复餐食主记录保存成功、照片上传失败后仍停留在新增态的问题：立即缓存并锁定同一 Meal，后续只重试照片，避免重复加餐或主餐唯一冲突。
