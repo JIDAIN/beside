@@ -14,11 +14,11 @@
 
 截至 2026-09-14：
 
-- **Production Web**：当前正式线上版本来自 2026-09-11 的受控发布；Vercel 项目与兼容域名工作正常；
+- **Production Web**：最新受控发布为 `dpl_FXSFNP7HDAKQrkn9ZSAYQkuT43nn`，source commit `ea763a7e149ac26fcc1b0d765baab63adc181671`，状态 READY；
+- **首页日期**：已按请求、按 `Asia/Shanghai` 计算业务日期并动态渲染，Production 首屏验证为 `9月14日星期一`，不再固定部署日；
 - **Supabase**：当前 Production 数据库已包含常吃食物模板、每日 21:00 记录完整性提醒等最新 migration；
-- **GitHub main**：允许领先 Production；未获得当次明确授权时不自动发布；
-- **自动部署**：长期保持 `vercel.json -> git.deploymentEnabled=false`；
-- **当前 main 待下一次授权发布的 Web 修复**：首页业务日期改为按请求、按 `Asia/Shanghai` 计算，避免静态 HTML 固定为部署日。
+- **自动部署**：发布完成后已恢复 `vercel.json -> git.deploymentEnabled=false`；
+- **线上检查**：`/` 与 `/food` 均返回 HTTP 200，最新 Production 检查窗口未发现 error / fatal runtime 日志。
 
 完整的 Production / main / Supabase 边界以 [`docs/09-status-roadmap.md`](docs/09-status-roadmap.md) 为准。
 
