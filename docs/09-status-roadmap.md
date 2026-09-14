@@ -9,7 +9,7 @@
 
 伴岛当前核心生活记录、AI 接入、提醒、小信箱和 Legacy Game 隔离均已进入稳定使用阶段，没有发现阻止当前 Production 使用的核心故障。
 
-当前需要明确区分三层事实：
+当前事实分三层维护：
 
 ```text
 Production Web
@@ -17,7 +17,7 @@ Production Web
 != Supabase 当前 schema / runtime state
 ```
 
-允许 `main` 或数据库 migration 在受控情况下领先 Web Production；未获当次部署授权时，不把“已提交”写成“已上线”。
+`main` 或数据库 migration 可以在受控情况下领先 Web Production，但只有真实发布完成的内容才写成“已上线”。
 
 ## 2. 正式项目身份
 
@@ -36,34 +36,40 @@ Production    https://couple-better-game.vercel.app
 
 ## 3. 当前 Production Web
 
-Primary domain：
-
-```text
-https://couple-better-game.vercel.app
-```
-
 当前 Vercel Production：
 
 ```text
-deployment: dpl_99YXhXyGijb6oqSTeDEt7u9qNSfc
+deployment: dpl_FXSFNP7HDAKQrkn9ZSAYQkuT43nn
 state: READY
 target: production
-source commit: 5ab2b82eba7246a8b14bd3a2e7ede4df44282f42
+source commit: ea763a7e149ac26fcc1b0d765baab63adc181671
 ```
 
-该部署属于 2026-09-11 的受控发布，包含当时已完成的饮食紧凑编辑器、常吃食物、Service Worker 收口等 Web 代码。
+本次为 2026-09-14 获得明确授权后的受控发布，包含首页业务日期修复以及此前已在 `main` 收口的当前 Web 代码与文档事实源。
 
-2026-09-14 审查时：
+上线后已验证：
 
-- Production `/` 与 `/food` 返回 HTTP 200；
-- 页面 metadata 正式显示“伴岛”；
-- Vercel 最近检查窗口未发现 runtime error；
-- Vercel Project 名称为 `beside`；
-- Production 兼容域名继续保留旧地址。
+- `https://couple-better-game.vercel.app/` 返回 HTTP 200；
+- 首屏直接显示 `9月14日星期一`；
+- 根页面响应为 `private, no-cache, no-store`，不再把部署日缓存成首页“今天”；
+- `/food` 返回 HTTP 200；
+- metadata 正式显示“伴岛”；
+- 最新 Production 检查窗口未发现 error / fatal runtime 日志。
 
-## 4. 当前 GitHub main 与待发布差异
+首页当前实现为：
 
-`main` 可以领先 Production，但 `vercel.json` 必须保持：
+```text
+每次请求
+-> 服务端按 Asia/Shanghai 计算业务日期
+-> 作为 initialDate 传给 TodayLifePage
+-> 根页面动态渲染
+```
+
+对应 source regression test 已加入，禁止重新退化为 build-time date。
+
+## 4. 当前 GitHub main
+
+发布后已经重新关闭 Git 自动部署：
 
 ```json
 {
@@ -73,26 +79,7 @@ source commit: 5ab2b82eba7246a8b14bd3a2e7ede4df44282f42
 }
 ```
 
-截至本状态文档更新，`main` 相对当前 Production 的运行差异主要是：
-
-### 首页业务日期修复（待下一次授权发布）
-
-旧 Production 的 `/` 静态首屏 HTML 会把部署日写入首页标题；客户端 hydration 后通常能恢复本地日期，但弱网或首屏阶段可能短暂显示旧日期。
-
-当前 `main` 已改为：
-
-```text
-每次请求
--> 服务端按 Asia/Shanghai 计算业务日期
--> 作为 initialDate 传给 TodayLifePage
--> 首页强制动态渲染
-```
-
-并增加 source regression test，防止重新退化为 build-time date。
-
-这项修复目前**尚未部署 Production**。
-
-其余 2026-09-14 的新变化主要是数据库提醒 migration 与文档，不要求为了文档变更单独发布 Web。
+当前 `main` 可以继续包含发布后的文档同步提交；这些 docs-only commit 不代表需要再次部署 Production。
 
 ## 5. Supabase 当前状态
 
@@ -124,6 +111,7 @@ Reminder Center / Reminder Engine             ✅
 
 ```text
 今日 / 双人心情、睡眠、活动                  ✅ Production
+首页 Asia/Shanghai 动态业务日期               ✅ Production
 睡眠按起床日归档                            ✅ Production
 心情 / 睡眠删除                             ✅ Production
 饮食 Meal V2                               ✅ Production
@@ -136,6 +124,8 @@ Reminder Center / Reminder Engine             ✅
 体重                                         ✅ Production
 家庭药箱                                     ✅ Production
 小信箱 V2                                    ✅ Production
+Reminder Center                              ✅ Production
+每日 21:00 记录完整性提醒                    ✅ Production Supabase
 数据导出 / 导入 / 备份 / 恢复                ✅ Production
 Legacy Game 保留并隔离                       ✅ Production
 ```
@@ -163,15 +153,7 @@ AI 语义：
 - 补充已有餐食更新同一 Meal；
 - 饭后确认替换实际 items / 汇总并保留原 `mealDate / eatenAt`。
 
-### 常吃食物
-
-`favorite_food_templates` 是 Cat / Fish 各自隔离的模板：
-
-- 独立维护；
-- 适合咖啡、酸奶、饼干等固定食品；
-- 加入餐食时复制字段到普通 `meal_items`；
-- 当日临时份量不覆盖模板；
-- 编辑模板不回写历史 Meal。
+`favorite_food_templates` 是 Cat / Fish 各自隔离的常吃食物模板：加入餐食时复制到普通 `meal_items`，当日临时份量不会反向覆盖模板，模板修改也不会回写历史 Meal。
 
 ## 8. Reminder Center / 微信提醒
 
@@ -202,34 +184,7 @@ mailbox
   -> PushPlus
 ```
 
-### 每日 21:00 完整性提醒
-
-Cat / Fish 当前均已启用：
-
-```text
-timezone: Asia/Shanghai
-time: 21:00
-enabled: true
-```
-
-每天独立检查：
-
-```text
-心情
-睡眠（sleep_date = 当天起床日）
-早餐 confirmed
-午餐 confirmed
-晚餐 confirmed
-```
-
-规则：
-
-- 五项完整：静默；
-- 任一缺失：汇总成一条提醒；
-- `estimated` 不算完成；
-- `snack` 不参与必填完整性；
-- Cat / Fish 各算各的；
-- 同一 actor + date 使用 dedupe，避免正常路径重复发送。
+每日 21:00 完整性提醒对 Cat / Fish 独立检查：心情、睡眠、confirmed 早餐、午餐、晚餐；五项完整则静默，任一缺失则汇总成一条提醒。`estimated` 与 `snack` 不算必填完成项。
 
 完整说明见 `docs/14-wechat-reminders.md`。
 
@@ -242,17 +197,7 @@ draft -> 仅寄件人可见，可编辑 / 删除 / 寄出
 sent  -> 寄件人与收件人可见，永久只读
 ```
 
-当前 UI：
-
-```text
-收信箱 / 已寄出 / 待寄出
-手札 / 明信片筛选
-月份筛选
-手札信纸分页
-水平横向明信片
-```
-
-首次真正进入 `sent` 时，只给 recipient 生成一次 mailbox reminder；微信提醒不包含正文。
+当前 UI 包含收信箱 / 已寄出 / 待寄出、手札 / 明信片筛选、月份筛选、手札分页与水平横向明信片。首次真正进入 `sent` 时，只给 recipient 生成一次 mailbox reminder；微信提醒不包含正文。
 
 ## 10. AI / MCP 当前架构
 
@@ -315,7 +260,6 @@ life_mutate
 - 某些 MCP client 不透传图片字节时需要 media recovery；
 - Mailbox 暂无 per-user archive / hide-sent-copy 状态；
 - 微信公众平台当前使用测试号能力；
-- 首页业务日期修复已在 `main`，等待下一次获得明确授权时发布；
 - Production 自动部署长期关闭。
 
 这些都不是当前正常使用的阻塞项。
@@ -324,11 +268,10 @@ life_mutate
 
 默认进入“正常使用 + 小步迭代”：
 
-1. 下一次获得明确 Production 授权时，把首页业务日期修复一起发布；
-2. 继续按实际使用反馈修复具体问题，不做无目标大重构；
-3. 新增生理期等 domain 时复用现有 AI Access Core / Reminder Engine；
-4. 定期做权限、数据恢复、通知链路和 Production smoke 回归；
-5. 每次功能变化同步维护对应唯一主文档，避免状态文档再次漂移。
+1. 继续按真实使用反馈修复具体问题，不做无目标大重构；
+2. 新增生理期等 domain 时复用现有 AI Access Core / Reminder Engine；
+3. 定期做权限、数据恢复、通知链路和 Production smoke 回归；
+4. 每次功能变化同步维护对应唯一主文档，避免状态文档再次漂移。
 
 ## 15. 部署纪律
 
