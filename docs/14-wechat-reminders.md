@@ -1,7 +1,7 @@
 # 提醒中心与微信提醒
 
 状态：当前有效。  
-状态日期：2026-09-07。
+状态日期：2026-09-14。
 
 > 本文描述当前 Reminder Center、Supabase 云端调度、微信公众号测试号与 PushPlus 的正式提醒架构。历史 Google Drive / Apps Script Bridge 不再属于当前提醒链路。
 
@@ -173,16 +173,52 @@ primaryError（发生 fallback 时）
 
 ## 6. 其他提醒来源
 
-当前以下来源暂时继续走 PushPlus，不在本次迁移中扩大范围：
+当前以下来源继续走 PushPlus：
 
 ```text
 自定义提醒
 药箱到期
-纪念日
-每日未记录 system nudge
+纪念日 / 整百日
+每日记录完整性提醒
 ```
 
-这样可以先让“小信箱来信”作为微信公众号正式试运行场景，观察稳定性后再逐步迁移其他提醒。
+### 每日记录完整性提醒
+
+Cat / Fish 各自独立检查，每天 `21:00`（`Asia/Shanghai`）检查当天是否完整记录以下 5 项：
+
+```text
+心情
+睡眠（sleep_date 为当天起床日，即昨晚入睡 → 今天起床）
+早餐 confirmed
+午餐 confirmed
+晚餐 confirmed
+```
+
+规则：
+
+- 五项全部完成：静默，不发送提醒；
+- 任一缺失：只发送 1 条汇总提醒，并列出全部缺项；
+- `estimated` 餐前估算不算完成，只有 `confirmed` 算实际记录；
+- `snack` 不参与每日必填检查；
+- Cat / Fish 分开判断，不互相代替；
+- dedupe key 为 `daily_record:<actor>:<date>`，同一人同一天最多成功触发一次正常提醒。
+
+完整性判断由：
+
+```text
+private.life_daily_record_completeness(space_id, actor, record_date)
+```
+
+统一返回 `mood / sleep / breakfast / lunch / dinner / missingItems / missingKeys / complete`，避免微信提醒和未来 UI 各写一套判断。
+
+当前提醒示例：
+
+```text
+🌙 团子来检查今天的小记录啦
+主人～今天还差：午餐、晚餐。有空记一下吧～ 💗 ——团子
+```
+
+小信箱来信仍先走微信公众号测试号；以上其他来源目前继续走 PushPlus。
 
 ## 7. Reminder Center 数据模型
 
@@ -280,11 +316,13 @@ life-pushplus-reminders-v1
 
 这里的 cron 名称是历史名称；实际 Reminder Center dispatcher 已经具备按来源选择 provider 的能力，并不再意味着所有提醒都只走 PushPlus。
 
+每日记录完整性提醒不新增 cron：现有 5 分钟 dispatcher 在 `21:00` 后的 20 分钟窗口内检查，dedupe 保证同一人当天只生成一次正常投递。
+
 小信箱来信实例在信件第一次真正进入 `sent` 时即时生成，随后由最多约 5 分钟一次的统一调度投递。
 
-## 10. 2026-09-07 微信公众号验收
+## 10. 微信公众号验收
 
-已经完成：
+2026-09-07 已完成：
 
 ```text
 微信测试号 AppID / AppSecret                    ✅ Vault
@@ -306,7 +344,13 @@ PushPlus fallback                               ✅ Production DB
 - 完整 Reminder Engine 测试 Fish：微信请求遇到一次瞬时 `SSL_ERROR_SYSCALL`，系统自动切到 PushPlus，`pushplusFallbackSent=1` 且投递成功；
 - 两次端到端测试生成的临时 reminder / delivery 数据均已清理，残留为 0。
 
-这同时验证了“公众号正常走主通道”和“公众号临时不可用时 PushPlus 自动兜底”两条路径。
+2026-09-14 每日完整性提醒验收：
+
+- Production 偏好已将 Cat / Fish `daily_record_reminder_enabled=true`，时间统一为 `21:00`；
+- 2026-09-11 的真实历史数据五项齐全，Cat / Fish 均判定 `complete=true`；
+- 2026-09-14 验证 Cat 缺午餐、晚餐，Fish 缺五项，缺项数组与真实数据一致；
+- 同一 actor/date 连续 claim 两次时，第一次返回提醒、第二次为空；测试事务已 rollback，无测试 delivery 残留；
+- 汇总文案已验证可正确输出缺项。
 
 ## 11. 当前扩展原则
 
@@ -315,11 +359,11 @@ PushPlus fallback                               ✅ Production DB
 ```text
 业务模块
 → Reminder Engine
-→ Reminder Instance
+→ Reminder Instance / legacy daily claim
 → Notification Delivery
 → Provider
 ```
 
 不要为每个模块单独创建定时任务或各写一套微信发送逻辑。
 
-公众号测试稳定后，再决定是否把药箱 / 纪念日 / 自定义提醒切到公众号，以及是否申请正式的「团子」公众号。
+公众号测试稳定后，再决定是否把药箱 / 纪念日 / 自定义提醒 / 每日完整性提醒切到公众号，以及是否申请正式的「团子」公众号。
