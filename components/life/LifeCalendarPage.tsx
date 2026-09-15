@@ -8,7 +8,7 @@ import { MoodIcon } from "@/components/ui/MoodIcon";
 import { useLifeIdentity } from "@/components/life/LifeIdentityContext";
 import { prefetchStaleQuery, useStaleQuery } from "@/lib/client/use-stale-query";
 import { fetchLifeDay, fetchLifeMonthBundle, LifeApiError } from "@/lib/life/life-client";
-import { hydrateLifeMonthBundle, type LifeMonthBundle, type LifeMonthBundleDay } from "@/lib/life/month-bundle";
+import { type LifeMonthBundle, type LifeMonthBundleDay } from "@/lib/life/month-bundle";
 import { mealCaloriesForPartner, metricBubbleRem, moodCalendarSlots, sleepHoursForPartner, type CalendarView } from "@/lib/life/monthly-review";
 import type { MoodKey } from "@/lib/life/life-service";
 import { moodVisual } from "@/components/life/today/today-life-model";
@@ -54,20 +54,15 @@ export function LifeCalendarPage({ initialView = "mood", initialMonth }: { initi
   const [role, setRole] = useState<AppRoleSwitchValue>("me");
   const [month, setMonth] = useState(() => initialMonth ?? localMonth());
   const today = useMemo(() => localDate(), []);
-  const fetcher = useCallback(async () => {
-    if (!mePartnerKey || !taPartnerKey) return { month, days: [] } as LifeMonthBundle;
-    const bundle = await fetchLifeMonthBundle(month);
-    hydrateLifeMonthBundle(bundle, mePartnerKey, taPartnerKey);
-    return bundle;
-  }, [mePartnerKey, month, taPartnerKey]);
-  const query = useStaleQuery<LifeMonthBundle>({ key: `life-month-bundle:${month}`, fetcher, staleMs: 60_000 });
+  const fetcher = useCallback(() => fetchLifeMonthBundle(month), [month]);
+  const query = useStaleQuery<LifeMonthBundle>({ key: `life-month-bundle:${month}`, fetcher, staleMs: 60_000, enabled: Boolean(mePartnerKey && taPartnerKey) });
   const byDate = useMemo(() => new Map((query.data?.days ?? []).map((day) => [day.date, day])), [query.data]);
   const cells = useMemo(() => monthCells(month), [month]);
   const selectedPartner = role === "me" ? mePartnerKey : taPartnerKey;
   const error = query.error instanceof LifeApiError ? query.error.message : query.error?.message ?? null;
 
   const warmDay = useCallback((date: string) => {
-    void prefetchStaleQuery({ key: `life-day:${date}`, fetcher: () => fetchLifeDay(date), staleMs: 60_000 });
+    void prefetchStaleQuery({ key: `life-day:${date}`, fetcher: () => fetchLifeDay(date), staleMs: 60_000 }).catch(() => undefined);
   }, []);
 
   function dayContent(day: LifeMonthBundleDay | undefined) {

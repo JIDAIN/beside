@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { invalidateStaleQuery, useStaleQuery } from "@/lib/client/use-stale-query";
+import { readFetch } from "@/lib/client/read-fetch";
 import type { LifePartnerKey } from "@/lib/life/life-service";
 
 type ApiStatus = {
@@ -14,35 +16,21 @@ async function readError(response: Response) {
   return body?.error || "操作失败，请稍后再试";
 }
 
+async function fetchConfigured() {
+  const response = await readFetch("/api/life/notifications/pushplus", { cache: "no-store" });
+  if (!response.ok) throw new Error(await readError(response));
+  return ((await response.json()) as ApiStatus).configured === true;
+}
+
 export function LifeWechatReminderCard({ actor }: { actor: LifePartnerKey }) {
-  const [configured, setConfigured] = useState<boolean | null>(null);
+  const query = useStaleQuery({ key: `pushplus-status:${actor}`, fetcher: fetchConfigured });
+  const configured = query.data;
   const [token, setToken] = useState("");
   const [busy, setBusy] = useState<"save" | "test" | "clear" | null>(null);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const accountName = actor === "cat" ? "小猫" : "小鱼";
   const aiName = "团子";
-
-  useEffect(() => {
-    let cancelled = false;
-    void fetch("/api/life/notifications/pushplus", { cache: "no-store" })
-      .then(async (response) => {
-        if (!response.ok) throw new Error(await readError(response));
-        return (await response.json()) as ApiStatus;
-      })
-      .then((body) => {
-        if (!cancelled) setConfigured(body.configured === true);
-      })
-      .catch((reason: unknown) => {
-        if (!cancelled) {
-          setConfigured(false);
-          setError(reason instanceof Error ? reason.message : "读取微信提醒状态失败");
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [actor]);
 
   async function save() {
     const value = token.trim();
@@ -60,7 +48,8 @@ export function LifeWechatReminderCard({ actor }: { actor: LifePartnerKey }) {
         body: JSON.stringify({ token: value }),
       });
       if (!response.ok) throw new Error(await readError(response));
-      setConfigured(true);
+      query.update(true);
+      invalidateStaleQuery("life-reminder-settings");
       setToken("");
       setNotice(`${accountName}的微信提醒已保存，可以发送测试消息了。`);
     } catch (reason) {
@@ -92,7 +81,8 @@ export function LifeWechatReminderCard({ actor }: { actor: LifePartnerKey }) {
     try {
       const response = await fetch("/api/life/notifications/pushplus", { method: "DELETE" });
       if (!response.ok) throw new Error(await readError(response));
-      setConfigured(false);
+      query.update(false);
+      invalidateStaleQuery("life-reminder-settings");
       setToken("");
       setNotice(`${accountName}的微信提醒已解绑。`);
     } catch (reason) {
@@ -113,7 +103,7 @@ export function LifeWechatReminderCard({ actor }: { actor: LifePartnerKey }) {
               <p className="mt-1 text-[10px] leading-4 text-[var(--life-text-muted)]">{aiName}只会提醒当前账号，不会发到 Ta 的微信。</p>
             </div>
             <span className="shrink-0 text-[10px] font-bold text-[var(--life-text-muted)]">
-              {configured === null ? "读取中" : configured ? "已绑定" : "未绑定"}
+              {configured === undefined ? (query.error ? "读取失败" : "读取中") : configured ? "已绑定" : "未绑定"}
             </span>
           </div>
 
@@ -168,7 +158,7 @@ export function LifeWechatReminderCard({ actor }: { actor: LifePartnerKey }) {
             打开 PushPlus 获取 token
           </a>
           {notice ? <p className="mt-3 text-xs font-bold leading-5 text-[var(--life-teal-strong)]">{notice}</p> : null}
-          {error ? <p className="mt-3 text-xs font-bold leading-5 text-[var(--life-danger)]">{error}</p> : null}
+          {error || query.error ? <p className="mt-3 text-xs font-bold leading-5 text-[var(--life-danger)]">{error || query.error?.message}</p> : null}
         </div>
       </div>
     </section>

@@ -1,5 +1,6 @@
 "use client";
 
+import { invalidateStaleQuery } from "@/lib/client/use-stale-query";
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
 import { AppPageShell } from "@/components/ui/AppPageShell";
@@ -73,6 +74,7 @@ export function LifeAiPage() {
       if (!response.ok || !body?.ok) {
         throw new Error(body?.error || "AI 请求失败");
       }
+      invalidateStaleQuery("");
       setMessages((current) => [
         ...current,
         {

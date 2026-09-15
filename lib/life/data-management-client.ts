@@ -1,3 +1,5 @@
+import { clearStaleQueries } from "../client/use-stale-query";
+import { readFetch } from "../client/read-fetch";
 export type LifeBackupSnapshot = {
   id: string;
   scope: "user" | "config" | "full";
@@ -19,7 +21,7 @@ export class LifeDataManagementClientError extends Error {
 }
 
 async function request<T>(init?: RequestInit) {
-  const response = await fetch("/api/life/data-management", {
+  const response = await readFetch("/api/life/data-management", {
     ...init,
     headers: {
       "Content-Type": "application/json",
@@ -53,15 +55,19 @@ export async function exportLifeData() {
 }
 
 export async function restoreLifeBackup(snapshotId: string, confirmation: string) {
-  return request<{ ok: true; result: Record<string, unknown> }>({
+  const result = await request<{ ok: true; result: Record<string, unknown> }>({
     method: "POST",
     body: JSON.stringify({ action: "restore_backup", snapshotId, confirmation }),
   });
+  clearStaleQueries({ persisted: true });
+  return result;
 }
 
 export async function importLifeBackup(data: Record<string, unknown>, confirmation: string) {
-  return request<{ ok: true; result: Record<string, unknown> }>({
+  const result = await request<{ ok: true; result: Record<string, unknown> }>({
     method: "POST",
     body: JSON.stringify({ action: "import_backup", data, confirmation }),
   });
+  clearStaleQueries({ persisted: true });
+  return result;
 }

@@ -10,6 +10,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { readFetch } from "@/lib/client/read-fetch";
 import { parseIsoDate } from "@/lib/home/date-utils";
 import {
   createExchangeRecordFromPayload,
@@ -312,6 +313,7 @@ export function HomeResourcesProvider({
   const lastSyncedAtRef = useRef<string | null>(null);
   const hadLocalDataRef = useRef(false);
   const hasUnsyncedChangesRef = useRef(false);
+  const readInFlightRef = useRef(false);
   const syncInFlightRef = useRef(false);
   const pendingAutoSyncRef = useRef(false);
   const retryCountRef = useRef(0);
@@ -427,9 +429,12 @@ export function HomeResourcesProvider({
         return guard;
       }
 
-      setSyncStatus("正在加载");
+      if (readInFlightRef.current) return { ok: true };
+      readInFlightRef.current = true;
+      const stateAtRead = stateRef.current;
+      if (!options?.silent) setSyncStatus("正在加载");
       try {
-        const response = await fetch(`/data/couple-data.json?t=${Date.now()}`, {
+        const response = await readFetch(`/data/couple-data.json?t=${Date.now()}`, {
           cache: "no-store",
         });
         if (!response.ok) throw new Error("读取 GitHub 数据失败");
@@ -449,6 +454,8 @@ export function HomeResourcesProvider({
           return { ok: true };
         }
 
+        // A local edit or completed sync while the read was in flight takes priority.
+        if (stateRef.current !== stateAtRead) return { ok: true };
         const result = applyRemoteData(data, remoteUpdatedAt);
         if (!result.ok) {
           throw new Error(
@@ -464,7 +471,7 @@ export function HomeResourcesProvider({
         setSyncError(reason);
         setSyncStatus("同步失败");
         return { ok: false, reason, errorCode: "UNKNOWN" as const };
-      }
+      } finally { readInFlightRef.current = false; }
     },
     [applyRemoteData, setSyncError],
   );
@@ -521,6 +528,24 @@ export function HomeResourcesProvider({
     clearSyncError,
     setSyncError,
   ]);
+
+  useEffect(() => {
+    const revalidate = () => {
+      if (document.visibilityState !== "visible" || !navigator.onLine
+        || hasUnsyncedChangesRef.current || syncInFlightRef.current || readInFlightRef.current) return;
+      void reloadFromGitHub({ silent: true });
+    };
+    const timer = window.setInterval(revalidate, 30_000);
+    window.addEventListener("focus", revalidate);
+    window.addEventListener("online", revalidate);
+    document.addEventListener("visibilitychange", revalidate);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", revalidate);
+      window.removeEventListener("online", revalidate);
+      document.removeEventListener("visibilitychange", revalidate);
+    };
+  }, [reloadFromGitHub]);
 
   const tryRedeem = useCallback(
     (cost: { gems?: number; coins?: number }) => {

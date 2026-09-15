@@ -1,3 +1,4 @@
+import { readFetch } from "../client/read-fetch";
 import type { LifePartnerKey } from "./life-service";
 import type { WeightRecord, WeightWritePayload } from "./weight-service";
 
@@ -16,12 +17,12 @@ async function readJson<T>(response: Response): Promise<T> {
 }
 
 export async function fetchWeights(partnerKey: LifePartnerKey) {
-  const response = await fetch(`/api/life/weights?person=${partnerKey}`, { cache: "no-store", credentials: "same-origin" });
+  const response = await readFetch(`/api/life/weights?person=${partnerKey}`, { cache: "no-store", credentials: "same-origin" });
   return (await readJson<{ ok: true; weights: WeightRecord[] }>(response)).weights;
 }
 
 export async function createWeightRecord(payload: WeightWritePayload) {
-  const response = await fetch("/api/life/weights", {
+  const response = await readFetch("/api/life/weights", {
     method: "POST", credentials: "same-origin", cache: "no-store",
     headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
   });
@@ -29,7 +30,7 @@ export async function createWeightRecord(payload: WeightWritePayload) {
 }
 
 export async function updateWeightRecord(id: string, payload: WeightWritePayload) {
-  const response = await fetch(`/api/life/weights/${encodeURIComponent(id)}`, {
+  const response = await readFetch(`/api/life/weights/${encodeURIComponent(id)}`, {
     method: "PUT", credentials: "same-origin", cache: "no-store",
     headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
   });
@@ -37,7 +38,7 @@ export async function updateWeightRecord(id: string, payload: WeightWritePayload
 }
 
 export async function deleteWeightRecord(id: string) {
-  const response = await fetch(`/api/life/weights/${encodeURIComponent(id)}`, {
+  const response = await readFetch(`/api/life/weights/${encodeURIComponent(id)}`, {
     method: "DELETE", credentials: "same-origin", cache: "no-store",
   });
   return (await readJson<{ ok: true; weight: WeightRecord }>(response)).weight;

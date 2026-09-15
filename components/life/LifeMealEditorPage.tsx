@@ -290,7 +290,7 @@ export function LifeMealEditorPage() {
     if (!mealId || !partnerKey || !canEdit || invalidRequest) return;
     let cancelled = false;
     fetchMeals({ mealDate: initialDate, partnerKey }).then((records) => {
-      if (cancelled) return;
+      if (cancelled || dirtyRef.current) return;
       const found = records.find((record) => record.id === mealId && record.deletedAt == null) ?? null;
       if (!found) throw new Error("没有找到这餐记录");
       setMeal(found);

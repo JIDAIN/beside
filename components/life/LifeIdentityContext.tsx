@@ -10,11 +10,7 @@ import {
   rememberStaleQueryScope,
 } from "@/lib/client/use-stale-query";
 import { fetchLifeDay, fetchLifeMonthBundle } from "@/lib/life/life-client";
-import { hydrateLifeMonthBundle } from "@/lib/life/month-bundle";
 import { fetchLifeSettings } from "@/lib/life/settings-client";
-import { fetchWeights } from "@/lib/life/weight-client";
-import { fetchMedicines } from "@/lib/life/medicine-client";
-import { fetchMailboxLetters } from "@/lib/life/mailbox-client";
 import { preloadMealPhotos } from "@/lib/nutrition/meal-photo-cache";
 import { fetchMeals } from "@/lib/nutrition/meal-client";
 import type { MealRecord } from "@/lib/nutrition/meal-service";
@@ -94,21 +90,17 @@ function warmLifeEssentials(me: LifePartnerKey) {
     return preloadMealPhotos(meals, 1400);
   });
 
-  // Month/detail and Nest datasets are useful prefetches, but must not compete
-  // with the first visible screen. They start after the initial paint window.
-  window.setTimeout(() => {
-    void Promise.allSettled([
-      prefetchStaleQuery({
-        key: `life-month-bundle:${month}`,
-        fetcher: () => fetchLifeMonthBundle(month),
-        staleMs: 60_000,
-      }).then((bundle) => hydrateLifeMonthBundle(bundle, me, ta)),
-      prefetchStaleQuery({ key: `weights:${me}`, fetcher: () => fetchWeights(me) }),
-      prefetchStaleQuery({ key: `weights:${ta}`, fetcher: () => fetchWeights(ta) }),
-      prefetchStaleQuery({ key: "medicines", fetcher: fetchMedicines }),
-      prefetchStaleQuery({ key: "mailbox", fetcher: fetchMailboxLetters }),
-    ]);
-  }, 1200);
+  // Do not compete with the visible screen or bulk-write a monthly snapshot
+  // over independently refreshed day/meal caches. Warm the calendar only after
+  // essential reads finish, and only while this identity is still active.
+  void Promise.allSettled(essentialTasks).then(() => {
+    if (readStaleQueryScopeHint() !== me || document.visibilityState !== "visible") return;
+    return prefetchStaleQuery({
+      key: `life-month-bundle:${month}`,
+      fetcher: () => fetchLifeMonthBundle(month),
+      staleMs: 60_000,
+    });
+  }).catch(() => undefined);
 }
 
 function validPartner(value: unknown): value is LifePartnerKey {
@@ -149,7 +141,7 @@ export function LifeIdentityProvider({ children }: { children: ReactNode }) {
     let next = fallback;
     let authoritative = false;
     try {
-      const response = await fetch("/api/auth/session", { cache: "no-store" });
+      const response = await fetch("/api/auth/session", { cache: "no-store", signal: AbortSignal.timeout(15_000) });
       if (!response.ok) throw new Error("读取登录状态失败");
       const data = (await response.json()) as { authenticated?: boolean; identity?: { partnerKey?: LifePartnerKey } };
       next = data.authenticated && validPartner(data.identity?.partnerKey) ? data.identity.partnerKey : null;

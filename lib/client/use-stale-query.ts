@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 type CacheEntry<T> = {
   data?: T;
   updatedAt: number;
   revision: number;
   promise?: Promise<T>;
+  requestId?: symbol;
 };
 
 type PersistedEntry = {
@@ -19,8 +20,22 @@ type PersistedCache = {
   entries: Record<string, PersistedEntry>;
 };
 
+type CacheEvent = "update" | "invalidate" | "scope";
+const subscribers = new Map<string, Set<(event: CacheEvent) => void>>();
+export function subscribeStaleQuery(key: string, listener: (event: CacheEvent) => void) {
+  const listeners = subscribers.get(key) ?? new Set();
+  listeners.add(listener);
+  subscribers.set(key, listeners);
+  return () => { listeners.delete(listener); if (!listeners.size) subscribers.delete(key); };
+}
+function notifyQuery(key: string, event: CacheEvent) {
+  for (const listener of subscribers.get(key) ?? []) listener(event);
+}
+
+export const STALE_QUERY_TIMEOUT_MS = 15_000;
 const queryCache = new Map<string, CacheEntry<unknown>>();
 const CACHE_PREFIX = "couple-better-game:life-query:v2:";
+const MUTATION_SIGNAL_KEY = "couple-better-game:life-query-change";
 const SCOPE_HINT_KEY = "couple-better-game:life-scope";
 const MAX_PERSISTED_ENTRIES = 220;
 const MAX_PERSISTED_AGE_MS = 30 * 24 * 60 * 60 * 1000;
@@ -30,6 +45,8 @@ let activeScope: string | null = null;
 let hydratedScope: string | null = null;
 let revisionClock = 0;
 let scopeSerial = 0;
+let browserEventsInstalled = false;
+let persistTimer: ReturnType<typeof setTimeout> | undefined;
 
 class StaleQueryScopeChangedError extends Error {
   constructor() {
@@ -56,7 +73,8 @@ function nextRevision() {
 }
 
 function shouldPersistKey(key: string) {
-  return key.startsWith("life-day:")
+  return key.startsWith("life-month-bundle:")
+    || key.startsWith("life-day:")
     || key.startsWith("life-month:")
     || key.startsWith("meals:")
     || key.startsWith("weights:")
@@ -107,7 +125,34 @@ function ensureScopeFromHint() {
   hydrateScope(hint);
 }
 
+function installBrowserEvents() {
+  if (!browserReady() || browserEventsInstalled) return;
+  browserEventsInstalled = true;
+  window.addEventListener("pagehide", flushCurrentScope);
+  window.addEventListener("storage", (event) => {
+    if (event.key !== MUTATION_SIGNAL_KEY || !event.newValue) return;
+    try {
+      const message = JSON.parse(event.newValue) as { scope?: string };
+      if (message.scope === activeScope) invalidateStaleQuery("", false);
+    } catch { /* Ignore malformed hints. All facts still come from the API. */ }
+  });
+}
+
+function broadcastMutation() {
+  if (!browserReady() || !activeScope) return;
+  installBrowserEvents();
+  try {
+    window.localStorage.setItem(MUTATION_SIGNAL_KEY, JSON.stringify({ scope: activeScope, nonce: `${Date.now()}:${nextRevision()}` }));
+  } catch { /* Periodic and foreground revalidation remain available. */ }
+}
+
 function persistCurrentScope() {
+  installBrowserEvents();
+  if (!browserReady() || persistTimer) return;
+  persistTimer = setTimeout(() => { persistTimer = undefined; flushCurrentScope(); }, 100);
+}
+
+function flushCurrentScope() {
   if (!browserReady() || !activeScope) return;
   try {
     const cutoff = Date.now() - MAX_PERSISTED_AGE_MS;
@@ -132,11 +177,13 @@ function persistCurrentScope() {
 
 export function setStaleQueryScope(scope: "cat" | "fish" | null) {
   if (activeScope === scope && hydratedScope === scope) return;
+  flushCurrentScope();
   scopeSerial += 1;
   activeScope = scope;
   hydratedScope = null;
   queryCache.clear();
   if (scope) hydrateScope(scope);
+  for (const key of subscribers.keys()) notifyQuery(key, "scope");
 }
 
 export function rememberStaleQueryScope(scope: "cat" | "fish") {
@@ -173,6 +220,8 @@ export function peekStaleQuery<T>(key: string) {
 export function setStaleQueryData<T>(key: string, data: T) {
   queryCache.set(key, { data, updatedAt: Date.now(), revision: nextRevision() });
   persistCurrentScope();
+  notifyQuery(key, "update");
+  broadcastMutation();
 }
 
 export function setStaleQueryDataMany(entries: Array<{ key: string; data: unknown }>) {
@@ -182,20 +231,31 @@ export function setStaleQueryDataMany(entries: Array<{ key: string; data: unknow
     queryCache.set(entry.key, { data: entry.data, updatedAt, revision });
   }
   persistCurrentScope();
+  for (const entry of entries) notifyQuery(entry.key, "update");
+  broadcastMutation();
 }
 
-export function invalidateStaleQuery(prefix: string) {
+export function invalidateStaleQuery(prefix: string, broadcast = true) {
   const revision = nextRevision();
   for (const [key, entry] of queryCache.entries()) {
     if (!key.startsWith(prefix)) continue;
     queryCache.set(key, { ...entry, updatedAt: 0, revision });
   }
   persistCurrentScope();
+  for (const key of subscribers.keys()) {
+    if (key.startsWith(prefix)) notifyQuery(key, "invalidate");
+  }
+  if (broadcast) broadcastMutation();
 }
 
 export function clearStaleQueries({ persisted = false }: { persisted?: boolean } = {}) {
   ensureScopeFromHint();
+  clearTimeout(persistTimer);
+  persistTimer = undefined;
+  scopeSerial += 1;
   queryCache.clear();
+  for (const key of subscribers.keys()) notifyQuery(key, "scope");
+  broadcastMutation();
   if (persisted && browserReady() && activeScope) {
     try {
       window.localStorage.removeItem(storageKey(activeScope));
@@ -218,7 +278,12 @@ function runStaleQueryFetch<T>({
 }): Promise<T> {
   const requestRevision = cached?.revision ?? 0;
   const requestScopeSerial = scopeSerial;
-  const rawPromise = fetcher();
+  const requestId = Symbol(key);
+  let timeout: ReturnType<typeof setTimeout>;
+  const rawPromise = new Promise<T>((resolve, reject) => {
+    timeout = setTimeout(() => reject(new Error("读取超时，正在自动重试")), STALE_QUERY_TIMEOUT_MS);
+    try { Promise.resolve(fetcher()).then(resolve, reject); } catch (cause) { reject(cause); }
+  }).finally(() => clearTimeout(timeout));
 
   const guardedPromise: Promise<T> = (async () => {
     try {
@@ -247,11 +312,12 @@ function runStaleQueryFetch<T>({
 
       queryCache.set(key, { data, updatedAt: Date.now(), revision: requestRevision });
       persistCurrentScope();
+      notifyQuery(key, "update");
       return data;
     } catch (cause) {
       if (!(cause instanceof StaleQueryScopeChangedError)) {
         const latest = entryFor<T>(key);
-        if (latest?.revision === requestRevision) {
+        if (requestScopeSerial === scopeSerial && latest?.requestId === requestId) {
           queryCache.set(key, {
             data: latest.data,
             updatedAt: latest.updatedAt,
@@ -268,6 +334,7 @@ function runStaleQueryFetch<T>({
     updatedAt: cached?.updatedAt ?? 0,
     revision: requestRevision,
     promise: guardedPromise,
+    requestId,
   });
   return guardedPromise;
 }
@@ -294,20 +361,27 @@ export function useStaleQuery<T>({
   key,
   fetcher,
   staleMs = 30_000,
+  enabled = true,
 }: {
   key: string;
   fetcher: () => Promise<T>;
   staleMs?: number;
+  enabled?: boolean;
 }) {
   // Keep the server HTML and the first hydration render identical. Persisted
   // browser data is restored in a layout effect, which runs before paint, so a
   // returning user gets cached content without a hydration mismatch or flash.
+  const generation = useRef(0);
   const [data, setData] = useState<T | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   const refresh = useCallback(async (force = false) => {
+    if (!enabled) return undefined;
+    const requestGeneration = generation.current;
+    const requestScope = scopeSerial;
+    const isCurrent = () => generation.current === requestGeneration && scopeSerial === requestScope;
     const cached = entryFor<T>(key);
     const fresh = !force && cached?.data !== undefined && Date.now() - cached.updatedAt < staleMs;
     if (fresh) {
@@ -321,10 +395,13 @@ export function useStaleQuery<T>({
 
     try {
       const next = await prefetchStaleQuery({ key, fetcher, staleMs, force });
-      setData(next);
+      if (!isCurrent()) return undefined;
+      const current = peekStaleQuery<T>(key) ?? next;
+      setData(current);
       setError(null);
-      return next;
+      return current;
     } catch (cause) {
+      if (!isCurrent()) return undefined;
       if (cause instanceof StaleQueryScopeChangedError) {
         setError(null);
         return undefined;
@@ -332,29 +409,44 @@ export function useStaleQuery<T>({
       const fallback = entryFor<T>(key)?.data;
       if (fallback !== undefined) {
         setData(fallback);
-        setError(null);
-      } else {
-        setError(cause instanceof Error ? cause : new Error("数据暂时没有加载出来"));
       }
+      setError(cause instanceof Error ? cause : new Error("数据暂时没有加载出来"));
       throw cause;
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (isCurrent()) { setLoading(false); setRefreshing(false); }
     }
-  }, [fetcher, key, staleMs]);
+  }, [enabled, fetcher, key, staleMs]);
 
   useBrowserLayoutEffect(() => {
+    generation.current += 1;
+    let scopeTimer: ReturnType<typeof setTimeout> | undefined;
+    const unsubscribe = subscribeStaleQuery(key, (event) => {
+      if (event === "scope") generation.current += 1;
+      const next = peekStaleQuery<T>(key);
+      setData(next);
+      setLoading(next === undefined);
+      if (event === "update") setError(null);
+      else if (event === "scope") {
+        scopeTimer = setTimeout(() => { if (activeScope) void refresh(true).catch(() => undefined); }, 0);
+      } else void refresh(true).catch(() => undefined);
+    });
     const cached = peekStaleQuery<T>(key);
     setData(cached);
     setLoading(cached === undefined);
     // Always verify persisted/in-memory data after a screen mounts. Cached content
     // stays visible while this forced read runs, preserving the no-flash UX.
     void refresh(true).catch(() => undefined);
+    return () => { generation.current += 1; clearTimeout(scopeTimer); unsubscribe(); };
   }, [key, refresh]);
 
   useEffect(() => {
     if (!browserReady()) return;
-    const revalidate = () => { void refresh(true).catch(() => undefined); };
+    const revalidate = () => {
+      if (document.visibilityState !== "visible" || !navigator.onLine) return;
+      void refresh(true).catch(() => undefined);
+    };
+    // External MCP / partner writes cannot emit a browser event. Reconcile while visible.
+    const interval = window.setInterval(revalidate, 30_000);
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") revalidate();
     };
@@ -363,11 +455,23 @@ export function useStaleQuery<T>({
     window.addEventListener("focus", revalidate);
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
+      window.clearInterval(interval);
       window.removeEventListener("online", revalidate);
       window.removeEventListener("focus", revalidate);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [refresh]);
+
+  const failures = useRef(0);
+  useEffect(() => {
+    if (!error) { failures.current = 0; return; }
+    if (failures.current >= 2) return;
+    const timer = setTimeout(() => {
+      failures.current += 1;
+      if (typeof navigator === "undefined" || navigator.onLine) void refresh(true).catch(() => undefined);
+    }, 2_000 * (failures.current + 1));
+    return () => clearTimeout(timer);
+  }, [error, refresh]);
 
   const update = useCallback((next: T | ((current: T | undefined) => T)) => {
     const current = peekStaleQuery<T>(key);

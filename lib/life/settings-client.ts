@@ -1,3 +1,4 @@
+import { readFetch } from "../client/read-fetch";
 import { normalizeLifeSettings, type LifeSettings, type LifeSettingsPatch } from "./settings-service";
 
 export class LifeSettingsApiError extends Error {
@@ -9,7 +10,7 @@ export class LifeSettingsApiError extends Error {
 type ApiError = { error?: string };
 
 async function requestJson<T>(input: RequestInfo | URL, init?: RequestInit): Promise<T> {
-  const response = await fetch(input, {
+  const response = await readFetch(input, {
     ...init,
     headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
     cache: "no-store",

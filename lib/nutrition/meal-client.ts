@@ -1,3 +1,4 @@
+import { readFetch } from "../client/read-fetch";
 import type {
   MealPhotoDisplay,
   MealQuery,
@@ -59,7 +60,7 @@ export async function fetchMeals(query: MealQuery) {
   const params = new URLSearchParams({ date: query.mealDate });
   if (query.partnerKey) params.set("person", query.partnerKey);
 
-  const response = await fetch(`/api/meals?${params.toString()}`, {
+  const response = await readFetch(`/api/meals?${params.toString()}`, {
     method: "GET",
     credentials: "same-origin",
     cache: "no-store",
@@ -69,7 +70,7 @@ export async function fetchMeals(query: MealQuery) {
 }
 
 export async function createMealRecord(payload: MealWritePayload) {
-  const response = await fetch("/api/meals", {
+  const response = await readFetch("/api/meals", {
     method: "POST",
     credentials: "same-origin",
     cache: "no-store",
@@ -84,7 +85,7 @@ export async function updateMealRecord(
   mealId: string,
   payload: MealWritePayload,
 ) {
-  const response = await fetch(`/api/meals/${encodeURIComponent(mealId)}`, {
+  const response = await readFetch(`/api/meals/${encodeURIComponent(mealId)}`, {
     method: "PUT",
     credentials: "same-origin",
     cache: "no-store",
@@ -96,7 +97,7 @@ export async function updateMealRecord(
 }
 
 export async function deleteMealRecord(mealId: string) {
-  const response = await fetch(`/api/meals/${encodeURIComponent(mealId)}`, {
+  const response = await readFetch(`/api/meals/${encodeURIComponent(mealId)}`, {
     method: "DELETE",
     credentials: "same-origin",
     cache: "no-store",
@@ -112,7 +113,7 @@ export function mealPhotoUrl(meal: MealRecord) {
 export async function uploadMealPhoto(mealId: string, file: File) {
   const form = new FormData();
   form.set("file", file);
-  const response = await fetch(`/api/meals/${encodeURIComponent(mealId)}/photo`, {
+  const response = await readFetch(`/api/meals/${encodeURIComponent(mealId)}/photo`, {
     method: "PUT",
     credentials: "same-origin",
     cache: "no-store",
@@ -123,7 +124,7 @@ export async function uploadMealPhoto(mealId: string, file: File) {
 }
 
 export async function updateMealPhotoDisplay(mealId: string, display: MealPhotoDisplay) {
-  const response = await fetch(`/api/meals/${encodeURIComponent(mealId)}/photo`, {
+  const response = await readFetch(`/api/meals/${encodeURIComponent(mealId)}/photo`, {
     method: "PATCH",
     credentials: "same-origin",
     cache: "no-store",
@@ -135,7 +136,7 @@ export async function updateMealPhotoDisplay(mealId: string, display: MealPhotoD
 }
 
 export async function deleteMealPhoto(mealId: string) {
-  const response = await fetch(`/api/meals/${encodeURIComponent(mealId)}/photo`, {
+  const response = await readFetch(`/api/meals/${encodeURIComponent(mealId)}/photo`, {
     method: "DELETE",
     credentials: "same-origin",
     cache: "no-store",

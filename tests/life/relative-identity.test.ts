@@ -32,8 +32,8 @@ describe("relative me / Ta identity", () => {
     expect(identity).toContain("startInitialWarmup(next)");
     expect(identity).toContain("warmLifeEssentials");
     expect(identity).not.toContain("bootstrapReady");
-    expect(identity).toContain('key: "medicines"');
-    expect(identity).toContain('key: "mailbox"');
+    expect(identity).not.toContain('key: "medicines"');
+    expect(identity).not.toContain('key: "mailbox"');
     expect(identity).toContain('key: "life-settings"');
     expect(login).toContain("await refreshIdentity()");
     expect(me).toContain("await refreshIdentity()");

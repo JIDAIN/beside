@@ -20,6 +20,8 @@
 - **自动部署**：发布完成后已恢复 `vercel.json -> git.deploymentEnabled=false`；
 - **线上检查**：`/` 与 `/food` 均返回 HTTP 200，最新 Production 检查窗口未发现 error / fatal runtime 日志。
 
+2026-09-15：月历及全站共享读取刷新修复已完成代码与自动回归，尚未部署；浏览器验收受本地地址访问限制，发布后需补验。
+
 完整的 Production / main / Supabase 边界以 [`docs/09-status-roadmap.md`](docs/09-status-roadmap.md) 为准。
 
 ## 产品入口

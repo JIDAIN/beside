@@ -1,3 +1,4 @@
+import { readFetch } from "../client/read-fetch";
 import type { LifeMonthMoodRecord } from "./calendar-service";
 import type { LifeMonthBundle } from "./month-bundle";
 import type {
@@ -27,7 +28,7 @@ type ApiErrorBody = {
 };
 
 async function fetchJson<T>(input: RequestInfo | URL, init?: RequestInit): Promise<T> {
-  const response = await fetch(input, {
+  const response = await readFetch(input, {
     ...init,
     headers: {
       "Content-Type": "application/json",

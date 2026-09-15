@@ -1,7 +1,8 @@
+import { readFetch } from "../client/read-fetch";
 import type { MedicineRecord, MedicineWritePayload } from "./medicine-service";
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(url, { ...init, headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) }, cache: "no-store" });
+  const response = await readFetch(url, { ...init, headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) }, cache: "no-store" });
   if (!response.ok) {
     const body = await response.json().catch(() => null) as { error?: string } | null;
     throw new Error(body?.error ?? "药箱请求失败");

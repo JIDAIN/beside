@@ -1,3 +1,4 @@
+import { readFetch } from "../client/read-fetch";
 export type LifeReminderStatus = "pending" | "snoozed" | "completed" | "dismissed";
 export type LifeReminderSourceKind = "custom" | "medicine" | "anniversary" | "system" | "mailbox";
 
@@ -36,7 +37,7 @@ async function readJson<T>(response: Response): Promise<T> {
 }
 
 export async function fetchLifeReminders() {
-  const response = await fetch("/api/life/reminders", { cache: "no-store" });
+  const response = await readFetch("/api/life/reminders", { cache: "no-store" });
   const body = await readJson<{ ok: true; items: LifeReminderItem[] }>(response);
   return Array.isArray(body.items) ? body.items : [];
 }
@@ -47,7 +48,7 @@ export async function createLifeReminder(input: {
   content?: string;
   dueAt: string;
 }) {
-  const response = await fetch("/api/life/reminders", {
+  const response = await readFetch("/api/life/reminders", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
@@ -60,7 +61,7 @@ export async function actOnLifeReminder(
   action: "complete" | "dismiss" | "snooze",
   snoozeUntil?: string | null,
 ) {
-  const response = await fetch("/api/life/reminders", {
+  const response = await readFetch("/api/life/reminders", {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ id, action, snoozeUntil: snoozeUntil ?? null }),
@@ -69,7 +70,7 @@ export async function actOnLifeReminder(
 }
 
 export async function fetchLifeReminderSettings() {
-  const response = await fetch("/api/life/reminders/settings", { cache: "no-store" });
+  const response = await readFetch("/api/life/reminders/settings", { cache: "no-store" });
   const body = await readJson<{ ok: true; settings: LifeReminderSettings }>(response);
   return body.settings;
 }
@@ -78,7 +79,7 @@ export async function saveLifeReminderSettings(input: {
   medicineReminderEnabled: boolean;
   medicineOffsets: number[];
 }) {
-  const response = await fetch("/api/life/reminders/settings", {
+  const response = await readFetch("/api/life/reminders/settings", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),

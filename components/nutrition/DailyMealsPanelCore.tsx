@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { invalidateStaleQuery, useStaleQuery } from "../../lib/client/use-stale-query";
 import { Title } from "animal-island-ui";
 import {
   deleteMealRecord,
@@ -349,67 +350,17 @@ export function DailyMealsPanelCore({
   const [selectedDate, setSelectedDate] = useState(today);
   const [selectedPartner, setSelectedPartner] =
     useState<NutritionPartnerKey>("fish");
-  const [meals, setMeals] = useState<MealRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const fetcher = useCallback(() => fetchMeals({ mealDate: selectedDate, partnerKey: selectedPartner }), [selectedDate, selectedPartner]);
+  const query = useStaleQuery({ key: `meals:${selectedPartner}:${selectedDate}`, fetcher });
+  const meals = useMemo(() => sortMeals(query.data ?? []), [query.data]);
+  const loading = query.loading;
+  const error = query.error ? mealLoadError(query.error) : null;
   const [editorMeal, setEditorMeal] = useState<MealRecord | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<MealRecord | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  const requestIdRef = useRef(0);
-
-  const loadMeals = useCallback(async () => {
-    const requestId = requestIdRef.current + 1;
-    requestIdRef.current = requestId;
-    setLoading(true);
-    setError(null);
-
-    try {
-      const records = await fetchMeals({
-        mealDate: selectedDate,
-        partnerKey: selectedPartner,
-      });
-      if (requestId !== requestIdRef.current) return;
-      setMeals(sortMeals(records));
-    } catch (caught) {
-      if (requestId !== requestIdRef.current) return;
-      setMeals([]);
-      setError(mealLoadError(caught));
-    } finally {
-      if (requestId === requestIdRef.current) setLoading(false);
-    }
-  }, [selectedDate, selectedPartner]);
-
-  useEffect(() => {
-    const requestId = requestIdRef.current + 1;
-    requestIdRef.current = requestId;
-    let cancelled = false;
-
-    void fetchMeals({
-      mealDate: selectedDate,
-      partnerKey: selectedPartner,
-    })
-      .then((records) => {
-        if (cancelled || requestId !== requestIdRef.current) return;
-        setMeals(sortMeals(records));
-        setError(null);
-      })
-      .catch((caught: unknown) => {
-        if (cancelled || requestId !== requestIdRef.current) return;
-        setMeals([]);
-        setError(mealLoadError(caught));
-      })
-      .finally(() => {
-        if (!cancelled && requestId === requestIdRef.current) {
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedDate, selectedPartner]);
+  const loadMeals = () => query.refresh(true);
 
   useEffect(() => {
     if (!toast) return;
@@ -425,14 +376,10 @@ export function DailyMealsPanelCore({
   );
 
   function selectDate(date: string) {
-    setLoading(true);
-    setError(null);
     setSelectedDate(date);
   }
 
   function selectPartner(partner: NutritionPartnerKey) {
-    setLoading(true);
-    setError(null);
     setSelectedPartner(partner);
   }
 
@@ -451,6 +398,8 @@ export function DailyMealsPanelCore({
     setDeleting(true);
     try {
       await deleteMealRecord(pendingDelete.id);
+      query.update((current) => (current ?? []).filter((meal) => meal.id !== pendingDelete.id));
+      invalidateStaleQuery(`life-month-bundle:${pendingDelete.mealDate.slice(0, 7)}`);
       setPendingDelete(null);
       setToast("这餐已经删除");
       await loadMeals();
@@ -582,11 +531,11 @@ export function DailyMealsPanelCore({
           initialDate={selectedDate}
           onClose={() => setEditorOpen(false)}
           onSaved={(saved) => {
+            invalidateStaleQuery("meals:");
+            invalidateStaleQuery("life-month-bundle:");
             setEditorOpen(false);
             setToast(editorMeal ? "这餐已经更新" : "这餐已经记下");
             if (saved.partnerKey !== selectedPartner || saved.mealDate !== selectedDate) {
-              setLoading(true);
-              setError(null);
               setSelectedPartner(saved.partnerKey);
               setSelectedDate(saved.mealDate);
             } else {

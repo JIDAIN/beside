@@ -17,11 +17,11 @@ describe("R8.7 non-blocking startup and prewarm", () => {
     expect(chrome).not.toContain("MIN_SPLASH_MS");
   });
 
-  it("hydrates the whole current month into the canonical day and meal cache before reveal", () => {
+  it("warms the current month without overwriting day and meal snapshots", () => {
     const identity = source("components/life/LifeIdentityContext.tsx");
     const bundle = source("lib/life/month-bundle.ts");
     expect(identity).toContain("fetchLifeMonthBundle(month)");
-    expect(identity).toContain("hydrateLifeMonthBundle(bundle, me, ta)");
+    expect(identity).not.toContain("hydrateLifeMonthBundle(");
     expect(identity).toContain("fetchLifeSettings");
     expect(bundle).toContain("life-day:${item.date}");
     expect(bundle).toContain("meals:${me}:${item.date}");
@@ -45,19 +45,19 @@ describe("R8.7 non-blocking startup and prewarm", () => {
     expect(food).toContain("priority");
   });
 
-  it("keeps heavier secondary screens warming after the app is interactive", () => {
+  it("does not prefetch unrelated secondary screens on startup", () => {
     const identity = source("components/life/LifeIdentityContext.tsx");
-    expect(identity).toContain("fetchWeights(me)");
-    expect(identity).toContain("fetchMedicines");
-    expect(identity).toContain("fetchMailboxLetters");
+    expect(identity).not.toContain("fetchWeights(me)");
+    expect(identity).not.toContain("fetchMedicines");
+    expect(identity).not.toContain("fetchMailboxLetters");
     expect(identity).toContain("void Promise.allSettled");
-    expect(identity).toContain("}, 1200)");
+    expect(identity).not.toContain("}, 1200)");
   });
 
-  it("hydrates every opened calendar month and warms only the tapped day's life record", () => {
+  it("loads month independently and warms only the tapped day's life record", () => {
     const calendar = source("components/life/LifeCalendarPage.tsx");
     expect(calendar).toContain("fetchLifeMonthBundle(month)");
-    expect(calendar).toContain("hydrateLifeMonthBundle(bundle, mePartnerKey, taPartnerKey)");
+    expect(calendar).not.toContain("hydrateLifeMonthBundle(");
     expect(calendar).toContain("const warmDay = useCallback");
     expect(calendar).toContain("prefetchStaleQuery({ key: `life-day:${date}`");
     expect(calendar).not.toContain("preloadMealPhotos");

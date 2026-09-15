@@ -1,3 +1,4 @@
+import { readFetch } from "../client/read-fetch";
 import type {
   MailboxLetter,
   MailboxStatus,
@@ -5,7 +6,7 @@ import type {
 } from "./mailbox-service";
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(url, {
+  const response = await readFetch(url, {
     ...init,
     headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
     cache: "no-store",

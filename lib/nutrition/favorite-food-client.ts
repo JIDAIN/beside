@@ -1,3 +1,4 @@
+import { readFetch } from "../client/read-fetch";
 import type { FavoriteFoodRecord, FavoriteFoodWritePayload } from "./favorite-food-service";
 
 type FavoriteFoodListResponse = { ok: true; foods: FavoriteFoodRecord[] };
@@ -31,7 +32,7 @@ async function readJson<T>(response: Response): Promise<T> {
 
 export async function fetchFavoriteFoods(partnerKey: FavoriteFoodWritePayload["partnerKey"]) {
   const params = new URLSearchParams({ person: partnerKey });
-  const response = await fetch(`/api/favorite-foods?${params.toString()}`, {
+  const response = await readFetch(`/api/favorite-foods?${params.toString()}`, {
     method: "GET",
     credentials: "same-origin",
     cache: "no-store",
@@ -41,7 +42,7 @@ export async function fetchFavoriteFoods(partnerKey: FavoriteFoodWritePayload["p
 }
 
 export async function createFavoriteFood(payload: FavoriteFoodWritePayload) {
-  const response = await fetch("/api/favorite-foods", {
+  const response = await readFetch("/api/favorite-foods", {
     method: "POST",
     credentials: "same-origin",
     cache: "no-store",
@@ -53,7 +54,7 @@ export async function createFavoriteFood(payload: FavoriteFoodWritePayload) {
 }
 
 export async function updateFavoriteFood(id: string, payload: FavoriteFoodWritePayload) {
-  const response = await fetch(`/api/favorite-foods/${encodeURIComponent(id)}`, {
+  const response = await readFetch(`/api/favorite-foods/${encodeURIComponent(id)}`, {
     method: "PUT",
     credentials: "same-origin",
     cache: "no-store",
@@ -65,7 +66,7 @@ export async function updateFavoriteFood(id: string, payload: FavoriteFoodWriteP
 }
 
 export async function deleteFavoriteFood(id: string) {
-  const response = await fetch(`/api/favorite-foods/${encodeURIComponent(id)}`, {
+  const response = await readFetch(`/api/favorite-foods/${encodeURIComponent(id)}`, {
     method: "DELETE",
     credentials: "same-origin",
     cache: "no-store",

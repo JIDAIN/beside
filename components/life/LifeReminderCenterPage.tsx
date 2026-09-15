@@ -1,7 +1,8 @@
 "use client";
 
+import { invalidateStaleQuery, useStaleQuery } from "@/lib/client/use-stale-query";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useLifeIdentity } from "@/components/life/LifeIdentityContext";
 import { AppPageShell } from "@/components/ui/AppPageShell";
 import {
@@ -142,9 +143,12 @@ function ReminderSection({
 
 export function LifeReminderCenterPage() {
   const { currentPartnerKey } = useLifeIdentity();
-  const [items, setItems] = useState<LifeReminderItem[]>([]);
-  const [settings, setSettings] = useState<LifeReminderSettings | null>(null);
-  const [medicineOffsets, setMedicineOffsets] = useState<number[]>([]);
+  const itemsQuery = useStaleQuery({ key: "life-reminders-home", fetcher: fetchLifeReminders });
+  const items = useMemo(() => itemsQuery.data ?? [], [itemsQuery.data]);
+  const settingsQuery = useStaleQuery<LifeReminderSettings>({ key: "life-reminder-settings", fetcher: fetchLifeReminderSettings });
+  const settings = settingsQuery.data;
+  const [offsetDraft, setMedicineOffsets] = useState<number[] | null>(null);
+  const medicineOffsets = offsetDraft ?? settings?.medicineOffsets ?? [];
   const [title, setTitle] = useState("");
   const [due, setDue] = useState("");
   const [scope, setScope] = useState<"cat" | "fish" | "both">("both");
@@ -154,33 +158,10 @@ export function LifeReminderCenterPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  const applyLoadedState = useCallback((nextItems: LifeReminderItem[], nextSettings: LifeReminderSettings) => {
-    setItems(nextItems);
-    setSettings(nextSettings);
-    setMedicineOffsets(nextSettings.medicineOffsets);
-  }, []);
-
-  const load = useCallback(async () => {
-    const [nextItems, nextSettings] = await Promise.all([
-      fetchLifeReminders(),
-      fetchLifeReminderSettings(),
-    ]);
-    applyLoadedState(nextItems, nextSettings);
-  }, [applyLoadedState]);
-
-  useEffect(() => {
-    let cancelled = false;
-    Promise.all([fetchLifeReminders(), fetchLifeReminderSettings()])
-      .then(([nextItems, nextSettings]) => {
-        if (!cancelled) applyLoadedState(nextItems, nextSettings);
-      })
-      .catch((cause: unknown) => {
-        if (!cancelled) setError(cause instanceof Error ? cause.message : "读取提醒失败");
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [applyLoadedState]);
+  async function load() {
+    invalidateStaleQuery("life-reminders-home");
+    await itemsQuery.refresh(true);
+  }
 
   const groups = useMemo(() => {
     const today = dateKey(new Date());
@@ -243,6 +224,7 @@ export function LifeReminderCenterPage() {
 
   function toggleMedicineOffset(value: number) {
     setMedicineOffsets((current) => {
+      current = current ?? medicineOffsets;
       if (current.includes(value)) {
         if (current.length === 1) return current;
         return current.filter((item) => item !== value);
@@ -261,10 +243,10 @@ export function LifeReminderCenterPage() {
         medicineReminderEnabled: enabled,
         medicineOffsets,
       });
-      setSettings(next);
+      settingsQuery.update(next);
       setMedicineOffsets(next.medicineOffsets);
       setNotice(enabled ? "药箱提醒设置已保存。" : "药箱提醒已关闭。");
-      setItems(await fetchLifeReminders());
+      await load();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "保存提醒设置失败");
     } finally {
@@ -317,9 +299,9 @@ export function LifeReminderCenterPage() {
           </div>
         </section>
 
-        {error ? (
+        {error || itemsQuery.error || settingsQuery.error ? (
           <p className="rounded-2xl bg-[color:color-mix(in_srgb,var(--life-coral)_14%,white)] px-3 py-2.5 text-xs font-bold text-[var(--life-danger)]">
-            {error}
+            {error || itemsQuery.error?.message || settingsQuery.error?.message}
           </p>
         ) : null}
         {notice ? (
