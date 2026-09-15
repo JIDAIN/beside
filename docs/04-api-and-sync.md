@@ -308,7 +308,7 @@ Island Life 浏览器缓存只属于可重建的 stale read model：
 
 缓存不参与权限判断，也不是第二数据库。mutation 后必须防止旧 in-flight read 覆盖新写入结果。
 
-当前客户端读取策略（2026-09-15，待发布）：
+当前客户端读取策略（2026-09-15，已发布）：
 
 - `useStaleQuery` 按 key 通知已挂载组件；写入回读同步到页面，失效时主动重读，不依赖手动刷新。
 - 缓存按 Cat / Fish scope 隔离；请求带 scope 与 revision 校验，切账号、切日期/月或写入后不接受旧请求回滚。

@@ -12,15 +12,15 @@
 
 ## 当前状态
 
-截至 2026-09-14：
+截至 2026-09-15：
 
-- **Production Web**：最新受控发布为 `dpl_FXSFNP7HDAKQrkn9ZSAYQkuT43nn`，source commit `ea763a7e149ac26fcc1b0d765baab63adc181671`，状态 READY；
-- **首页日期**：已按请求、按 `Asia/Shanghai` 计算业务日期并动态渲染，Production 首屏验证为 `9月14日星期一`，不再固定部署日；
+- **Production Web**：最新受控发布为 `dpl_9VcNvuPrXogywWixknPS7z97qN1P`，source commit `0bd6f5fa6a7f96a4dac6311feb73322249fe4245`，状态 READY；
+- **首页日期**：已按请求、按 `Asia/Shanghai` 计算业务日期并动态渲染，Production 首屏验证为 `9月15日星期二`，不再固定部署日；
 - **Supabase**：当前 Production 数据库已包含常吃食物模板、每日 21:00 记录完整性提醒等最新 migration；
 - **自动部署**：发布完成后已恢复 `vercel.json -> git.deploymentEnabled=false`；
 - **线上检查**：`/` 与 `/food` 均返回 HTTP 200，最新 Production 检查窗口未发现 error / fatal runtime 日志。
 
-2026-09-15：月历及全站共享读取刷新修复已完成代码与自动回归，尚未部署；浏览器验收受本地地址访问限制，发布后需补验。
+2026-09-15：月历及全站共享读取刷新修复已发布 Production；381 项自动测试及恢复自动部署保护后的 CI 通过。线上月历视图、月份切换与页面导航已检查；真实账号写入后的端到端刷新仍需登录会话验收。
 
 完整的 Production / main / Supabase 边界以 [`docs/09-status-roadmap.md`](docs/09-status-roadmap.md) 为准。
 
