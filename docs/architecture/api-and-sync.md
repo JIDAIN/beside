@@ -83,7 +83,7 @@ MCP token 的 `partnerKey` 是可信身份来源；昵称、自称、`person=cat
 
 旧 `/game` 兼容同步仍保留 `couple-cloud-session` / `DATA_EDIT_PASSWORD` 等历史路径，但它们不再是 Island Life 登录或 AI/MCP 鉴权的一部分。
 
-详细身份与权限矩阵见 [`17-auth-and-pairing.md`](17-auth-and-pairing.md)。
+详细身份与权限矩阵见 [`17-auth-and-pairing.md`](auth-and-identity.md)。
 
 ## 3. Meal API
 

@@ -6,7 +6,7 @@
 
 V2 生活系统的主视觉规范：
 
-`docs/12-island-life-design-system.md`
+`docs/product/design-system.md`
 
 任何今日、饮食、日历、小窝、体重、小信箱、家庭药箱、游戏机或未来页面，都应优先遵守同一套 `--life-*` token、App* 组件和 Pattern。
 
