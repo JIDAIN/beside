@@ -35,13 +35,7 @@
 
 ## 当前产品
 
-当前主导航：
-
-```text
-今日 / 饮食 / 日历 / 小窝 / 我的
-```
-
-完整的当前功能、入口与能力边界：
+当前功能、信息架构、入口与能力边界统一维护在：
 → [Product Overview](docs/product/overview.md)
 
 当前 Production / GitHub main / Supabase 状态：
