@@ -6,6 +6,45 @@
 >
 > 产品设想、未实现方案和个人设计草稿不在这里维护；它们属于独立的产品设计知识库。
 
+## 与 Obsidian「伴岛」项目的关系
+
+伴岛同时维护两套文档体系，但两者用途不同：
+
+```text
+Obsidian / 伴岛项目
+= 产品设计与未来规划
+= “希望伴岛以后变成什么样”
+
+GitHub / docs
+= 当前工程事实库
+= “伴岛现在实际上是什么、代码应该怎样安全维护”
+
+Production Web / Supabase runtime
+= 当前真实运行状态
+= “用户现在实际运行和保存的是什么”
+```
+
+典型流转：
+
+```text
+Obsidian 产品设计
+→ 设计确认
+→ GitHub code + engineering docs
+→ 明确授权后部署
+→ Production / Supabase runtime
+```
+
+### 规则
+
+- Obsidian 可以领先于 GitHub：尚未开发的产品设计、交互方案和未来模块可以先存在于 Obsidian。
+- 尚未实现的 Obsidian 设计不能写成 GitHub current docs 的当前能力。
+- GitHub 文档必须能够独立解释当前程序；AI 维护代码时不能依赖“去 Obsidian 再看一份说明”才能理解当前实现。
+- Obsidian 可以链接 GitHub 的当前工程文档，用于标记某项设计是否已经实现；GitHub 不反向依赖 Obsidian 作为工程事实源。
+- Obsidian 与 GitHub 不一致且 Obsidian 描述未来方案时，这是正常的“设计领先实现”。
+- Obsidian 若声称某功能已实现，但代码 / GitHub / Production 不支持该结论，应以当前代码与运行事实为准，并修正 Obsidian 状态。
+- GitHub docs 与当前 main 代码或已核验 Production runtime 不一致时，属于 GitHub 文档缺陷，应修正文档。
+- Production Web、GitHub main 与 Supabase runtime 必须继续分层判断；main 已完成不等于 Production 已上线。
+
 ## 文档地图
 
 | 区域 | 回答的问题 |
