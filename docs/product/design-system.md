@@ -1,244 +1,179 @@
-# 岛屿生活 Design System
+# 伴岛 / Beside Design System
 
-这份文档是 V2 可见 UI 的**唯一主视觉规范**。人工确认版本：**岛屿生活 V2 · 方案 B**。
+状态：2026-09-21。本文是当前 Island Life 可见 UI 的主视觉规范，只描述视觉语言与组件层级；业务规则以 Product / Domains 为准。
 
 ## 1. 核心原则
 
-```text
-统一 > 花哨
-可读 > 主题化
-成熟交互优先 > 重复造轮子
-岛屿感来自整体语言 > 来自某一个组件库
-记录，不评价；观察，不排名；数字是事实，不是成绩
-```
+- 简约、温暖、轻量；
+- 记录，不评价；观察，不排名；
+- 可读性优先于装饰；
+- 控件名称已经能说明功能时，不再叠加灰色解释小字；
+- 生活感来自整体色彩、留白、插画和动效，不来自厚重主题框；
+- 同一交互优先复用已有 App* / Pattern。
 
-`animal-island-ui` 只是基础来源之一。第三方项目只能按许可证复用逻辑/结构，并通过项目自己的 `App*` / token / visual adapter 归一。
+## 2. 当前视觉 token
 
-## 2. 色彩与材质
+事实源：app/island-life-tokens.css。
 
-- 暖白 / 奶油白：主背景；
-- 薄荷 / 青绿：主识别、选中、轻操作；
-- 柔黄：太阳、温暖强调；
-- 珊瑚 / 粉：关系与情绪点缀；
-- 浅蓝：睡眠、安静信息；
-- 深灰绿：正文。
+主背景与 surface：
 
-禁止大面积棕色木板 UI。木色只能作为房间地面、纸张等小范围物件语义。
+- life-bg: #fffaf2
+- life-surface: #fffdf8
+- life-surface-soft: #f7fbf6
+- life-surface-warm: #fff4e6
 
-基础 token：`app/island-life-tokens.css`。
-R4-R6 页面级统一适配：`app/island-life-refactor.css`。
+主要强调色：
 
-## 3. 视觉浓度
+- mint / teal：主交互与选中；
+- yellow：温暖强调；
+- coral / pink：关系和情绪点缀；
+- blue：睡眠与安静信息。
 
-```text
-信息密度低 -> 插画 / 空间构图更明显
-信息密度高 -> 主题退到色彩 / 容器 / 微装饰
-```
+文字使用深灰绿体系，不使用纯黑大面积压迫页面。
 
-- 今日、小窝：允许明显生活游戏感；
-- 月历：像一张柔和纸质月历，情绪直接落在日期下；
-- 饮食、体重、药箱：数据可读优先，不做装饰噪声；
-- 我的：像设置/账户页，不再堆共同生活功能快捷卡片。
+基础圆角：
 
-## 4. 统一基础组件
+- small 10px
+- control 14px
+- card 18px
+- hero 22px
 
-```text
-AppPageShell
-AppLifeBottomNav
-AppRoleSwitch
-AppRecordRow
-AppFeatureTile
-AppNutritionBar
-```
+主内容宽度当前为 max 30rem。
 
-R6 新增的视觉 adapter class：
+## 3. UI 分层
 
-```text
-life-page-header / life-page-title / life-page-subtitle
-life-bottom-nav / life-bottom-nav-item
-life-sheet-backdrop / life-mood-sheet
-life-calendar-paper / life-calendar-day / life-calendar-mood
-life-nest-scene / life-nest-tile
-life-account-hero / life-settings-list / life-settings-row
-```
+第三方 primitive / animal-island-ui
+→ components/ui/App*
+→ shared pattern
+→ components/life / nutrition / legacy game
 
-这些 class 只表达统一视觉，不承载业务事实。
+业务页面不要直接复制第三方完整视觉系统。
 
-## 5. 主信息架构
+animal-island-ui 当前仍是真实 npm 依赖，但外部组件应先经过 App* wrapper 或项目 visual adapter 归一。
 
-```text
+## 4. 当前基础组件 / Pattern
+
+常用：
+
+- AppPageShell
+- AppButton
+- AppInput
+- AppSelect
+- AppDialog / Modal
+- AppLifeBottomNav
+- AppRoleSwitch
+- AppRecordRow
+- AppFeatureTile
+- AppNutritionBar
+- MealPhotoFrame
+
+组件负责稳定交互和视觉，不承载数据库事实。
+
+## 5. 主导航
+
+固定五项：
+
 今日 / 饮食 / 日历 / 小窝 / 我的
-```
 
-### 今日
-- 心情 / 睡眠 / 活动；
-- 心情展示双方，但只能记录当前登录用户；
-- 情绪固定使用八种毛绒圆脸图标：心累 / 生气 / 兴奋 / 烦躁 / 心动 / 平静 / 伤心 / 开心，不使用系统 emoji 或 ASCII 字符脸；
-- 今日页与历史日详情页直接共用 `TodayMoodCard`：某人尚未记录真实心情时统一显示独立的“未记录心情”插画；记录后立即替换为真实八种心情之一，删除记录后恢复未记录插画；该插画不属于真实 mood 枚举，也不得进入月历；
-- “未记录心情”插画与八种真实 mood 使用同一 256×256 画布和同一 `life-person-state-orb`；视觉主体通过资源自身的透明留白校准，不通过页面级 CSS 单独缩放；
-- 睡眠只编辑自己的记录，并以“昨晚入睡 / 今天起床”录入、按起床日归档；心情和睡眠均可删除自己的记录；
-- 活动维持统一自由文本事实。
+使用统一 LifeIcon，不使用平台差异明显的系统 emoji 充当主导航图标。
 
-### 饮食
-- `我 / Ta` 相对当前登录账号；
-- 早餐 / 午餐 / 晚餐为每日唯一固定槽；我 / Ta 切换在页面标题右侧，不再横跨整行；
-- 加餐为 `0..N`，新增前选上午 / 下午 / 晚上；同一时段的每次加餐均以独立照片、时间和营养卡片展示；
-- 餐食编辑页采用移动端单列分组：顶部日期 / 时间 / 餐次，照片，营养合计，食物明细，固定可达的保存操作；
-- 食物明细优先展示名称 / 实际份量 / 热量，重量与三大营养素使用次级展开区；
-- 表单标签、错误、未保存提醒和照片失败重试属于必要交互反馈，不使用装饰性说明文字替代；
-- 每餐/每次加餐可有实物图、食物、宏量营养、kcal；
-- Ta 只读；
-- 不做双方对照列、饭历、streak。
+底部导航固定在 safe-area 上方；当前 CSS 将可见导航内容限制到约 30rem。
 
-### 日历
-- 顶部切换心情 / 饮食 / 睡眠三种月度回顾；
-- 我 / Ta 切换置于“月度回顾”标题最右侧，仅在饮食 / 睡眠视图显示；
-- 标准七列日期排布；
-- 心情月历每天固定两个纵向槽位：第 1 位永远是当前登录用户，第 2 位永远是 Ta；槽位只按 `mePartnerKey / taPartnerKey` 查找记录，不受记录时间、接口顺序或数组顺序影响；
-- 某一方无心情时只将该方槽位留空，另一方不得上移；双方都无记录时两个槽位均为空；月历绝不显示“未记录心情”插画或占位文字；
-- 今天用小太阳标识；
-- 双方都有记录时两枚情绪图继续沿用现有轻微错位视觉；
-- 点击日期进入事实详情；
-- 历史日期详情与今日首页保持同一内容结构，只包含心情 / 睡眠 / 活动，并直接复用 `TodayMoodCard`、`TodaySleepCard`、`TodayActivityCard`，不得复制历史专用卡片；
-- 历史日期不是只读归档：当前账号可继续编辑自己的心情、睡眠，活动按共享权限维护；历史饮食维护仍在独立“饮食”页面完成，历史日详情不嵌入饮食卡片，也不为饮食额外发起 Meal 请求或照片预加载；
-- 月度饮食回顾继续由月度数据提供，不受历史日详情移除饮食卡片影响；
-- 不做连续天数、完成率或积极度比较。
-- 饮食和睡眠使用我 / Ta 单人切换，不在同一格并排比较；
-- 三种视图统一沿用心情月历的纸张背景、日期排布和控件色；领域色只用于数值圆块；
-- 饮食固定暖色有机圆块，睡眠固定紫蓝有机圆块，切换人物只换数据、不换颜色；
-- 圆块大小表示数值变化，精确 kcal / 小时直接显示，数字是事实而非评分。
+## 6. 页面密度
 
-日期排布 / mood-under-date 产品模式参考 MIT：
-`GitHub-Xzhi/obsidian-mood-calendar`，只借成熟模式，不复制插件视觉或代码。
+低信息密度页面可以有更明显的场景和插画，例如今日、小窝。
 
-### 小窝
-固定四个共同生活入口：
+高信息密度页面应让主题退到：
 
-```text
-体重 / 小信箱 / 家庭药箱 / 游戏机
-```
+- surface；
+- token；
+- 小范围插画；
+- 圆角；
+- 微弱阴影。
 
-小窝主页面顶部允许房间场景感，四入口保持清楚可点击。
+饮食、药箱、体重等数据页优先扫描效率，不做 Dashboard 堆卡。
 
-#### 体重
-- `我 / Ta`；
-- 当前体重、趋势、历史；
-- 我可编辑，Ta 只读。
+## 7. 我 / Ta
 
-#### 小信箱
-- 收到的 / 寄出的；
-- 纸信/明信片视觉，不使用头像列表；
-- 新信固定 `我 -> Ta`；
-- 收到的信只读，自己寄出的信可编辑/删除。
+UI 统一使用“我 / Ta”，不直接暴露 cat / fish。
 
-#### 家庭药箱
-- 搜索 / 筛选；
-- 药名 / 规格 / 数量 / 有效期；
-- **没有存放位置字段**，因为药统一放在家庭药箱；
-- 同名不同批次分开；状态动态计算。
+AppRoleSwitch 只切换正在查看的人，不代表写权限发生变化。
 
-#### 游戏机
-- 只做游戏列表；
-- `变美变瘦大作战 -> /game`；
-- 旧游戏视觉与机制保持独立。
+身份和权限由：
+→ [Auth and Identity](../architecture/auth-and-identity.md)
 
-### 我的
-只负责当前账户与应用边界：
+## 8. 心情视觉
 
-```text
-当前账号
-我 / Ta 身份映射
-云同步状态
-个人写入权限
-数据管理边界
-退出登录
-```
+真实 mood 使用固定八种图标资源。
 
-不再重复展示小窝、日历、游戏机快捷卡片。
+“未记录心情”是 Today / 历史详情的展示插画，不是 mood enum：
 
-## 6. “我 / Ta”强制规则
+- 不写入数据库；
+- 不进入月历；
+- 月历无记录时留空。
 
-数据库稳定身份：`cat / fish`。
-UI 标签始终相对当前登录：
+## 9. 月度回顾
 
-```text
-cat 登录：我=cat，Ta=fish
-fish 登录：我=fish，Ta=cat
-```
+心情 / 饮食 / 睡眠共用一套纸张式月历骨架。
 
-所有业务页面必须消费 `LifeIdentityContext` 的 `mePartnerKey / taPartnerKey`，禁止重新写死 `SELF_KEY=cat`。
+- 心情：同格保留“我 / Ta”固定槽位；
+- 饮食：暖色 metric bubble；
+- 睡眠：紫蓝 metric bubble；
+- 切换人物只换数据，不更换领域色板；
+- 数字显示 kcal / 小时，不做分数、等级或完成率。
 
-## 7. 成熟项目/库复用优先级
+## 10. Meal photo
 
-```text
-A. 已有 App* wrapper / 项目 Pattern
-B. animal-island-ui 已验证能力
-C. MIT/许可兼容的成熟 GitHub Pattern
-D. 成熟 headless / 通用库，仅借交互
-E. 项目原创组件（最后选择）
-```
+真实餐食照片必须使用 MealPhotoFrame：
 
-R1C 原计划优先 TanStack Query。由于本轮通过 GitHub Contents API 修改仓库，不能可靠运行 `npm install` 自动重建完整 lockfile，因此没有手工伪造 lockfile；先建立同一概念边界的 stale-while-revalidate cache。未来可在正常 npm 环境平滑替换。
+- 容器 4:3；
+- object-contain；
+- 保留完整照片；
+- rotation / scale 仅改变显示 transform；
+- 允许留白，不用 object-cover 强裁切。
 
-## 8. 不允许的做法
+完整 photo contract：
+→ [Meal Photo Storage](../domains/meal/photo-storage.md)
 
-- 每页单独发明色板；
-- 整包复制异风格 GitHub CSS；
-- 大面积棕色/木板背景；
-- 每个日期都画独立 Dashboard 卡片；
-- 用头像代替心情；
-- 饮食同时并排比较两人；
-- 在生活系统使用金币、经验、排名、streak；
+## 11. 小信箱
+
+小信箱使用纸信 / 明信片视觉，不使用头像消息列表。
+
+当前三态：
+
+- 收信箱；
+- 已寄出；
+- 待寄出。
+
+只有自己的 draft 可编辑 / 删除 / 寄出；sent 无论在收信箱还是已寄出都只读。
+
+横向明信片保持水平展示，不做斜放主弹窗。
+
+## 12. 移动端
+
+- safe-area 不遮挡操作；
+- 主要 touch target 保持明确；
+- 长中文允许合理换行；
+- 数字稳定对齐；
+- 页面避免因为 loading / image reload 整体跳变；
+- 长表单关键保存操作保持可达。
+
+## 13. ui-lab
+
+/ui-lab 是视觉回归和 Pattern 预览页。
+
+当前页面不发真实 Life API 请求，不应该产生 Supabase 业务写入或 Legacy Game settlement。
+
+## 14. 不允许的做法
+
+- 每页另起色板；
+- 大面积木板 / 棕色后台感；
+- 用金币、经验、streak 包装普通生活记录；
+- 用头像替代 mood；
 - 把 cat 固定写成“我”；
-- 新版生活功能重新塞回 `/game`。
+- 把 sent mailbox 做成可编辑；
+- 为局部页面复制第二套 Button / Card / Input；
+- 为了铺满容器裁掉真实餐食照片内容。
 
-## 9. R6 实施检查
-
-R6 已统一：
-
-- 根页面暖白 + 薄荷/柔黄环境背景；
-- 页面标题排版；
-- 底部导航材质与激活态；
-- 心情 bottom sheet；
-- 稀疏情绪月历；
-- 小窝房间场景 + 四入口；
-- 我的账户/同步设置列表；
-- 通用 `life-surface` 透明度与数据页克制程度。
-
-R6 不触碰 Legacy Game 的视觉和结算逻辑。
-
-## 10. 开发与验收流程
-
-1. 先查已有 App* / Pattern；
-2. 需要外部方案时确认许可证；
-3. 使用 `--life-*` token；
-4. 第三方实现经过视觉 adapter；
-5. 业务权限不能只靠隐藏按钮；
-6. Test / Lint / Build；
-7. 只有得到用户该次明确授权后才能 Vercel Preview / Production。
-
-## 11. 手机实机密度校准
-
-设计稿总览图不能直接按展示比例换算 CSS 尺寸；最终以窄屏手机 viewport 的信息密度为准。统一约束：
-
-- Life 主内容最大宽度 `30rem`，不再沿用平板式 `46rem`；
-- 卡片是内容分组，不是每项功能都做成独立大面板；
-- 主卡圆角以 `18px` 为基准，阴影只用于分层，不做悬浮 Dashboard；
-- 底部导航使用统一 SVG 图标，不使用不同平台渲染差异明显的系统 emoji；
-- 首屏优先完整露出至少两个主要生活模块；
-- 页面副标题只解释当前页，不重复产品规则和权限实现细节。
-
-## 12. 饮食模块交互控件收口
-
-饮食模块继续复用全站 `AppButton`、`life-surface`、`life-mood-sheet` 与既有 token，不另起色板或厚重按钮体系。模块级密度与交互适配集中在 `app/food-compact.css`。
-
-统一层级：
-
-- 主按钮：保存、添加等确认动作，继续使用 `AppButton primary`；
-- 次级按钮：取消、返回，使用浅底 / 细边框，不与正文混淆；
-- 危险按钮：删除使用 danger 色，但面积和层级低于主按钮；
-- 导航 / 入口：日期、常吃食物、餐次编辑、添加餐食使用轻边框 + 轻底色 + 明确箭头 / 状态，不再以裸文字充当入口；
-- 卡片型选择：新的食物、常吃食物、上午 / 下午 / 晚上加餐使用同一圆角、边框、按压反馈和箭头语言；
-- 图标按钮：餐卡编辑等小操作保持方形轻边框，点击区域不因图标尺寸过小而缩小。
-
-移动端饮食页优先减少无效留白：标题区、日期区、餐食照片、表单字段、备注和底部操作栏均以尽快露出营养合计与食物列表为目标。餐食照片默认只显示紧凑预览；展开“调整照片”后才放大显示，不改变原照片上传、替换、删除、旋转、缩放与 AI/MCP 能力。
+交互细节：
+→ [UI Guidelines](ui-guidelines.md)

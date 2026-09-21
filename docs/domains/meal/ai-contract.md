@@ -1,220 +1,218 @@
-# Meal Draft Confirmation + Before/After Photo Difference Contract
+# Meal AI Draft Contract
 
-状态：2026-09-07 当前有效 contract。
+状态：2026-09-21。本文是当前新 Meal 的 AI 对话草稿、实际摄入判断和确认写入 contract。
 
-## 1. Goal
+## 1. 核心边界
 
-新 meal 不能从一张图片或粗略描述直接跳到持久化数据。AI 必须先根据**实际摄入**生成可检查的草稿，用户修改或确认后，再调用正式写入。
+新 Meal 的默认 AI 交互：
 
-关键边界：
+用户文字 / 图片
+→ AI 生成可检查草稿
+→ 用户修改或确认
+→ life_mutate
+→ 正式 Meal
 
-```text
-草稿 / 确认状态 = 对话层交互状态
-正式 meal       = Supabase 持久化事实
-```
+聊天中的 draft / confirmation 不写数据库。
 
-当前**没有** `meal_drafts` 后台表，也**没有**服务端通过“确认 / 可以 / 好的”等关键词判断 meal create 是否允许执行的 confirmation guard。
+当前没有 meal_drafts 表，也没有服务端通过扫描“确认 / 可以 / 好的”关键词来决定 create 是否允许。
 
-服务端仍然负责真正的安全边界：身份、ownership、schema、幂等、删除、高风险覆盖、媒体绑定等。
+身份、ownership、schema、幂等、delete 和媒体绑定仍由服务端强制。
 
-## 2. Interaction flow
+## 2. 新 Meal 才需要草稿确认
 
-```text
-1. 用户提供文字 / 图片
-2. AI 判断实际摄入并生成 draft
-3. AI 展示食物、份量和营养估算
-4. 用户修改，或明确确认当前草稿
-5. 确认后 AI 调用 life_mutate create meal
-6. canonical service 校验并正式写入
-7. 返回真实 tool result / read-back
-```
+“先草稿、后确认”针对 **新 Meal creation**。
 
-用户第一句说“帮我记录 / 记一下 / 保存这顿饭”，表示**最终想记录**，但不等于已经确认尚未展示的营养草稿。
+已有 Meal 的：
 
-如果草稿已经确认，而正式写入因网络或临时 transport 问题失败，用户说“再试一次”时，AI 可以重试同一份已确认草稿，不需要强迫用户重复确认。
+- 补充食物；
+- 饭后 confirm estimated；
+- 修改时间 / 备注；
+- 修改照片显示；
+- 删除；
 
-## 3. One-photo mode
+按各自 action 和安全规则处理，不重新把整顿饭变成新草稿。
 
-单张照片不自动等于“等待饭后确认”。先看用户的明确意图：
+## 3. 单图
 
-- 只有一张餐前照片，用户说“记录这顿饭”“记录这个饭的热量”“按图中全部记录”等，表示要把图中整份餐食作为完整摄入量记录；生成整份营养草稿，用户确认后直接创建 `status=confirmed` 的 Meal，不等待第二张照片，也不做差值计算；
-- 用户明确说“还没吃”“先估一下”“饭后再确认”等，才创建 `status=estimated` 的 Meal，保留饭后确认流程；
-- 用户说明已经吃了一部分时，根据实际说明估算。
+只有一张图片时先判断用户语义。
 
-实际摄入说明例如：
+用户明确说：
 
-- `基本都吃完了`
-- `吃了一半`
-- `只吃了几口`
-- `这个没吃`
-- `后来又添了一点`
+- 记录这顿饭；
+- 按照片全部记录；
+- 记录这个饭的热量；
 
-除“明确按单张餐前图整份记录”外，草稿统计的是用户实际吃下去的量，不机械等于餐前摆盘总量。
+表示把图中可判断的整份餐食作为本次目标，先生成草稿，确认后 create confirmed。
 
-## 4. Two-photo before/after mode
+只有明确：
 
-餐前 + 餐后两张图片时：
+- 还没吃；
+- 先估；
+- 饭前估算；
+- 吃完再确认；
 
-```text
-actual intake = estimated amount before - edible amount remaining after
-```
+才 create estimated。
 
-规则：
+餐前照片本身不自动等于 estimated。
 
-- 按食物种类和上下文匹配，不按固定盘中位置死配；
-- 用户明确文字优先于纯视觉差分；
-- 骨头、果皮、果核、壳、包装等不可食残余不能作为可食剩余机械扣减；
-- 要考虑翻面、移动、汤汁、餐后照片不完整、中途添饭等不确定性；
-- 多人共享菜有用户个人份额说明时，以文字说明为准。
+## 4. 餐前 + 餐后
 
-饭后确认替换为实际摄入明细时，旧的饭前总热量和区间不得沿用；如果本次没有显式提供新总量，应从新的 items 重新汇总，无法汇总则保存为未知。
+两图用于估算实际摄入：
 
-## 5. Draft fields
+estimated actual intake
+≈ before edible amount - after edible remaining amount
 
-能合理判断时，每项尽量包含：
+但：
 
-- `rawName` / `displayName`
-- `portionDescription`
-- `estimatedWeightG`
-- `caloriesKcal`
-- `proteinG`
-- `carbsG`
-- `fatG`
+- 用户文字优先；
+- 按食物种类匹配，不按画面位置死配；
+- 骨头、果皮、包装等不可食残余不能当可食剩余；
+- 中途添饭、共享菜、照片缺失会增加不确定性；
+- 无法可靠判断时只问最关键的问题。
 
-整餐尽量包含：
+饭后确认更新同一 estimated Meal，不创建第二条。
 
-- `totalCaloriesKcal`
-- 总 protein
-- 总 carbs
-- 总 fat
+## 5. 草稿字段
 
-这些数字是合理估算，不是实验室测量。真正未知的值允许为空 / `null`，不要为了“完整”制造虚假精度。
+合理可判断时，每个 item 尽量包含：
 
-## 6. Confirmation semantics
+- rawName / displayName
+- portionDescription
+- estimatedWeightG
+- caloriesKcal
+- proteinG
+- carbsG
+- fatG
 
-“确认”属于 AI 与用户当前对话的语义，不属于数据库状态，也不是 API payload 中必须存在的确认字段。
+Meal 尽量包含 totalCaloriesKcal。
 
-用户在看到当前草稿后说，例如：
+真正未知允许 null，不制造虚假精度。
 
-```text
-确认记录
-没问题
-可以
-就这样
-按这个记
-记进去
-```
+AI 正式 confirmed Meal 至少需要一个 food item。
 
-AI 可以把它理解为对当前草稿的确认，并执行正式 `life_mutate`。
+## 6. 用户确认
 
-但服务端不会通过扫描当前 `userText` 是否包含这些短语来决定 create meal 能不能执行。因此：
+用户已经看到当前草稿后，类似：
 
-- 模型 / Project Instructions / `MEAL_DRAFT_AGENT_RULES` 必须遵守交互流程；
-- 服务端不能把对话状态重新实现成脆弱的关键词状态机；
-- 如果某个可信程序内部流程直接调用 canonical meal create，服务端仍按 schema / permission / idempotency 等正式规则处理。
+- 确认记录；
+- 没问题；
+- 可以；
+- 就这样；
+- 按这个记；
 
-## 7. Existing meal updates / deletes
+可视为确认当前草稿。
 
-草稿确认流程只针对**新 meal creation**。
+如果已确认后的正式 write 因临时网络失败而失败，用户要求重试时可以重试 **同一份已确认操作**，不重新生成不同 operation。
 
-已经持久化的 meal：
+## 7. 主餐 / snack
 
-- 早餐、午餐、晚餐每天各自只有一个有效槽，再次记录对应主餐时更新或补录该 Meal；
-- 加餐以每次实际进食为独立 Meal，同一 morning / afternoon / night 可有多条，并分别保留照片、时间、items 和汇总；
-- 只有明确补充某次已有加餐才更新；同一时段存在多个候选时先确认目标；
-- 用户明确要求 update 时，按 ID / ownership / validation 正常更新；
-- 用户明确要求 delete 时，按删除意图 + ID / ownership 安全规则处理；
-- 不因为只是修改时间、备注、照片显示等无关信息，就重新要求生成整顿饭草稿。
+主餐：
 
-## 8. Photo persistence
+- breakfast / lunch / dinner 每天每人最多一个 active Meal；
+- 再补食物应 append / update 原 Meal。
 
-如果用户还要求正式保存图片：
+Snack：
 
-```text
+- morning / afternoon / night 是 period，不是唯一槽；
+- 同 period 可以有多条；
+- 不同实际进食事件分别 create。
+
+候选不唯一时必须澄清，不猜 UUID。
+
+完整 Meal lifecycle：
+→ [Meal Lifecycle](lifecycle.md)
+
+## 8. append_meal_item
+
+“早餐还吃了一个鸡蛋”等语义：
+
+query existing target
+→ unique target
+→ append_meal_item
+→ 保留原 eatenAt
+
+不是创建第二条早餐。
+
+## 9. confirm_estimated_meal
+
+饭后确认：
+
+unique estimated target
+→ 用实际 items 替换估算 items
+→ status=confirmed
+→ 保留原 mealDate / eatenAt
+→ 未明确提供的新汇总按实际 items 重算；无法重算则未知
+
+不能用确认发生的时间覆盖真正吃饭时间。
+
+## 10. 图片
+
+多图可以参与分析，但正式 Meal 当前只有一个展示图。
+
+如果需要保存图片：
+
 草稿确认
 → life_mutate attachPhoto=true
-→ 有真实附件：直接进入 canonical media path
-→ 无附件字节：MEDIA_ATTACHMENT_REQUIRED
+→ 有真实 bytes：canonical media path
+→ 无 bytes：MEDIA_ATTACHMENT_REQUIRED
 → recovery.uploadUrl
-→ 浏览器补传
-```
 
-当前一条正式 meal 只绑定 1 张展示照片：
+browser recovery 完成前不能声称图片已保存。
 
-- 餐前 / 餐后多图都可参与分析；
-- 未特别指定时默认保存餐前图；
-- 用户明确要求时可保存餐后图；
-- 不能声称同一个 meal 已永久保存两张图；
-- browser recovery 未完成前不能声称照片已保存。
+详细照片规则：
+→ [Meal Photo Storage](photo-storage.md)
 
-## 9. Architecture responsibility
+## 11. Server-side vision
 
-### AI / model
+当前 server-side fallback recognizer 只要求模型识别：
 
-负责：
+- 可见食物名称；
+- 可见份量描述；
+- confidence。
 
-- 识别图片和用户文字；
-- 判断实际摄入；
-- 生成和修改草稿；
-- 维护当前对话里的“这份草稿是否已被确认”的语义；
-- 确认后再调用正式写入。
+它明确 **不要求视觉模型直接估算 kcal、克数或 macros**。
 
-### AI Access Core / canonical services
+低于 confidence 0.6 的食物会被过滤。
 
-负责：
+因此“图片识别出了食物”不等于“营养值已经可靠生成”；营养仍由完整 Meal 草稿流程结合用户文字、视觉结果和可合理估算的信息处理。
 
-- normalization / strict schema；
-- signed actor / ownership；
+## 12. 责任边界
+
+模型：
+
+- 理解用户意图；
+- 读取可见图片 / 用户说明；
+- 形成草稿；
+- 维护当前对话是否已确认。
+
+AI Access Core / service：
+
+- normalization；
+- signed actor；
+- permission；
+- schema；
 - idempotency；
-- domain write；
-- media boundary；
-- tool result / read-back；
-- 删除和其他高风险规则。
+- target lookup；
+- media；
+- tool result。
 
-不负责：
+Supabase：
 
-```text
-通过当前一句 userText 的“确认关键词”模拟聊天状态机
-```
+- 只保存正式 canonical facts；
+- 不保存聊天草稿状态。
 
-### Supabase
+## 13. Regression
 
-只保存已经正式提交的 canonical meal facts，不保存聊天草稿或草稿确认状态。
+修改此流程至少检查：
 
-## 10. 2026-09-07 实机验收
+- 新 Meal 第一轮不直接落库；
+- confirmed / estimated 语义正确；
+- 主餐不重复；
+- snack 不错误合并；
+- append 保留 eatenAt；
+- confirm estimated 保留 mealDate / eatenAt；
+- 未知营养不伪造；
+- media recovery 不重复 mutation；
+- ownership / delete safety 保持服务端强制。
 
-餐前 / 餐后 AI 流程已经由真实使用确认通过：
-
-```text
-餐前照片 + 餐后照片
-→ AI 根据差分与用户文字判断实际摄入
-→ 生成可检查的 meal 草稿
-→ kcal / protein / carbs / fat 等营养估算呈现
-→ 用户确认
-→ 正式写入 meal
-→ 网页正常读取并显示
-```
-
-当前结论：
-
-- 两张图片可正常用于实际摄入判断；
-- 用户明确文字优先于视觉差分；
-- 草稿 → 用户确认 → 正式写入流程符合预期；
-- 实际使用中未发现阻塞性问题；
-- 本项视为 **已验收 ✅**。
-
-这项验收只证明“多图参与 AI 分析”的流程可用，不改变当前“一条正式 meal 只持久化 1 张展示照片”的数据模型边界。
-
-## 11. Regression requirements
-
-未来修改 meal AI 流程时至少检查：
-
-```text
-[ ] 第一轮新 meal 不被模型直接落库
-[ ] 草稿修改后重新展示，不边改边写
-[ ] 已确认写入失败后可重试同一草稿
-[ ] 服务端没有重新引入确认关键词守卫
-[ ] ownership / idempotency / delete 安全仍由服务端强制
-[ ] 多图分析没有被误写成多图持久化
-[ ] 未完成 media recovery 时不宣称照片已保存
-```
+历史实机验收与开发过程放在 archive / CHANGELOG，不在当前 contract 重复维护。

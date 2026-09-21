@@ -1,183 +1,161 @@
-# 餐食照片存储与显示边界
+# Meal Photo Storage
 
-状态：2026-09-07。
+状态：2026-09-21。本文维护当前 Meal 正式照片的存储、压缩、显示和媒体恢复 contract。
 
-R11.5 的实施与发布记录已归档到 `docs/archive/v2-evolution/45-r11-5-meal-nutrition-photo-display.md`；本文档只维护当前有效的照片存储与显示契约。
+## 1. 数据模型
 
-## 1. 当前模型
+每条正式 Meal 当前只有一个展示照片槽：
 
-每个正式 meal 当前只绑定 **1 张展示照片**：
+- meals.photo_path
+- meals.photo_rotation_degrees
+- meals.photo_scale
 
-```text
-public.meals.photo_path
-public.meals.photo_rotation_degrees
-public.meals.photo_scale
-```
+rotation 允许 0 / 90 / 180 / 270。
 
-含义：
+scale 允许 0.60 ～ 1.00。
 
-- `photo_path`：Supabase Storage 中的压缩展示图对象路径；
-- `photo_rotation_degrees`：无损显示旋转，`0 / 90 / 180 / 270`；
-- `photo_scale`：无损显示缩放，`0.60 .. 1.00`。
+rotation / scale 是显示元数据，不重复改写图片像素。
 
-旋转与缩放只是展示元数据，不反复重写图片像素。
+## 2. 服务端压缩
 
-## 2. 上传与压缩
+当前统一实现：lib/server/image-compression.ts。
 
-浏览器上传、MCP / ChatGPT 直接附件以及 browser media recovery 最终都进入服务端照片处理边界：
+默认输入上限：
 
-```text
+- Meal photo：10 MB；
+- 历史 Drive compatibility 有单独更高上限，但已不是当前主上传链路。
+
+支持 MIME：
+
+- JPEG
+- PNG
+- WebP
+- HEIC
+- HEIF
+
+处理：
+
 原图
-→ EXIF 方向归一
-→ 最长边 600px
-→ WebP quality 70
-→ >120KB 时逐步降到 65 / 60 / 55
-→ Private Supabase Storage: meal-photos
-→ meals.photo_path
-```
+→ sharp rotate() 归一 EXIF
+→ fit=inside，最长边最大 600px，不放大小图
+→ WebP q70
+→ 如果仍 >120KB，再尝试 q65 / q60 / q55
+→ 输出 WebP
 
-不同入口可以有各自的请求体 / 附件限制，但正式展示图必须复用同一套压缩、权限和状态写入逻辑。
+120KB 是降低 quality 的触发阈值，不是绝对硬上限；q55 后仍可能大于 120KB。
 
-支持 MIME：JPEG / PNG / WebP / HEIC / HEIF。
+## 3. Storage
 
-Storage path：
+正式对象存入 private bucket：
 
-```text
+meal-photos
+
+path：
+
 <space-slug>/<meal-id>/<random>.webp
-```
 
-## 3. 默认方向
+space slug 中继续出现 couple-better-game 属于内部兼容标识。
 
-压缩后的最终像素尺寸用于生成默认显示方向：
+浏览器不持有 service secret，也不能直接提交任意 photo_path。
 
-```text
-height > width  -> photo_rotation_degrees = 90
-否则            -> photo_rotation_degrees = 0
-photo_scale      -> 1.00
-```
+## 4. 默认显示方向
 
-所以手机竖拍的餐食照片默认会在饮食卡片里横向显示。
+压缩后：
 
-用户之后可以在程序 UI 中改回竖向或旋转 180°/270°，不会重新压缩原图。
+- height > width → 默认 rotation=90；
+- 否则 rotation=0；
+- scale=1。
 
-## 4. UI 显示规则
-
-真实餐食照片统一通过 `MealPhotoFrame` 展示：
-
-- 固定卡片视觉框为 4:3；
-- 主图使用 `object-contain`；
-- 禁止对真实餐食照片使用 `object-cover` 强裁切；
-- 用户选择竖图时，空余区域使用浅色 / 空白背景填充；
-- 两边或上下出现留白是预期行为，优先保证整张照片完整；
-- 编辑页支持左转 / 右转 90°；
-- 编辑页支持 60%–100% 显示大小调节。
+因此手机竖拍图默认适配横向餐卡；用户仍可手动改回其他方向。
 
 ## 5. Photo API
 
-### GET
+当前：
 
-```text
-GET /api/meals/:id/photo
-```
+- GET /api/meals/[id]/photo
+- PUT /api/meals/[id]/photo
+- PATCH /api/meals/[id]/photo
+- DELETE /api/meals/[id]/photo
 
-鉴权后返回私有 Storage 中的展示图。
+共同前提：signed actor + Meal ownership。
 
-### PUT
+PUT：
 
-```text
-PUT /api/meals/:id/photo
-```
-
-流程：
-
-```text
-Web/MCP 身份鉴权
-→ meal ownership
-→ 图片校验
-→ 压缩
+鉴权
+→ ownership
+→ compressMealPhoto
 → 上传新对象
-→ 计算默认旋转
 → replace_meal_photo_state
 → best-effort 清理旧对象
-```
 
-数据库替换失败时删除刚上传的新对象，避免孤儿文件。
+数据库绑定失败时清理刚上传的新对象，避免 orphan。
 
-### PATCH
+PATCH 只修改 rotation / scale，不重新编码图片。
 
-```text
-PATCH /api/meals/:id/photo
-```
+DELETE 解除 photo binding，并恢复默认 display metadata。
 
-只修改：
+## 6. UI
 
-```text
-rotationDegrees
-scale
-```
+真实照片统一使用 MealPhotoFrame：
 
-不重新编码 Storage 图片。
+- aspect 4:3；
+- object-contain；
+- 完整内容优先；
+- 允许留白；
+- 不用 object-cover 强裁切；
+- quarter-turn 时调整内部 frame，再执行 rotate + scale。
 
-### DELETE
+## 7. AI 多图 vs 正式单图
 
-```text
-DELETE /api/meals/:id/photo
-```
+多张图片可以参与 AI 分析，但当前数据库仍只持久化一个 photo_path。
 
-解绑 / 删除照片后同时恢复：
+因此：
 
-```text
-rotation = 0
-scale = 1
-```
+- 餐前 / 餐后可同时参与分析；
+- 未指定时按当前 Meal AI contract 选择一张正式展示图；
+- 不存在 beforePhotoPath / afterPhotoPath；
+- 不能告诉用户“一餐永久保存了两张图”。
 
-## 6. AI 多图边界
+多图交互：
+→ [Meal AI Contract](ai-contract.md)
 
-用户可以在聊天里发送餐前图、餐后图等多张图片用于实际摄入分析，但当前正式 meal 仍只持久化 1 张展示图。
+## 8. MCP media
 
-行为约定：
+有真实附件：
 
-- 多张图片都可参与 AI 差分分析；
-- 未特别指定时，正式保存餐前图；
-- 餐后图默认只用于判断剩余量；
-- 用户明确要求保存餐后图时，保存餐后图；
-- 当前不能声称同一 meal 已永久保存两张照片；
-- 不创建不存在的 `beforePhotoPath` / `afterPhotoPath` 字段。
+附件
+→ adapter
+→ compressMealPhoto
+→ LifeAgentAttachment
+→ Meal mutation
+→ private Storage
 
-如果未来需要永久保存餐前 + 餐后多图，应新增独立 `meal_media` / attachment 模型，而不是继续扩张单个 `photo_path`。
+如果用户明确要求保存当前图片，但 MCP client 没传图片 bytes：
 
-## 7. AI / MCP 媒体路径
-
-支持真实附件的客户端：
-
-```text
-附件字节
-→ AI / MCP adapter
-→ canonical meal photo service
-→ 压缩 + private Storage
-```
-
-如果 MCP client 没有透传真实图片字节，但用户要求保存图片：
-
-```text
 life_mutate attachPhoto=true
 → MEDIA_ATTACHMENT_REQUIRED
+→ mutationExecuted=false
 → recovery.uploadUrl
-→ 用户浏览器补传同一张图
-→ 服务端完成压缩与正式绑定
-```
+→ browser 上传原图
+→ 服务端按签名 actor 和原业务参数继续执行
 
-收到 `MEDIA_ATTACHMENT_REQUIRED` 后不得重复 create/update 造成双写。
+收到 MEDIA_ATTACHMENT_REQUIRED 后不得重新 create/update，否则可能重复业务写入。
 
-旧 Harbor Sheet / Drive Bridge 原图通道已经退役，不属于当前照片上传架构。
+## 9. 安全边界
 
-## 8. 安全约束
+- bucket private；
+- Storage 写入只走服务端；
+- path 服务端生成；
+- photo API 校验 Meal owner；
+- 普通 Meal payload 不能任意覆盖 photo_path；
+- transform 值严格限制；
+- “图片识别失败”与“图片保存失败”是不同问题，视觉识别失败时照片仍可能正常持久化。
 
-- `meal-photos` bucket 为 private；
-- 浏览器不持有 Supabase service secret；
-- Storage 不开放任意浏览器写策略；
-- GET/PUT/PATCH/DELETE photo API 均走现有身份/权限边界；
-- 文件名与对象路径由服务端生成；
-- 普通 Meal CRUD 不允许客户端直接编辑 `photo_path`；
-- 显示旋转只允许 `0/90/180/270`；
-- 显示 scale 只允许 `0.60..1.00`。
+## 10. 事实来源
+
+- lib/server/image-compression.ts
+- lib/server/supabase-nutrition.ts
+- app/api/meals/[id]/photo/route.ts
+- components/life/MealPhotoFrame.tsx
+- lib/server/life-mcp-tools.ts
+- app/ai-media-upload/route.ts
