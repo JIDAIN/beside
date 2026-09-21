@@ -139,21 +139,11 @@ Migration 运维：
 
 如使用会产生费用的 Supabase branch / project 做 replay，必须先取得用户明确同意。
 
-### Logged-in Production end-to-end cache/write smoke
+### Production 真实使用状态
 
-2026-09-15 Production 的 cache-refresh 发布已有自动测试、页面可达性与匿名行为检查。
+用户已长期使用当前 Production，并确认真实登录后的日常写入、读取、修改、刷新等使用过程中未发现异常；因此不再把 Production E2E smoke 列为未完成工程项。
 
-但仍没有在本轮使用真实登录账号对 Production 完整执行：
-
-```text
-write
-→ immediate UI read-back
-→ month/day cache convergence
-→ delete/update
-→ cross-device / MCP write convergence
-```
-
-因此不能把这部分写成“真实账号 E2E 已完整验收”。
+这属于真实使用验收结论，不额外虚构未明确执行过的自动化场景或脚本覆盖范围。
 
 ## 8. 文档一致性规则
 
