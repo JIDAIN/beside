@@ -236,7 +236,7 @@ lib/home/                Legacy Game 领域逻辑
 supabase/migrations/     Production migration 历史
 tests/                   Test / source contract / service tests
 docs/                    当前有效文档
-docs/adr/                长期架构决策
+docs/architecture/decisions/                长期架构决策
 docs/archive/            历史实施与阶段验收
 ```
 

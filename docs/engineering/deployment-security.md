@@ -12,11 +12,11 @@ Browser / MCP client
   -> Supabase PostgreSQL / Private Storage
 ```
 
-浏览器不持有 Supabase service/secret key。固定账号、session、MCP OAuth 与资源权限矩阵见 [`17-auth-and-pairing.md`](../architecture/auth-and-identity.md)。
+浏览器不持有 Supabase service/secret key。固定账号、session、MCP OAuth 与资源权限矩阵见 [`../architecture/auth-and-identity.md`](../architecture/auth-and-identity.md)。
 
 ## 2. 配置与 Secret
 
-环境变量不在本文档重复维护完整清单；当前唯一配置清单见 [`15-configuration-reference.md`](configuration.md)。
+环境变量不在本文档重复维护完整清单；当前唯一配置清单见 [`configuration.md`](configuration.md)。
 
 核心安全规则：
 
@@ -115,7 +115,7 @@ signed actor != record owner -> 拒绝
 - mailbox sent：双方可见但永久只读；
 - reminder instance / PushPlus token：绑定当前 actor。
 
-共享药箱、纪念日等明确 couple-space 事实按共享规则维护。完整矩阵以 `17-auth-and-pairing.md` 为准。
+共享药箱、纪念日等明确 couple-space 事实按共享规则维护。完整矩阵以 `../architecture/auth-and-identity.md` 为准。
 
 ## 6. Supabase Auth 临时方案清理
 
@@ -147,7 +147,7 @@ Browser / MCP
 - 已执行 migration 不回改，schema 变化只追加新 migration；
 - 真实个人数据、药箱库存、账号密码、PushPlus token 不写入 migration seed 或公开仓库。
 
-数据边界见 [`48-life-legacy-game-data-boundary.md`](../architecture/life-legacy-boundary.md)。恢复操作流程见 [`16-operations-runbook.md`](operations-runbook.md)。
+数据边界见 [`../architecture/life-legacy-boundary.md`](../architecture/life-legacy-boundary.md)。恢复操作流程见 [`operations-runbook.md`](operations-runbook.md)。
 
 ## 9. AI 写入安全
 
@@ -187,7 +187,7 @@ AI 不获得任意 SQL、不直接持有 service role、不通过昵称切换 ac
 ```text
 [ ] Git 自动部署仍关闭
 [ ] Test / Lint / Build 全部通过
-[ ] 15-configuration-reference.md 中 Required 配置已满足
+[ ] configuration.md 中 Required 配置已满足
 [ ] 登录只允许固定 cat / fish 账号
 [ ] 无 signup / pairing / bootstrap 产品入口
 [ ] 未登录 Life API -> 401
@@ -203,4 +203,4 @@ AI 不获得任意 SQL、不直接持有 service role、不通过昵称切换 ac
 
 ## 12. 生产故障
 
-部署失败、Supabase/RPC 异常、MCP 连接失败、Reminder/PushPlus 不投递、误删/恢复等问题不在本页临时追加排障笔记；统一按 [`16-operations-runbook.md`](operations-runbook.md) 处理，并把长期有效结论回写到相应主文档。
+部署失败、Supabase/RPC 异常、MCP 连接失败、Reminder/PushPlus 不投递、误删/恢复等问题不在本页临时追加排障笔记；统一按 [`operations-runbook.md`](operations-runbook.md) 处理，并把长期有效结论回写到相应主文档。

@@ -23,7 +23,7 @@
 
 - 修复首页静态首屏把部署日固定为“今天”的问题：根页面改为每次请求按 `Asia/Shanghai` 计算业务日期，并作为 `initialDate` 传给 `TodayLifePage`；新增回归测试，禁止重新退化为 `useState(() => localIsoDate())` 的 build-time 日期。
 - 统一当前正式项目身份为 **伴岛 / Beside（小岛）**；`couple-better-game` 仅保留为历史名称、兼容 slug、缓存 key、MCP 内部标识或 Production 兼容地址。
-- 重建 `README.md`、`docs/product/overview.md`、`docs/architecture/overview.md`、`docs/engineering/current-state.md`、`docs/archive/v2-evolution/10-v2-life-redesign.md`、`docs/architecture/ai/architecture.md` 的当前事实口径。
+- 重建 `README.md`、`docs/product/overview.md`、`docs/architecture/overview.md`、`docs/engineering/current-state.md`、`docs/archive/v2-evolution/docs/archive/v2-evolution/10-v2-life-redesign.md`、`docs/architecture/ai/architecture.md` 的当前事实口径。
 - `docs/engineering/current-state.md` 现在明确区分 Production Web、GitHub main 与 Supabase schema/runtime，避免数据库 migration 已生效却被误写成 Web 已部署。
 - 当前文档纳入常吃食物、微信公众号测试号主通道 + PushPlus fallback、每日 21:00 记录完整性提醒等已生效能力。
 - 将 2026-09-11 的“饮食编辑页与 Service Worker 收口”阶段报告移入 `docs/archive/v2-evolution/`，并在文档索引中补充长期有效的 Meal V2 lifecycle。

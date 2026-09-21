@@ -295,7 +295,7 @@ wallet_ledger
 
 除非用户明确要求操作游戏，否则不纳入 Life 恢复或清理。
 
-完整 allowlist 见 `48-life-legacy-game-data-boundary.md`。
+完整 allowlist 见 `../architecture/life-legacy-boundary.md`。
 
 ## 11. Migration 故障
 
@@ -382,7 +382,7 @@ Data recovery    -> snapshot + restore result
 是否改变长期架构（若是 -> ADR）
 ```
 
-一次性事故过程可以进入 `docs/archive/`；长期有效的结论必须回写当前主文档。`09-status-roadmap.md` 只记录当前状态，不堆事故流水账。
+一次性事故过程可以进入 `docs/archive/`；长期有效的结论必须回写当前主文档。`current-state.md` 只记录当前状态，不堆事故流水账。
 
 
 ## 页面旧记录 / 长时间加载排查

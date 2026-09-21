@@ -272,7 +272,7 @@ npm run build
 - 不得为了“顺便看看效果”自行部署；
 - 部署审批是逐次授权，不视为永久授权。
 
-长期设计理由见 `docs/adr/0006-manual-production-deployment.md`。
+长期设计理由见 `docs/architecture/decisions/0006-manual-production-deployment.md`。
 
 ## 13. 当前下一步
 
@@ -286,9 +286,9 @@ npm run build
 
 ```text
 当前事实 -> 顶层领域主文档
-架构原因 -> docs/adr/
+架构原因 -> docs/architecture/decisions/
 版本 / 阶段 / 实施验收 -> docs/archive/
-当前上线状态 -> 09-status-roadmap.md
+当前上线状态 -> engineering/current-state.md
 发生了什么 -> CHANGELOG.md
 ```
 
@@ -296,10 +296,10 @@ npm run build
 
 以下变化必须同批更新文档：
 
-- API / transport / auth -> `04-api-and-sync.md`；
-- schema / 数据域 -> `03-data-model.md`；
-- 环境变量 -> `15-configuration-reference.md`；
-- Production 排障 / 恢复方式 -> `16-operations-runbook.md`；
+- API / transport / auth -> `architecture/api-and-sync.md`；
+- schema / 数据域 -> `architecture/data-model.md`；
+- 环境变量 -> `engineering/configuration.md`；
+- Production 排障 / 恢复方式 -> `engineering/operations-runbook.md`；
 - 长期架构方向 -> 新 ADR 或 supersede 旧 ADR。
 
 顶层长期文档按**领域**命名，不按 `R8 / R10 / R11.5` 之类开发轮次持续新增。版本化实施记录在结论吸收后必须归档。
