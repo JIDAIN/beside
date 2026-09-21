@@ -21,7 +21,7 @@
 
 `couple-better-game` 只在历史名称、兼容 slug、内部 key 或 Production 兼容地址中保留。
 
-具体数据隔离见 [`48-life-legacy-game-data-boundary.md`](48-life-legacy-game-data-boundary.md)。
+具体数据隔离见 [`48-life-legacy-game-data-boundary.md`](../../architecture/life-legacy-boundary.md)。
 
 ## 1. 重构后的产品原则
 

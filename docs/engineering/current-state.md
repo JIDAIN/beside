@@ -196,7 +196,7 @@ mailbox
 
 每日 21:00 完整性提醒对 Cat / Fish 独立检查：心情、睡眠、confirmed 早餐、午餐、晚餐；五项完整则静默，任一缺失则汇总成一条提醒。`estimated` 与 `snack` 不算必填完成项。
 
-完整说明见 `docs/14-wechat-reminders.md`。
+完整说明见 `docs/domains/reminders/overview.md`。
 
 ## 9. 小信箱当前事实
 
@@ -247,7 +247,7 @@ life_mutate
 - 微信 OpenID、AppSecret、PushPlus token 等只保存在服务端 / Vault；
 - 浏览器不持有 Supabase service role。
 
-详细矩阵见 `docs/17-auth-and-pairing.md`。
+详细矩阵见 `docs/architecture/auth-and-identity.md`。
 
 ## 12. 数据域边界
 
@@ -260,7 +260,7 @@ life_mutate
 != 运动 / 活动
 ```
 
-普通 Life 清理 / import / restore 默认不得触碰 Legacy Game。完整 allowlist 见 `docs/48-life-legacy-game-data-boundary.md`。
+普通 Life 清理 / import / restore 默认不得触碰 Legacy Game。完整 allowlist 见 `docs/architecture/life-legacy-boundary.md`。
 
 ## 13. 当前已知边界
 
