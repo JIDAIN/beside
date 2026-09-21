@@ -8,7 +8,9 @@
 
 `couple_better_game`、`couple-better-game` 等旧名称只在历史记录、数据库兼容 slug、缓存 key、MCP 内部标识或既有 Production 地址中继续保留，不再代表当前正式产品名称。
 
-伴岛是给两个人共同使用的私人生活记录与陪伴 Web App。当前技术栈为 **Next.js + React + TypeScript + Vercel + Supabase**；Supabase 是生活数据事实源，本地 stale cache / Service Worker 只负责体验优化，不是第二数据库。
+伴岛是给两个人共同使用的私人生活记录与陪伴 Web App。**伴岛 / Beside 是当前唯一正式产品**；`Island Life` 只表示当前生活数据域 / 架构术语。「变美变瘦大作战」是伴岛最初的程序雏形，现保留为「小窝 → 游戏机」中的一个小游戏，工程内部称 Legacy Game。
+
+当前技术栈为 **Next.js + React + TypeScript + Vercel + Supabase**；Supabase 是生活数据事实源，本地 stale cache / Service Worker 只负责体验优化，不是第二数据库。
 
 ## 当前状态
 
@@ -20,7 +22,7 @@
 - **自动部署**：发布完成后已恢复 `vercel.json -> git.deploymentEnabled=false`；
 - **线上检查**：`/` 与 `/food` 均返回 HTTP 200，最新 Production 检查窗口未发现 error / fatal runtime 日志。
 
-2026-09-15：月历及全站共享读取刷新修复已发布 Production；381 项自动测试及恢复自动部署保护后的 CI 通过。线上月历视图、月份切换与页面导航已检查；真实账号写入后的端到端刷新仍需登录会话验收。
+2026-09-15：月历及全站共享读取刷新修复已发布 Production；381 项自动测试及恢复自动部署保护后的 CI 通过。线上月历视图、月份切换与页面导航已检查；当前 Production 已经过长期真实账号日常使用，未发现读写、修改或刷新异常。
 
 完整的 Production / main / Supabase 边界以 [`docs/engineering/current-state.md`](docs/engineering/current-state.md) 为准。
 
@@ -185,7 +187,7 @@ Supabase
 
 ## Legacy Game 边界
 
-伴岛中的旧“变瘦变美大作战”继续作为 Legacy Game 子项目存在：
+伴岛最初程序雏形「变美变瘦大作战」现作为「小窝 → 游戏机」中的小游戏继续存在，工程内部称 Legacy Game：
 
 ```text
 实际饮食摄入 ≠ Legacy Game deficit ≠ 真实体重 ≠ 运动 / 活动

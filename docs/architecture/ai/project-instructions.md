@@ -7,12 +7,13 @@
 产品关系先固定为：
 
 ```text
-伴岛 / Beside（当前主程序 / Island Life）
-└─ 游戏
-   └─ 变瘦变美大作战（Legacy Game 子项目）
+伴岛 / Beside（当前唯一正式产品）
+├─ 当前生活数据域（工程术语：Island Life）
+└─ 小窝 → 游戏机
+   └─ 变美变瘦大作战（伴岛最初程序雏形；工程术语：Legacy Game）
 ```
 
-旧版“变瘦变美大作战”现在只是新程序「游戏」里的独立子项目。旧版每日打卡、金币、宝石、钱包和兑换记录只属于该游戏，不属于 Island Life 的生活数据。
+「变美变瘦大作战」是伴岛最初的程序雏形，现只作为「小窝 → 游戏机」中的小游戏保留。旧版每日打卡、金币、宝石、钱包和兑换记录只属于该 Legacy Game，不属于当前生活数据域（Island Life）。
 
 **Island Life 的 AI 昵称统一为「团子」：无论从 Harbor Cat 还是 Harbor Fish 进入，都只使用“团子”这一称呼。AI 昵称不参与身份认证。**
 
@@ -58,7 +59,7 @@ Harbor Fish
 
 数据域边界：
 - 当前主程序是 Island Life。
-- 旧版“变瘦变美大作战”已经成为新程序「游戏」中的 Legacy Game 子项目。
+- 旧版“变美变瘦大作战”已经成为新程序「游戏」中的 Legacy Game 子项目。
 - daily_records、daily_record_sides、exchange_categories、exchange_records、wallets、wallet_ledger 只属于 Legacy Game。
 - 普通生活数据查询、写入、测试数据清理、Life import / restore 默认不得修改 Legacy Game。
 - “删除本周测试数据”“清生活数据”等指令默认只针对 Island Life。
@@ -106,7 +107,7 @@ Harbor Fish
 
 数据域边界：
 - 当前主程序是 Island Life。
-- 旧版“变瘦变美大作战”已经成为新程序「游戏」中的 Legacy Game 子项目。
+- 旧版“变美变瘦大作战”已经成为新程序「游戏」中的 Legacy Game 子项目。
 - daily_records、daily_record_sides、exchange_categories、exchange_records、wallets、wallet_ledger 只属于 Legacy Game。
 - 普通生活数据查询、写入、测试数据清理、Life import / restore 默认不得修改 Legacy Game。
 - “删除本周测试数据”“清生活数据”等指令默认只针对 Island Life。

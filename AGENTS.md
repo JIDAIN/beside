@@ -19,10 +19,10 @@
 ```text
 伴岛 / Beside（正式产品；Island Life 为生活域 / 架构术语）
 └─ 游戏
-   └─ 变瘦变美大作战（Legacy Game 子项目）
+   └─ 变美变瘦大作战（Legacy Game 子项目）
 ```
 
-`couple-better-game` 只保留为历史名称、兼容 slug、缓存 key、内部标识或 Production 兼容地址，不再代表当前正式产品名称。旧版“变瘦变美大作战”已经被收纳为「游戏」中的独立子项目，不再代表整个应用。
+`couple-better-game` 只保留为历史名称、兼容 slug、缓存 key、内部标识或 Production 兼容地址，不再代表当前正式产品名称。「变美变瘦大作战」是伴岛最初的程序雏形，伴岛扩展并重新定位后，该原游戏被保留为「小窝 → 游戏机」中的一个小游戏；工程内部称 Legacy Game。`Island Life` 只表示当前生活数据域 / 架构术语，不是正式产品或子品牌。
 
 ## 2. 开始任务前必读
 
@@ -93,48 +93,33 @@ wallet_ledger
 
 代码级表边界定义：`lib/server/life-data-domains.ts`，文档清单与代码冲突时以该代码定义和当前 Production schema 为准。
 
-## 4. V2 视觉语言是强制规范
+## 4. 统一 UI 架构与当前视觉 baseline
 
-`docs/product/design-system.md` 是所有 V2 页面唯一主视觉规范。
+`docs/product/design-system.md` 是伴岛 UI 架构、当前视觉 baseline 与未来全站 UI 重构规则的主文档。
 
-任何 AI/开发工具不得在业务 PR 中自行改变已确认方向：
-
-- 暖白/奶油底；
-- 薄荷/青绿主识别；
-- 柔黄/珊瑚/浅蓝点缀；
-- 不使用大面积棕色；
-- 低密度页面主题更明显，高密度数据页更克制；
-- V2 使用 `app/island-life-tokens.css` 的 `--life-*` token；
-- 业务页面优先 `components/ui/App*` / Pattern；
-- 外部 GitHub UI 不能带入第二套色板、阴影、Button/Card/Input 体系。
-
-### 当前 V2 主导航
+长期强制的是**统一设计系统和组件分层**，不是永久锁死 2026-09-21 的具体色板：
 
 ```text
-今日 / 饮食 / 日历 / 小窝 / 我的
+Design Tokens
+→ App* UI Adapter / Primitive
+→ Shared Patterns
+→ Domain Components
+→ Pages
 ```
 
-### 今日
+必须遵守：
 
-只显示心情 / 睡眠 / 活动三个高频记录区；三者都必须有记录入口。心情必须使用彩色情绪圆脸，不用头像替代。
+- 业务页面优先 `components/ui/App*` / shared Pattern；
+- 外部 UI 不得直接带入第二套完整色板、阴影、Button/Card/Input 体系；
+- 当前 `--life-*` token 和暖白/薄荷视觉是现有 baseline，可以在未来经确认的系统级 UI 重构中整体替换；
+- 不为局部页面长期新增独立视觉体系；
+- 当前多层 `r8-*.css` / calibration / compact stylesheet 是历史实现现状，不是推荐继续叠加的长期架构；
+- 全站 UI 重构应先改 token / App* / shared patterns，再迁移 domain/page，最后清理被替代的历史 override；
+- UI 重构不得顺手改变业务 contract、权限或 Legacy Game 结算语义。
 
-### 饮食
+当前主导航与当前页面能力以 `docs/product/overview.md` 为准；稳定交互 contract 以 `docs/product/ui-guidelines.md` 为准。
 
-一次只看我 / Ta 其中一人；每餐展示实物照片、食物明细、营养与总热量；每餐可编辑。常吃食物作为独立维护入口存在，加入当日餐食时复制模板内容，不把当天临时份量写回模板。
-
-### 日历
-
-统一提供心情 / 饮食 / 睡眠月度回顾：心情保持双人月历；饮食和睡眠按我 / Ta 单人查看。日期点击进入历史日详情。
-
-### 小窝
-
-```text
-体重 / 小信箱 / 家庭药箱 / 游戏机
-```
-
-体重也统一 `我 / Ta`；小信箱不用头像列表；游戏机只做游戏列表，本轮不新做 Legacy Game 详情 UI。
-
-## 5. V2 UI 组件边界
+## 5. UI 组件边界
 
 当前共享 Pattern：
 
@@ -146,7 +131,7 @@ AppFeatureTile
 AppNutritionBar
 ```
 
-V2 token：
+当前 token source：
 
 ```text
 app/island-life-tokens.css
@@ -171,10 +156,10 @@ app/island-life-tokens.css
 ## 7. 前端代码分层
 
 - `components/home/*`：Legacy Game UI
-- `components/life/*`：V2 Life UI
+- `components/life/*`：伴岛生活 UI
 - `components/nutrition/*`：饮食 UI
 - `components/ui/*`：项目视觉 adapter / cross-domain Pattern
-- `HomeResourcesProvider`：Legacy Game 状态编排器，不扩成 V2 全局 Provider
+- `HomeResourcesProvider`：Legacy Game 状态编排器，不扩成 生活域全局 Provider
 
 饮食已完成 provider 解耦：
 
@@ -228,7 +213,7 @@ DailyMealsPanelCore -> provider-free nutrition UI
 
 旧游戏完整保留：deficit、运动分钟、游戏体重快照、金币/宝石、钱包、成长地图、兑换商店与历史、成长日志、同步/备份。
 
-它现在的产品身份是：**伴岛「游戏」里的独立子项目“变瘦变美大作战”**。
+它现在的产品身份是：**伴岛「游戏」里的独立子项目“变美变瘦大作战”**。
 
 V2 不顺手重写 Legacy Game，也不把 Life facts 自动转成全局排行榜；普通生活数据清理、导入和恢复也不得顺手修改 Legacy Game。
 
