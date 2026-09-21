@@ -4,7 +4,7 @@
 
 ## 流程
 
-1. 阅读 `AGENTS.md`、`docs/09-status-roadmap.md` 和相关主文档。
+1. 阅读 `AGENTS.md`、`docs/engineering/current-state.md` 和相关主文档。
 2. 从真实代码 / logs / schema 找根因，不用旧文档猜。
 3. 判断 bug 属于 game / nutrition / weight / sync / UI / infra。
 4. 给出最小修复范围。

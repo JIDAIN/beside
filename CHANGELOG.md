@@ -6,7 +6,7 @@
 - 将 Production ledger 中 63 个同名 migration 的仓库文件 version / 顺序恢复为真实 Production 顺序；公共 migration 相对顺序倒置从 45 组收敛为 0。
 - 从 Production ledger 保存的原始 `statements` 恢复缺失的 `20260902150933_add_auth_pairing_bootstrap.sql`，补齐后续 hardening migration 的历史依赖。
 - 微信测试号 helper 在 Production runtime 中存在，但没有独立同名 ledger 记录；仓库将其显式改名为 `20260907110000_replay_only_wechat_test_account_probe.sql`，只承担空库重放兼容，不冒充 Production ledger migration。
-- 同步修正测试与历史文档中的旧 migration 路径；`docs/03-data-model.md` 补齐 Reminder `source_kind=mailbox`，并更新 API / 运维 / 状态文档日期与 migration 排障边界。
+- 同步修正测试与历史文档中的旧 migration 路径；`docs/architecture/data-model.md` 补齐 Reminder `source_kind=mailbox`，并更新 API / 运维 / 状态文档日期与 migration 排障边界。
 - 本轮没有执行 Production schema 变更，也没有触发 Vercel Preview / Production。完整 64 个 SQL 的一次性空库 replay 尚未实际执行，保留为灾难恢复验收边界。
 
 ## 2026-09-15 — 月历与全站读取刷新修复（已发布）
@@ -23,8 +23,8 @@
 
 - 修复首页静态首屏把部署日固定为“今天”的问题：根页面改为每次请求按 `Asia/Shanghai` 计算业务日期，并作为 `initialDate` 传给 `TodayLifePage`；新增回归测试，禁止重新退化为 `useState(() => localIsoDate())` 的 build-time 日期。
 - 统一当前正式项目身份为 **伴岛 / Beside（小岛）**；`couple-better-game` 仅保留为历史名称、兼容 slug、缓存 key、MCP 内部标识或 Production 兼容地址。
-- 重建 `README.md`、`docs/01-product.md`、`docs/02-architecture.md`、`docs/09-status-roadmap.md`、`docs/10-v2-life-redesign.md`、`docs/11-ai-write-architecture.md` 的当前事实口径。
-- `docs/09-status-roadmap.md` 现在明确区分 Production Web、GitHub main 与 Supabase schema/runtime，避免数据库 migration 已生效却被误写成 Web 已部署。
+- 重建 `README.md`、`docs/product/overview.md`、`docs/architecture/overview.md`、`docs/engineering/current-state.md`、`docs/archive/v2-evolution/10-v2-life-redesign.md`、`docs/architecture/ai/architecture.md` 的当前事实口径。
+- `docs/engineering/current-state.md` 现在明确区分 Production Web、GitHub main 与 Supabase schema/runtime，避免数据库 migration 已生效却被误写成 Web 已部署。
 - 当前文档纳入常吃食物、微信公众号测试号主通道 + PushPlus fallback、每日 21:00 记录完整性提醒等已生效能力。
 - 将 2026-09-11 的“饮食编辑页与 Service Worker 收口”阶段报告移入 `docs/archive/v2-evolution/`，并在文档索引中补充长期有效的 Meal V2 lifecycle。
 - 本轮**未获得 Production 部署授权，因此不发布 Web**；首页日期修复等待下一次明确授权。Supabase 每日完整性提醒已在本轮之前独立生效。
@@ -102,7 +102,7 @@
 - 实际验收：Cat 寄给 Fish 的明信片在寄出后生成 Fish 的 mailbox reminder；下一轮 5 分钟云端调度完成 PushPlus 投递，delivery 为 `accepted`，`notified_at` 已写入。
 - Production deployment `dpl_9YzBipVW9PQF3Si8hGrmVxUyTXzD` READY，source commit `3ecd159c9e8a47f470726c27bab48603eecf2d35`。
 - 发布后 `/me/reminders` HTTP 200，最近 30 分钟未发现 runtime error；Production 自动 Git 部署已重新保持关闭。
-- 同步收尾 `README.md`、`docs/09-status-roadmap.md`、`docs/14-wechat-reminders.md` 与本 Changelog，使当前文档与 Production 行为一致。
+- 同步收尾 `README.md`、`docs/engineering/current-state.md`、`docs/domains/reminders/overview.md` 与本 Changelog，使当前文档与 Production 行为一致。
 
 ## 2026-09-07 — Island Life 本轮收尾正式上线
 
@@ -110,7 +110,7 @@
 - 小信箱正式切换为 `draft / sent` 模型：待寄出只有寄件人可见可改；寄出后双方可见且永久只读。UI 使用收信箱 / 已寄出 / 待寄出三箱、手札 / 明信片筛选、月份归档、整页信纸翻页和始终水平横向的明信片。
 - Reminder Center V1 正式上线完整 `今天 / 即将到来 / 已完成 / 提醒设置` 体验与首页最近 3 条提醒；Reminder Engine、药箱、纪念日、snooze 与 PushPlus 云端调度继续复用既有 Supabase 数据层。
 - Cat / Fish 的 Web session、MCP token 与 actor-aware RPC 权限边界进入同一 Production 版本；AI 昵称和前端自称不参与鉴权。
-- 根目录 `README.md`、`docs/09-status-roadmap.md`、`docs/14-wechat-reminders.md` 同步更新为当前 Island Life 架构与正式状态。
+- 根目录 `README.md`、`docs/engineering/current-state.md`、`docs/domains/reminders/overview.md` 同步更新为当前 Island Life 架构与正式状态。
 - 发布前代码 CI：Test / Lint / Build 全部通过。
 - Production deployment `dpl_GC1Ut3u64w5rpZ8iwzRp5nyyvWmm` READY，source commit `7196c2fc843a0ca8d3aae00ed5ea87257a2ff5cf`。
 - 发布后 `/`、`/me/reminders`、`/nest/mailbox` 均返回 HTTP 200；Vercel 最近 30 分钟 runtime error 为 0。
@@ -127,7 +127,7 @@
 - 今日首页新增“接下来”轻量卡片，只展示最近 3 条提醒并跳转完整提醒中心。
 - Cat PushPlus 已绑定且真实自动提醒链路已验收；Fish 尚未绑定，因此 Fish / both 的真实微信投递等待后续验收。
 - Supabase 已验证 Cat/Fish reminder settings、药箱实例、纪念日实例与两个 cron 任务；此次 UI 代码未获得新的 Production 部署授权，因此线上仍为上一版 Reminder Center UI。
-- 同批同步更新 `docs/03-data-model.md`、`docs/09-status-roadmap.md`、`docs/14-wechat-reminders.md` 和文档索引。
+- 同批同步更新 `docs/architecture/data-model.md`、`docs/engineering/current-state.md`、`docs/domains/reminders/overview.md` 和文档索引。
 
 ## 2026-09-04 — R8.8 缓存竞态收口与首屏无闪烁（PR #58）
 

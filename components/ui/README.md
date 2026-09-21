@@ -1,6 +1,6 @@
 # UI adapter boundary
 
-`components/ui` is the project-facing visual adapter layer. V2 visible UI must also follow `docs/12-island-life-design-system.md`.
+`components/ui` is the project-facing visual adapter layer. V2 visible UI must also follow `docs/product/design-system.md`.
 
 ## Rules
 

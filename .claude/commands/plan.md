@@ -6,7 +6,7 @@
 
 - `AGENTS.md`
 - `docs/README.md`
-- `docs/09-status-roadmap.md`
+- `docs/engineering/current-state.md`
 - 相关代码 / schema
 
 ## 方案必须说明

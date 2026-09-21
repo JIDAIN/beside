@@ -6,7 +6,7 @@
 
 1. `AGENTS.md`
 2. `docs/README.md`
-3. `docs/09-status-roadmap.md`
+3. `docs/engineering/current-state.md`
 4. 与功能相关的主文档和源码
 
 ## 先分类
@@ -34,7 +34,7 @@
 
 ## 验证
 
-按 `docs/07-development-testing.md` 选择测试；能运行时完成相关 test/lint/build。
+按 `docs/engineering/development-testing.md` 选择测试；能运行时完成相关 test/lint/build。
 
 ## 完成输出
 
