@@ -1,7 +1,7 @@
 # AI 接入决策记录
 
 > 用途：记录 AI 接入开发中所有会影响 Harbor、MCP、业务 contract、权限、安全、性能和未来迁移的关键决定。  
-> 架构基线：`docs/26-ai-access-core-principles.md`
+> 架构基线：`docs/architecture/ai/access-core.md`
 
 ## 使用规则
 
@@ -79,7 +79,7 @@ Harbor 被定义为 Adapter，不是业务核心。未来 MCP 是替换 Adapter�
 
 ### 修改位置
 
-- `docs/26-ai-access-core-principles.md`
+- `docs/architecture/ai/access-core.md`
 - 本决策日志
 
 ### Harbor 影响
@@ -213,7 +213,7 @@ AI 应学习“用户意图”，不应学习内部数据库字段。未来无�
 - `lib/server/life-agent-registry.ts`
 - `lib/server/drive-bridge-service.ts`
 - `lib/server/life-ai-gateway.ts`
-- `docs/28-ai-natural-language-contract.md`
+- `docs/architecture/ai/natural-language.md`
 - `tests/ai/life-input-normalizer.test.ts`
 - `tests/server/life-agent-registry.test.ts`
 

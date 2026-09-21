@@ -1,6 +1,6 @@
 # R11.5 — 饮食营养完整化与照片显示编辑
 
-> Archived: 2026-09-07。本文档是 R11.5 实施与验收记录，不再作为当前事实主文档。当前规则请读 `docs/01-product.md`、`03-data-model.md`、`04-api-and-sync.md`、`06-ui-guidelines.md`、`13-meal-photo-storage.md`、`44-meal-draft-before-after-contract.md`。
+> Archived: 2026-09-07。本文档是 R11.5 实施与验收记录，不再作为当前事实主文档。当前规则请读 `docs/product/overview.md`、`03-data-model.md`、`04-api-and-sync.md`、`06-ui-guidelines.md`、`13-meal-photo-storage.md`、`44-meal-draft-before-after-contract.md`。
 
 状态：2026-09-06 已合并、数据库迁移已执行、Production 已上线。  
 2026-09-07 补充：餐前 / 餐后 AI 实际使用流程已实机验收通过。

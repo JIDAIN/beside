@@ -13,7 +13,7 @@
 - R1A：当前 Tab 重复点击不再同路由导航。
 - R1B：固定 `cat/fish` 双账号、共享旧密码、相对“我/Ta”、HMAC HttpOnly Cookie。
 - R1C：根身份 Context + stale-while-revalidate 查询缓存；今日页优先展示缓存。
-- 详见 `docs/17-auth-and-pairing.md`、`docs/18-r1c-navigation-cache.md`。
+- 详见 `docs/architecture/auth-and-identity.md`、`docs/18-r1c-navigation-cache.md`。
 
 ## R2：首页心情 / 睡眠 ✅
 - 只编辑当前 `mePartnerKey`；Ta 只读。
@@ -53,7 +53,7 @@
 - 小窝使用房间场景 + 2×2 四入口。
 - 我的使用账号 Hero + 设置列表。
 - 数据密集页保持克制；Legacy Game 不改视觉/机制。
-- 更新 `docs/12-island-life-design-system.md`；详见 `docs/23-r6-visual-polish.md`。
+- 更新 `docs/product/design-system.md`；详见 `docs/23-r6-visual-polish.md`。
 
 ## 最终统一验收 ✅
 
@@ -77,7 +77,7 @@ Lint   ✅
 Build  ✅
 ```
 
-完整修复与已知 npm audit 提示记录见 `docs/09-status-roadmap.md`。
+完整修复与已知 npm audit 提示记录见 `docs/engineering/current-state.md`。
 
 ## 本轮结论
 
