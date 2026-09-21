@@ -125,4 +125,4 @@ TypeScript 兼容 helper：
 lib/server/life-wechat-reminders.ts
 ```
 
-Reminder Engine 的身份、安全、幂等和 PushPlus token 隔离仍以 `docs/14-wechat-reminders.md` 为主文档；本文只定义团子的用户可见语气和 PushPlus 展示层约束。
+Reminder Engine 的身份、安全、幂等和 PushPlus token 隔离仍以 `docs/domains/reminders/overview.md` 为主文档；本文只定义团子的用户可见语气和 PushPlus 展示层约束。
