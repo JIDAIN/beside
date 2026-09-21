@@ -1,6 +1,6 @@
 # AI 自然语言输入与 Clarification Contract
 
-> 状态：AI Access Core 的长期业务契约。Harbor、程序内置 AI、MCP / function calling 共用。
+> 状态：2026-09-21，AI Access Core 当前自然语言 contract。Harbor、程序内置 AI、MCP / function calling 共用。
 
 ## 1. 目标
 
@@ -76,7 +76,7 @@ Adapter / AI 收到此类结果时应直接向用户问 `clarification.question`
 
 | 用户表达 | canonical resource | 自动处理 |
 |---|---|---|
-| 今天心情 / 睡眠 / 活动 | day | date 默认今天 |
+| 今天心情 / 睡眠 / 活动 | mood / sleep / activity（需要完整日汇总时用 day） | date 默认今天 |
 | 本月心情 | month | monthStart 默认本月 1 日 |
 | 今天吃了什么 | meal | date 默认今天，person 默认 me |
 | 对象今天吃了什么 | meal | person=ta |
@@ -114,6 +114,8 @@ wakeTime / wokeAt
 `23:30` 这类时钟值由程序结合 sleepDate 转为时间戳；起床时刻小于入睡时刻时按跨日处理。
 
 缺入睡或起床时间时必须澄清。
+
+当前 AI registry 对 sleep 只注册 upsert。Web/API 虽然已经支持删除自己的睡眠记录，但 life_mutate(resource=sleep, action=delete) 当前会被 registry 拒绝；在 AI action 真正接入前不得声称 AI 能删除睡眠。
 
 ### 4.3 Activity
 
@@ -227,7 +229,7 @@ sender / recipient 永远由服务端身份规则决定，不允许模型指定�
 
 ## 5. Update / Delete 规则
 
-自然输入层不得为了“方便”猜 UUID。
+自然输入层不得为了“方便”猜 UUID。以下 update/delete 规则只适用于当前 registry 已注册对应 action 的 resource。
 
 ```text
 修改 / 删除

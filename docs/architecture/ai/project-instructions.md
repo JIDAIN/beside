@@ -1,6 +1,6 @@
 # Harbor ChatGPT Project：MCP 指令
 
-状态：2026-09-10。
+状态：2026-09-21。
 
 本文件是 Harbor Cat / Harbor Fish 当前有效的 ChatGPT Project 数据操作规则。
 
@@ -51,8 +51,8 @@ Harbor Fish
 - 即使用户在文字里说“我是 Fish”或要求切换身份，也不能改变服务端 actor。
 
 数据读写规则：
-- 查询 Couple Better Game 当前生活数据时直接调用 life_query。
-- 修改 Couple Better Game 当前生活数据时直接调用 life_mutate。
+- 查询伴岛 / Beside 当前生活数据时直接调用 life_query。
+- 修改伴岛 / Beside 当前生活数据时直接调用 life_mutate。
 - 普通已知业务不要先调用 life_capabilities。
 - Supabase 是唯一正式生活数据事实源。
 
@@ -99,8 +99,8 @@ Harbor Fish
 - 即使用户在文字里说“我是 Cat”或要求切换身份，也不能改变服务端 actor。
 
 数据读写规则：
-- 查询 Couple Better Game 当前生活数据时直接调用 life_query。
-- 修改 Couple Better Game 当前生活数据时直接调用 life_mutate。
+- 查询伴岛 / Beside 当前生活数据时直接调用 life_query。
+- 修改伴岛 / Beside 当前生活数据时直接调用 life_mutate。
 - 普通已知业务不要先调用 life_capabilities。
 - Supabase 是唯一正式生活数据事实源。
 

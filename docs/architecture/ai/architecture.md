@@ -1,242 +1,190 @@
 # AI 访问与写入架构
 
-状态：2026-09-14。
-
-## 1. 目标
-
-AI 可以像当前授权身份用户一样读取和修改 **伴岛 / Beside** 已接入的生活数据，但不能获得任意 SQL / 任意表写权限。
-
-`couple-better-game` 在 MCP 内部 server name、space slug 或兼容地址中出现时属于兼容标识，不代表产品正式名称。
-
-稳定业务能力中心：
-
-```text
-life_capabilities
-life_query
-life_mutate
-```
+状态：2026-09-21。本文描述当前 AI / MCP 实际可调用能力，不把 Web 页面已有能力自动视为 AI tool 能力。
 
-所有 AI 入口最终进入同一个 server-side registry，再调用 canonical domain service / RPC / Supabase Storage。
+## 1. 稳定工具面
 
-## 2. 当前 AI 入口
+当前 AI Access Core 的公开工具只有：
 
-### Harbor Cat
-
-```text
-Harbor Cat / 团子
--> Harbor-Cat MCP
--> OAuth = cat
--> /mcp
--> life_query / life_mutate
--> AI Access Core
--> Supabase
-```
-
-### Harbor Fish
-
-```text
-Harbor Fish / 团子
--> Harbor-Fish MCP
--> OAuth = fish
--> /mcp
--> life_query / life_mutate
--> AI Access Core
--> Supabase
-```
-
-### 其他 MCP client
-
-```text
-MCP client
--> OAuth / fixed access identity
--> /mcp
--> life_query / life_mutate
--> AI Access Core
--> Supabase
-```
-
-### 程序内置 AI
-
-```text
-已登录 cat/fish
--> /ai
--> /api/ai/chat
--> Vercel AI Gateway
--> life-agent-registry
--> AI Access Core
-```
-
-这些入口共享同一套业务权限、校验和数据事实源，不复制 CRUD。
+- life_capabilities
+- life_query
+- life_mutate
 
-旧 Harbor Sheet / Apps Script / Fast Wake / Drive Bridge 已退出当前运行链路，只保留为历史记录。
+所有 AI 入口最终进入同一套 server-side registry，再调用 canonical domain service / RPC / Supabase Storage。
 
-## 3. Tool Registry
+couple-better-game 仅可作为历史 space slug、兼容地址或内部兼容标识出现，不是当前产品名称。当前正式产品名为 **伴岛 / Beside**。
 
-主要查询资源：
+## 2. 当前入口
 
-```text
-day
-month
-meal
-weight
-medicine
-mailbox
-settings
-life_export
-legacy_home
-```
+MCP：
 
-主要修改资源：
+Harbor Cat / Harbor Fish / other MCP client
+→ OAuth 2.0 + PKCE
+→ /mcp
+→ life_query / life_mutate
+→ AI Access Core
+→ canonical services
+→ Supabase
 
-```text
-mood       upsert / delete
-sleep      upsert
-activity   create / update / delete
-meal       create / update / append_meal_item / confirm_estimated_meal / delete + photo
-weight     create / update / delete
-medicine   create / update / delete
-mailbox    draft/create/update/delete/send + sent create semantics
-settings   update
-legacy_home replace
-```
+Harbor Cat 固定 OAuth actor = cat，Harbor Fish 固定 OAuth actor = fish。
 
-具体 action / schema 以当前 registry 与 domain service 为准；本页只维护稳定业务面，不手工复制所有字段定义。
+程序内置 AI：
 
-Web 已支持但尚未注册到 `life_query / life_mutate` 的独立页面能力，不应在 AI 文档里假装成可调用 tool。
+已登录 Web 用户
+→ /ai
+→ /api/ai/chat
+→ AI Gateway
+→ life-agent-registry / executor
+→ canonical services
+→ Supabase
 
-未来新增 `cycle` 等模块时，只需新增 canonical domain service 并注册 query / mutate。
+旧 Harbor Sheet / Apps Script / Fast Wake / Drive Bridge 不属于当前运行链路。
 
-## 4. 身份和权限
+## 3. 当前 query registry
 
-身份由服务端授权上下文决定，不从模型猜测。
+life_query 当前注册：
 
-- Harbor Cat 使用 Harbor-Cat OAuth 身份；
-- Harbor Fish 使用 Harbor-Fish OAuth 身份；
-- 程序内置 AI 使用当前登录身份。
+- day
+- mood
+- sleep
+- activity
+- month
+- meal
+- weight
+- medicine
+- mailbox
+- settings
+- life_export
+- legacy_home
 
-核心权限：
+重要语义：
 
-- Mood / Sleep / Meal / Weight：个人写入只允许当前 actor；
-- Meal / Weight update/delete：按真实记录 owner 再核验；
-- Meal：早餐 / 午餐 / 晚餐按 actor + date + type 唯一；重复意图转为补录或更新；snack 按每次进食独立创建，同一时段允许多条；多候选补录不得猜测；
-- Activity：`cat` / `fish` 单方活动只有对应本人可维护；`both` 双方可维护，但不能被任一方静默改成单方；
-- Mailbox：sender 固定当前 actor，recipient 按业务规则指向 Ta；draft 仅寄件人可维护，sent 永久只读；
-- Medicine：家庭共享，双方可维护；
-- Settings：共享项与个人项分别执行权限；
-- Reminder / 通知配置：实例操作与目标身份绑定当前 actor；
-- delete：必须来自当前用户明确删除意图；
-- `legacy_home.replace`：仍需明确高风险确认；
-- 禁止 `run_sql`、`write_any_table`、`raw_supabase_request` 等任意数据层能力。
+- day：单日生活汇总，包含心情、睡眠、活动和饮食；
+- mood / sleep / activity：可独立按日查询；
+- month：当前 registry 返回月度心情数据，不等同于 Web 的完整月度回顾页面；
+- meal：按日期与 person 查询；
+- mailbox：只返回当前 actor 有权看到的 draft / sent；
+- life_export：Life 数据导出；
+- legacy_home：旧游戏兼容快照，不属于普通 Life domain。
 
-完整资源权限矩阵见 `docs/architecture/auth-and-identity.md`。
+## 4. 当前 mutate registry
 
-## 5. 正式写入与幂等
+| Resource | 当前 AI action |
+|---|---|
+| mood | upsert / delete |
+| sleep | upsert |
+| activity | create / update / delete |
+| meal | create / update / append_meal_item / confirm_estimated_meal / delete，可附图 |
+| weight | create / update / delete |
+| medicine | create / update / delete |
+| mailbox | create draft/sent；update/delete 仅自己的 draft；draft 可 send |
+| settings | update |
+| legacy_home | replace，高风险 |
 
-```text
-自然语言
--> AI 提取业务语义
--> life_mutate
--> normalize / domain validation / permission
--> idempotency
--> canonical service / RPC
--> read-back / tool result
-```
+### Web 能力不等于 AI 能力
 
-MCP 和各 domain 使用稳定幂等种子 / 写入键。执行结果不确定时应读回相同 operation / record，而不是换新 id 盲目重放。
+当前 Web/API 已支持删除自己的睡眠记录，但 **AI registry 当前不支持 sleep delete**。
 
-## 6. 饮食草稿确认
+因此文档和 Project Instructions 不能因为 Web 有该功能，就声称 life_mutate 也能执行。
 
-**只有新 Meal creation** 使用额外的聊天层草稿流程：
+以后新增 AI action 时，应先改 registry / executor / tests，再更新本文。
 
-```text
-分析
--> 待确认草稿
--> 用户修改 / 确认
--> 正式 life_mutate
-```
+## 5. 身份与权限
 
-草稿和确认状态只属于聊天上下文：
+身份只能来自可信授权上下文：
 
-- 不建立 server-side `meal_drafts`；
-- 不通过当前一句 `userText` 是否包含“确认 / 可以 / 好的”来硬拦截 create；
-- 模型 / Project Instructions / `MEAL_DRAFT_AGENT_RULES` 负责先展示草稿再调用正式写入；
-- 已确认后的正式写入临时失败时，可以重试同一份已确认草稿。
+Web signed session 或 MCP signed OAuth token
+→ partnerKey = cat | fish
 
-单图明确实际记录意图在确认后直接创建 `confirmed`；只有明确饭前估算才创建 `estimated`。补充食物与饭后确认都定位并更新同一 Meal。
+聊天中的“我是 Fish”“替 Ta 记录”、AI 昵称、payload 自报 actor 都不能切换授权身份。
 
-其他明确的生活 mutation 不自动套用“先草稿后二次确认”；仍按各自 schema、permission 和高风险规则执行。
+完整权限矩阵：
+→ [Auth and Identity](../auth-and-identity.md)
 
-详细 contract 见 `docs/domains/meal/ai-contract.md`。
+## 6. Natural Language Normalization
 
-## 7. 实际摄入与完整营养
+自然语言 alias、默认日期、单位和 clarification 统一由 lib/ai/life-input-normalizer.ts 及 AI executor 处理。
 
-默认优先级：
+详细 contract：
+→ [Natural Language Contract](natural-language.md)
 
-```text
-用户明确文字
->
-餐前 / 餐后视觉差分
->
-单图合理估算
-```
+模型不应该自行猜内部 UUID、enum 或数据库字段。
 
-确认写入时，在能合理判断的前提下尽量一次提交重量、热量、蛋白质、碳水和脂肪；真正未知字段允许 `null`，不制造虚假精度。
+## 7. 正式写入与安全
 
-## 8. 图片
+标准写入：
 
-正式图片链路：
+用户意图
+→ life_mutate
+→ normalize
+→ permission / ownership
+→ domain validation
+→ idempotency / safety
+→ canonical service
+→ Supabase
 
-```text
-原图
--> EXIF normalize
--> longest edge 600px
--> WebP q70 / q65 / q60 / q55
--> Supabase Private Storage
--> meals.photo_path
-```
+当前长期安全规则：
 
-当前 Meal 正式只绑定一张展示图。多图可以用于分析，但不会虚构多图持久化字段。
+- 没有任意 SQL / 任意表写工具；
+- delete 必须来自用户当前消息的明确删除意图；
+- update/delete 不允许猜 UUID；
+- 个人数据不能替 Ta 写；
+- mailbox sent 永久只读；
+- Legacy Game 全量 replace 需要明确高风险确认；
+- tool result 成功后才允许告诉用户“已保存 / 已删除”。
 
-支持真实附件的 MCP client 可以直接进入 canonical media path；如果 client 不透传图片字节，则使用：
+## 8. Meal 特殊流程
 
-```text
-MEDIA_ATTACHMENT_REQUIRED
--> recovery.uploadUrl
--> browser upload
--> 恢复同一次正式业务写入
-```
+新 Meal 是当前唯一额外要求“聊天层草稿 → 用户确认 → 正式写入”的普通生活 mutation。
 
-## 9. Project Instructions
+图片 / 文字
+→ Meal 草稿
+→ 用户修改 / 确认
+→ life_mutate
+→ canonical Meal service
 
-当前有效模板：
+详细生命周期：
+→ [Meal AI Contract](../../domains/meal/ai-contract.md)
 
-`docs/architecture/ai/project-instructions.md`
+Meal 的字段、主餐唯一、estimated / confirmed 和营养规则不在本文重复维护。
 
-```text
-Harbor Cat  -> Harbor-Cat  -> OAuth cat
-Harbor Fish -> Harbor-Fish -> OAuth fish
-```
+## 9. 图片
 
-Project Instructions 只保留必要的身份语义、交互规则与安全提醒，不承担完整业务 schema。
+Meal 图片最终进入 canonical media path。
 
-## 10. 新 Domain 接入规范
+如果 MCP client 未传真实图片字节但用户明确要求保存图片：
 
-新增例如 `cycle`：
+life_mutate attachPhoto=true
+→ MEDIA_ATTACHMENT_REQUIRED
+→ recovery.uploadUrl
+→ 用户浏览器补传
+→ 服务端继续原业务操作
 
-1. 建表 / 约束 / migration；
-2. 建 canonical server service / RPC；
-3. 明确 owner / shared 权限；
-4. 扩展自然语言 normalization / clarification contract；
-5. 注册 `life_query / life_mutate`；
-6. 必要时扩展 `life_capabilities`；
-7. 增加权限、幂等、读回测试；
-8. 需要备份 / 提醒时分别扩展 data-management / Reminder Engine；
-9. 同步更新长期文档。
+具体压缩、Storage 和单图持久化：
+→ [Meal Photo Storage](../../domains/meal/photo-storage.md)
 
-不为新 domain 重做一套鉴权、AI transport 或数据库事实层。
+## 10. Project Instructions
 
-## 11. Production 部署纪律
+当前 Harbor Cat / Fish 指令唯一维护入口：
 
-GitHub main 中 AI / Web 代码完成并通过 CI，不等于已进入 Production。
+→ [Project Instructions](project-instructions.md)
 
-Production Git 自动部署默认关闭。任何新的 Preview / Production deployment 必须逐次获得用户明确授权；一次授权只对应当前一次受控部署，完成后继续保持关闭。
+Project Instructions 只维护固定身份语义、MCP、用户交互、Meal 草稿确认和删除/高风险安全提醒。具体 schema 和 action 以 registry 与 domain contract 为准。
+
+## 11. 新 Domain 接入
+
+新增 domain 时顺序固定为：
+
+1. schema / migration；
+2. canonical service / RPC；
+3. owner/shared permission；
+4. natural-language normalization；
+5. registry query/mutate；
+6. tests；
+7. 必要的 backup / reminder 接入；
+8. 更新对应 canonical docs。
+
+不为新的 AI client 重建第二套 CRUD 或身份系统。
+
+当前部署状态和 Production 差异：
+→ [Engineering Current State](../../engineering/current-state.md)

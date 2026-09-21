@@ -1,369 +1,195 @@
-# 提醒中心与微信提醒
+# Reminder Domain
 
-状态：当前有效。  
-状态日期：2026-09-14。
+状态：2026-09-21。本文描述当前代码 + Production Supabase 实际运行的提醒 contract。
 
-> 本文描述当前 Reminder Center、Supabase 云端调度、微信公众号测试号与 PushPlus 的正式提醒架构。历史 Google Drive / Apps Script Bridge 不再属于当前提醒链路。
+## 1. Reminder 不是一条单链路
 
-## 1. 当前正式链路
+当前实际上有两类提醒路径。
 
-```text
-生活模块 / 自定义提醒
-        ↓
-Reminder Engine
-        ↓
-life_reminder_rules
-life_reminder_instances
-        ↓
-网页 Reminder Center
-        +
-Supabase pg_cron
-        ↓
-life_notification_deliveries
-        ↓
-按 source_kind 选择通知通道
-```
+### A. Reminder Center instance 路径
 
-当前通道策略：
+用于 custom、medicine、anniversary、mailbox：
 
-```text
-mailbox
-  → 微信公众平台测试号（主通道）
-  → 若微信发送失败：PushPlus fallback
+rule / domain event
+→ life_reminder_instances
+→ due dispatcher
+→ life_notification_deliveries
+→ provider
 
-其他 Reminder Center 来源
-  → PushPlus
-```
+### B. 每日记录完整性特殊路径
 
-网站没有打开时，提醒仍由 Supabase 云端执行。
+每日完整性提醒当前 **不创建 life_reminder_instances**。
 
-Reminder Engine 与具体微信渠道保持解耦：业务模块只生成 reminder instance，不直接调用微信或 PushPlus。
+它由现有 claim 函数直接检查当天记录完整性：
 
-## 2. 微信公众平台测试号
+21:00 后检查
+→ private.life_daily_record_completeness
+→ public.claim_life_notification_reminders
+→ reserve life_notification_deliveries
+→ PushPlus
 
-当前已经接通微信公众平台测试号模板消息 API。
+因此不能把“所有提醒都先进入 reminder_instances”写成当前事实。
 
-Cat / Fish 各自关注同一个测试号，并分别绑定自己的 OpenID：
+## 2. 当前 Reminder Center
 
-```text
-cat  → life_wechat_openid_cat
-fish → life_wechat_openid_fish
-```
+页面代码存在于 /me/reminders 和 components/life/LifeReminderCenterPage.tsx。
 
-模板消息使用测试模板「团子来信 💌」，字段为：
+当前支持：
 
-```text
-first
-keyword1 = 提醒类型
-keyword2 = 提醒内容
-keyword3 = 提醒时间
-remark
-```
+- 新建自定义提醒；
+- recipient = cat / fish / both；
+- 今天 / 即将到来 / 已完成；
+- complete；
+- dismiss；
+- snooze 1 小时；
+- 当前账号自己的药箱提醒开关与提前天数；
+- 查看 PushPlus 是否已配置；
+- 查看纪念日提醒状态。
 
-小信箱通知点击后跳转：
+该页面当前不是底部主导航项，也不是“我的”页面的独立列表入口。
 
-```text
-https://couple-better-game.vercel.app/nest/mailbox
-```
+## 3. Reminder Center 数据模型
 
-测试号主要用于验证和当前私人使用；未来如果迁移到正式公众号，应继续复用同一 provider 边界，只替换正式公众号的 AppID / AppSecret / Template ID / OpenID 配置，不重写 Reminder Engine。
+life_reminder_rules 表示持续规则 / 自定义 reminder 来源。
 
-## 3. Secret 与身份边界
+life_reminder_instances 表示一次实际待处理事件，核心字段包括 recipient、source_kind、source_ref、title/content、due_at、snoozed_until、notified_at、status、dedupe_key、metadata。
 
-微信公众号配置与 PushPlus token 均只保存在 Supabase Vault，不进入 Git，不下发浏览器。
+状态只有：
 
-当前 Vault 配置包括：
+- pending
+- snoozed
+- completed
+- dismissed
 
-```text
-life_wechat_app_id
-life_wechat_app_secret
-life_wechat_template_id
-life_wechat_openid_cat
-life_wechat_openid_fish
+life_notification_deliveries 记录通知渠道投递，状态包括 reserved / accepted / failed。accepted 只表示 provider 接受发送，不表示用户已完成 reminder。
 
-life_pushplus_cat
-life_pushplus_fish
-```
+## 4. 当前 source_kind
 
-Cat / Fish 的微信目标地址完全分离。
+Production 与前端当前使用：
 
-AI 昵称统一为「团子」：
+- custom
+- medicine
+- anniversary
+- system
+- mailbox
 
-```text
-Harbor Cat  → 团子
-Harbor Fish → 团子
-Cat 微信提醒署名  → 团子
-Fish 微信提醒署名 → 团子
-```
+每日完整性提醒的 delivery kind 为 daily_record，属于上面的特殊 claim 路径，不是 Reminder Center source_kind。
 
-AI 昵称、用户自称、普通聊天文本都不参与身份认证。sender / recipient 仍由登录、OAuth、服务端签名身份和 mailbox 业务规则确定。
+## 5. Provider 路由
 
-## 4. 小信箱来信提醒
-
-小信箱继续复用统一 Reminder Engine。
-
-触发规则：
-
-```text
-保存 / 编辑 draft       → 不提醒
-draft → sent            → 仅 recipient 生成 1 条 mailbox instance
-直接以 sent 创建        → 仅 recipient 生成 1 条 mailbox instance
-已 sent 后读取 / 展示    → 不重复提醒
-```
-
-实例：
-
-```text
-source_kind = mailbox
-recipient = 信件收件人
-source_ref = 对应 mailbox letter
-metadata.format = postcard | letter
-metadata.destination = /mailbox
-```
+当前 Production dispatcher 的实际规则：
 
-当前微信公众号消息示例：
+### mailbox
 
-```text
-主人～团子来报信啦！ 💌
-提醒类型：小信箱 · 明信片 / 小信箱 · 手札
-提醒内容：只说明收到新来信
-提醒时间：实际到达时间
-团子已经帮主人放进小信箱，快去看看呀～
-```
+WeChat Public Platform test account
+→ 成功：wechat_test_account
+→ 失败：PushPlus fallback
 
-隐私边界：微信提醒不包含信件正文。真正的信件内容只在小岛登录后的信箱中查看。
+### 其他 Reminder Center instance
 
-## 5. 微信主通道 + PushPlus fallback
+custom / medicine / anniversary / system
+→ PushPlus
 
-小信箱发送函数：
+如果非 mailbox reminder 没有 PushPlus token，dispatcher 会跳过该 instance。
 
-```text
-private.life_mailbox_notification_send(actor, instance)
-```
+Reminder Engine 与 provider 保持解耦；业务模块不应直接调用微信 API。
 
-逻辑：
+## 6. Mailbox reminder
 
-```text
-1. 生成团子模板消息
-2. 调微信测试号模板消息 API
-3. 微信成功
-   → delivery.provider = wechat_test_account
-   → accepted
-4. 微信失败
-   → 自动调用现有 PushPlus
-5. PushPlus 成功
-   → delivery.provider = pushplus_wechat
-   → metadata.fallbackUsed = true
-   → accepted
-6. 两边都失败
-   → failed
-   → 等现有 delivery retry 规则处理
-```
-
-`life_notification_deliveries.metadata` 会记录：
-
-```text
-preferredProvider
-primaryProvider
-fallbackUsed
-primaryError（发生 fallback 时）
-```
-
-因此后续可以区分“公众号正常发送”和“公众号失败后由 PushPlus 兜底”。
+draft 不提醒。
 
-## 6. 其他提醒来源
+首次进入 sent 时为 recipient 创建 mailbox instance：
 
-当前以下来源继续走 PushPlus：
+- draft create/update → no reminder；
+- draft → sent → 1 mailbox instance for recipient；
+- direct sent create → 1 mailbox instance for recipient。
 
-```text
-自定义提醒
-药箱到期
-纪念日 / 整百日
-每日记录完整性提醒
-```
+微信通知不包含信件正文，点击进入 /nest/mailbox。
 
-### 每日记录完整性提醒
+已经成功通知过的 mailbox instance 会按当前数据库规则完成，不作为长期 pending task 留在提醒中心。
 
-Cat / Fish 各自独立检查，每天 `21:00`（`Asia/Shanghai`）检查当天是否完整记录以下 5 项：
+## 7. 每日记录完整性
 
-```text
-心情
-睡眠（sleep_date 为当天起床日，即昨晚入睡 → 今天起床）
-早餐 confirmed
-午餐 confirmed
-晚餐 confirmed
-```
+Cat / Fish 独立检查。
 
-规则：
+当前产品规则固定为每天 **21:00，Asia/Shanghai** 检查：
 
-- 五项全部完成：静默，不发送提醒；
-- 任一缺失：只发送 1 条汇总提醒，并列出全部缺项；
-- `estimated` 餐前估算不算完成，只有 `confirmed` 算实际记录；
-- `snack` 不参与每日必填检查；
-- Cat / Fish 分开判断，不互相代替；
-- dedupe key 为 `daily_record:<actor>:<date>`，同一人同一天最多成功触发一次正常提醒。
+- 心情；
+- 睡眠；
+- 早餐 confirmed；
+- 午餐 confirmed；
+- 晚餐 confirmed。
 
-完整性判断由：
+estimated 主餐、snack、Ta 的记录都不算当前 actor 完成。
 
-```text
-private.life_daily_record_completeness(space_id, actor, record_date)
-```
+五项全部完成时静默；有缺项时只生成一条汇总通知，missingItems 列出全部缺失项。
 
-统一返回 `mood / sleep / breakfast / lunch / dinner / missingItems / missingKeys / complete`，避免微信提醒和未来 UI 各写一套判断。
+dedupe key 为 daily_record:<actor>:<date>，因此同一 actor 同一天不会因 cron 重试重复正常投递。
 
-当前提醒示例：
+2026-09-21 已直接核验 Production：Cat / Fish 当前均启用该规则，时间均为 21:00。
 
-```text
-🌙 团子来检查今天的小记录啦
-主人～今天还差：午餐、晚餐。有空记一下吧～ 💗 ——团子
-```
+## 8. Medicine / Anniversary
 
-小信箱来信仍先走微信公众号测试号；以上其他来源目前继续走 PushPlus。
+Medicine reminder：
 
-## 7. Reminder Center 数据模型
+- 每个 actor 有自己的 enable + offsets；
+- 当前 UI 可以修改 medicine enabled 和 offsets；
+- offsets 限制 0～90 天；
+- 修改设置后会重建仍处于 active 的 medicine instances。
 
-### `life_reminder_rules`
+Anniversary reminder：
 
-表示持续规则或自定义提醒来源：
+- 从共享 anniversary date 物化；
+- 每个 actor 独立接收；
+- 当前 Reminder Center UI 只展示状态，不提供修改 anniversary reminder offsets 的控件。
 
-```text
-创建者
-recipient_scope = cat | fish | both
-source_kind
-标题 / 内容
-计划时间
-是否启用
-```
+具体当前 Production preference 值属于运行状态，不作为本文长期 contract；需要核实时直接查 Production。
 
-### `life_reminder_instances`
+## 9. Snooze 与 dedupe
 
-表示一次真正发生的提醒：
+Reminder Center snooze 会把 status 改为 snoozed、写 snoozed_until，并把 notified_at 置空。
 
-```text
-recipient
-source_kind
-source_ref
-due_at
-snoozed_until
-notified_at
-status
-dedupe_key
-metadata
-```
+delivery dedupe 使用 instance + effective due time，因此相同 due time 的网络重试不会重复发送；明确 snooze 后，新 due time 可以再次通知。
 
-状态：
+## 10. Production scheduler
 
-```text
-pending
-snoozed
-completed
-dismissed
-```
+2026-09-21 实际核验存在两个 active cron：
 
-### `life_notification_deliveries`
+| Job | Schedule |
+|---|---|
+| life-reminder-materialize-v1 | 10 0 * * * |
+| life-pushplus-reminders-v1 | */5 * * * * |
 
-只描述“这次通知投递发生了什么”，与用户是否完成提醒分离。
+前者物化 first-class Reminder Center sources；后者执行通知 dispatcher。
 
-```text
-reserved
-accepted
-failed
-```
+cron 名称中的 pushplus 是历史命名，不代表 mailbox 当前仍只走 PushPlus。
 
-`accepted` 只表示通知渠道接受发送，不代表用户完成了提醒。
+## 11. 身份与 secret
 
-## 8. Snooze、幂等与失败恢复
+PushPlus token、微信测试号 AppID/AppSecret/Template/OpenID 保存在服务端 / Supabase Vault，不进入公开 GitHub，不下发浏览器。
 
-点击“1 小时后”时：
+Cat / Fish 的 token / OpenID 路由必须按 actor 隔离。
 
-```text
-status → snoozed
-snoozed_until → 新时间
-notified_at → null
-```
+AI 昵称“团子”只影响展示，不参与鉴权。
 
-投递 dedupe 使用：
+## 12. 当前事实源
 
-```text
-instance id + effective due time
-```
+代码：
 
-因此同一有效到期时间不会因网络重试重复发送；明确 snooze 后可以在新时间再次提醒。
+- components/life/LifeReminderCenterPage.tsx
+- lib/life/reminder-client.ts
+- lib/server/life-reminder-center.ts
+- lib/server/life-wechat-reminders.ts
 
-`life_notification_deliveries` 同时负责：
+Production runtime：
 
-- 网络投递去重；
-- accepted / failed 记录；
-- 最多 3 次重试；
-- 卡住的 reserved 超时恢复；
-- 记录实际 provider 与 fallback 状态。
+- life_notification_preferences
+- life_reminder_rules
+- life_reminder_instances
+- life_notification_deliveries
+- cron.job
+- private.dispatch_due_life_reminders_for_actor
+- public.claim_life_notification_reminders
 
-## 9. 云端调度
-
-实例物化：
-
-```text
-life-reminder-materialize-v1
-每天执行
-```
-
-通知调度仍复用现有 cron：
-
-```text
-life-pushplus-reminders-v1
-*/5 * * * *
-```
-
-这里的 cron 名称是历史名称；实际 Reminder Center dispatcher 已经具备按来源选择 provider 的能力，并不再意味着所有提醒都只走 PushPlus。
-
-每日记录完整性提醒不新增 cron：现有 5 分钟 dispatcher 在 `21:00` 后的 20 分钟窗口内检查，dedupe 保证同一人当天只生成一次正常投递。
-
-小信箱来信实例在信件第一次真正进入 `sent` 时即时生成，随后由最多约 5 分钟一次的统一调度投递。
-
-## 10. 微信公众号验收
-
-2026-09-07 已完成：
-
-```text
-微信测试号 AppID / AppSecret                    ✅ Vault
-Cat OpenID                                      ✅
-Fish OpenID                                     ✅
-「团子来信 💌」模板                             ✅
-Cat 单独模板消息                                ✅ 实收
-Fish 单独模板消息                               ✅ 实收
-Cat → Fish 定向测试                             ✅ 无串人
-Fish → Cat 定向测试                             ✅ 无串人
-小信箱微信公众号主通道代码                     ✅ Production DB
-PushPlus fallback                               ✅ Production DB
-```
-
-真实 provider 测试：
-
-- 直接微信公众号发送：Cat / Fish 均返回 `wechat_test_account` 成功；
-- 完整 Reminder Engine 测试 Cat：`wechatSent=1`、`pushplusFallbackSent=0`；
-- 完整 Reminder Engine 测试 Fish：微信请求遇到一次瞬时 `SSL_ERROR_SYSCALL`，系统自动切到 PushPlus，`pushplusFallbackSent=1` 且投递成功；
-- 两次端到端测试生成的临时 reminder / delivery 数据均已清理，残留为 0。
-
-2026-09-14 每日完整性提醒验收：
-
-- Production 偏好已将 Cat / Fish `daily_record_reminder_enabled=true`，时间统一为 `21:00`；
-- 2026-09-11 的真实历史数据五项齐全，Cat / Fish 均判定 `complete=true`；
-- 2026-09-14 验证 Cat 缺午餐、晚餐，Fish 缺五项，缺项数组与真实数据一致；
-- 同一 actor/date 连续 claim 两次时，第一次返回提醒、第二次为空；测试事务已 rollback，无测试 delivery 残留；
-- 汇总文案已验证可正确输出缺项。
-
-## 11. 当前扩展原则
-
-未来生理期、睡眠、饮食、天气等提醒仍统一复用：
-
-```text
-业务模块
-→ Reminder Engine
-→ Reminder Instance / legacy daily claim
-→ Notification Delivery
-→ Provider
-```
-
-不要为每个模块单独创建定时任务或各写一套微信发送逻辑。
-
-公众号测试稳定后，再决定是否把药箱 / 纪念日 / 自定义提醒 / 每日完整性提醒切到公众号，以及是否申请正式的「团子」公众号。
+用户可见提醒语气：
+→ [Notification Tone](notification-tone.md)

@@ -1,128 +1,102 @@
-# 团子提醒语气与 PushPlus 展示规则
+# 团子提醒语气
 
-状态：当前有效。  
-状态日期：2026-09-07。
+状态：2026-09-21。本文只维护当前程序真正渲染的用户可见通知语言原则；Reminder 调度、provider 和幂等见 [Reminder Domain](overview.md)。
 
-## 1. 统一 AI 称呼
+## 1. AI 名称
 
-Island Life 对两位用户统一使用同一个 AI 名字：**团子**。
+伴岛 / Beside 对两位用户统一使用 AI 名称“团子”。
 
-```text
-Harbor Cat  -> 团子
-Harbor Fish -> 团子
-```
+cat / fish 只用于内部身份、权限、数据归属和通知路由，不作为用户称呼。
 
-`cat / fish` 只作为服务端 actor、鉴权、数据归属和 PushPlus token 路由使用，不属于面向用户的称呼。
+## 2. 当前称呼
 
-提醒、PushPlus 正文、测试消息和面向用户的 UI 文案中不得把 `Cat` / `Fish` 当作对人的称呼。
+默认称当前接收人为“主人”。
 
-## 2. 团子如何称呼用户与伴侣
+需要提及伴侣时，Production private.life_cute_partner_term(seed) 会稳定选择：
 
-团子对当前提醒接收人默认称：
+- 主人的宝宝
+- 主人的老婆
+- 主人的宝贝老婆
+- 主人的亲亲老婆
+- 主人最爱的宝贝
 
-```text
-主人
-```
+相同 seed 在重试时保持同一称呼。这些词只属于展示层，不能影响 actor / sender / recipient。
 
-需要提到另一位主人时，允许根据场景自然使用以下亲昵称呼：
+## 3. 语气原则
 
-```text
-主人的宝宝
-主人的老婆
-主人的宝贝老婆
-主人的亲亲老婆
-主人最爱的宝贝
-```
+当前正式提醒文案应：
 
-提醒渲染层使用稳定 seed 选择称呼，使同一条提醒在网络重试或重复渲染时保持一致，不出现一次叫“老婆”、下一次突然换成别的称呼的问题。
+- 亲近、温和；
+- 清楚说明发生了什么；
+- 可以使用少量 emoji；
+- 避免暴露内部 actor、表名、错误码；
+- 不把普通记录提醒写成考核；
+- 结尾可以使用“——团子”。
 
-这些称呼仅用于展示层，不参与身份鉴权，也不能反向决定记录属于 cat 还是 fish。
+真正安全或失败场景需要明确表达时，不为了“可爱”掩盖事实。
 
-## 3. 文案语气
+## 4. 当前 Production renderer
 
-团子的提醒应像一个可爱、亲近的小岛陪伴者，而不是系统机器人：
+Production 当前有两套主要正式 renderer：
 
-- 先自然叫“主人”；
-- 说明发生了什么；
-- 可以有少量 emoji、语气词和情绪价值；
-- 避免命令式、考核式、冷冰冰的系统措辞；
-- 不制造焦虑，不用“必须 / 立刻 / 失败 / 未完成”等压力词，除非业务安全确实要求；
-- 结尾可以自然署名 `——团子`；
-- 不在用户可见文本中暴露 `cat / fish` 内部 actor。
+- private.life_pushplus_center_message：Reminder Center instances；
+- private.life_pushplus_message：当前主要负责每日记录完整性特殊 claim。
 
-当前示例：
+### 每日记录完整性
 
-```text
-🌙 主人～团子来看看你啦
-主人～今天团子还没看到你的生活记录呀。随手记一点点就好，不用补全，也不用和任何人比。团子只是想陪主人把今天轻轻收好～ 💗 ——团子
+当前 Production 实际文案结构：
 
-💌 主人～收到明信片啦！
-主人～主人最爱的宝贝给主人寄来了一张明信片啦！团子已经帮主人放进小信箱，快去看看呀～ 💗 ——团子
+标题：🌙 团子来检查今天的小记录啦
 
-💊 主人～药箱里有个小提醒
-主人～团子来轻轻敲一下：……有空记得看看药箱哦，不急不慌～ 💗 ——团子
-```
+正文：主人～今天还差：<missingItems>。有空记一下吧～ 💗 ——团子
 
-## 4. PushPlus 普通模板与“激活消息”
+所以旧的“今天团子还没看到你的生活记录 / 不用补全”示例不再是 canonical 文案。
 
-当前程序仍通过同一个 PushPlus 微信渠道 API 发送，不新增第二套发送系统。
+### Mailbox
 
-### 普通模板
+当前 renderer 根据 postcard / letter 生成不同标题和正文，只说明收到新来信，不包含信件正文。
 
-未激活客服消息时，PushPlus 公众号使用微信模板消息。模板最上方可能显示类似：
+### Anniversary
 
-```text
-设备通知
-```
+根据 daysUntil 生成当天 / 明天 / N 天后的提醒，并使用稳定的伴侣亲昵称呼。
 
-这是 PushPlus / 微信模板的固定字段，程序无法把它改成“小信箱”或“团子提醒”。程序可控制的是实际提交的消息标题与正文。
+### Medicine
 
-### 激活消息 / 客服消息
+统一使用“药箱里有个小提醒”语气，正文来自当前 instance content。
 
-用户可在“pushplus 推送加”公众号中发送：
+### Custom / fallback
 
-```text
-激活消息
-```
+使用“主人～团子来提醒你啦”一类温和提醒结构。
 
-激活后，PushPlus 会把后续符合条件的微信推送改用客服消息方式展示，也就是更接近普通聊天气泡的样式。
+## 5. 微信测试号模板
 
-当前官方文档明确的约束：
+mailbox 微信主通道使用 first / type / content / time / remark / url 字段。
 
-- 必须由接收消息的用户本人主动激活；
-- 激活后最多使用 5 条客服消息；
-- 当前官方“如何在公众号中显示推送内容”文档写明有效期为 24 小时；
-- 超过时限或 5 条额度后需要重新激活，并会回到普通模板消息；
-- 程序 API 不能永久强制客服消息模式。
+当前跳转目标是生产兼容地址下的 /nest/mailbox。
 
-因此 Cat 与 Fish 如果都希望看到聊天气泡，应分别在各自绑定的 PushPlus 公众号会话中发送“激活消息”。程序无需修改 token 或发送接口，已激活期间现有 Reminder Engine -> PushPlus 链路会自然使用对应展示模式。
+生产 URL 保留 couple-better-game.vercel.app 是兼容地址，不代表当前产品仍叫 Couple Better Game。
 
-由于每次激活只有有限的客服消息额度，不应为了自动化测试随意消耗激活后的 5 条额度；需要测试时再明确发送。
+## 6. PushPlus 展示边界
 
-## 5. 当前实现位置
+程序控制 title、content、token 路由和 provider 调用。
 
-Supabase 正式投递渲染：
+PushPlus / 微信客户端具体如何展示模板或聊天气泡属于第三方 provider 行为，不应被写成伴岛内部稳定 contract。
 
-```text
-private.life_pushplus_message
-private.life_pushplus_center_message
-private.life_cute_partner_term
-private.dispatch_due_life_reminders_for_actor
-private.create_mailbox_arrival_reminder
-public.test_life_pushplus
-```
+## 7. 当前实现事实源
 
-对应 migration：
+Production functions：
 
-```text
-20260907102454_unify_tuanzi_reminders.sql
-20260907103640_cute_tuanzi_pushplus_messages.sql
-```
+- private.life_cute_partner_term
+- private.life_pushplus_center_message
+- private.life_pushplus_message
+- private.life_wechat_mailbox_message
+- private.life_mailbox_notification_send
 
-TypeScript 兼容 helper：
+相关 migrations：
 
-```text
-lib/server/life-wechat-reminders.ts
-```
+- 20260907102454_unify_tuanzi_reminders.sql
+- 20260907103640_cute_tuanzi_pushplus_messages.sql
+- 20260907121217_mailbox_wechat_primary_pushplus_fallback.sql
+- 20260914082048_enable_daily_record_completeness_reminder.sql
 
-Reminder Engine 的身份、安全、幂等和 PushPlus token 隔离仍以 `docs/domains/reminders/overview.md` 为主文档；本文只定义团子的用户可见语气和 PushPlus 展示层约束。
+修改提醒语气时，应以最新 Production function + migration 链最终定义为准，不能只根据旧 migration 中曾经出现过的文案判断当前行为。
