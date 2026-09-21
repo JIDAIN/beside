@@ -124,20 +124,20 @@ Migration 运维：
 - [Meal MOC](../domains/meal/README.md)
 - [Reminder MOC](../domains/reminders/README.md)
 
-## 7. 当前仍未完成的工程验收
+## 7. 可选的长期灾备验证
 
 ### Blank-database full replay
 
-仓库当前 64 个 migration 文件尚未在一次性空数据库中完成从零全量 replay 验收。
+仓库当前 64 个 migration 文件尚未在一次性空数据库中完成从零全量 replay。它属于长期灾备 / 新环境可重建性验证，不阻塞当前开发、日常使用或 Production。
 
 因此当前可以确认：
 
 - Production runtime 正常；
 - Production ledger 与公共仓库 migration 顺序已对齐；
 
-但不能把“空库从 0 重放 64 个文件必然成功”写成已验证事实。
+因此目前只保留一个事实：尚未验证“仅依赖仓库 migration 能否从全空数据库完整重建当前 schema/runtime”。
 
-如使用会产生费用的 Supabase branch / project 做 replay，必须先取得用户明确同意。
+这项验证可在未来新建 staging、灾备演练、迁移 Supabase project 或其他本来就需要新数据库环境的场景顺带执行。不要为了完成文档清单单独创建可能产生费用的 Supabase branch / project；如确需创建，必须先取得用户明确同意。
 
 ### Production 真实使用状态
 
