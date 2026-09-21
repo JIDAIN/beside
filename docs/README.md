@@ -88,7 +88,7 @@ code-local README 必须链接回对应 canonical docs；如果两者冲突，�
 - AI / MCP → [AI MOC](architecture/ai/README.md)
 - 数据库 migration → [Supabase README](../supabase/README.md)
 
-不要从 `archive/` 推断当前实现。
+不要从 `archive/` 或 `CHANGELOG.md` 的旧条目推断当前实现。CHANGELOG 记录的是历史快照，不是 Current State。
 
 ## 事实优先级
 
@@ -99,7 +99,7 @@ code-local README 必须链接回对应 canonical docs；如果两者冲突，�
 → 当前 GitHub main 代码
 → docs 当前工程文档
 → Accepted ADR
-→ archive
+→ CHANGELOG / archive
 → Git 历史 / 旧聊天
 ```
 
