@@ -2,7 +2,7 @@
 
 **核验日期：2026-09-21**
 
-本文只记录 **Production Web / GitHub main / Production Supabase 之间当前是否一致，以及仍有哪些未完成的工程验收**。
+本文只记录 **Production Web / GitHub main / Production Supabase 之间当前是否一致、已经确认的运行状态，以及可选的长期工程验证边界**。
 
 产品能力、业务规则、架构和未来设计不在这里重复维护。
 
