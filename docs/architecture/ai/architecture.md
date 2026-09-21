@@ -128,7 +128,7 @@ Web 已支持但尚未注册到 `life_query / life_mutate` 的独立页面能力
 - `legacy_home.replace`：仍需明确高风险确认；
 - 禁止 `run_sql`、`write_any_table`、`raw_supabase_request` 等任意数据层能力。
 
-完整资源权限矩阵见 `docs/17-auth-and-pairing.md`。
+完整资源权限矩阵见 `docs/architecture/auth-and-identity.md`。
 
 ## 5. 正式写入与幂等
 
@@ -166,7 +166,7 @@ MCP 和各 domain 使用稳定幂等种子 / 写入键。执行结果不确定�
 
 其他明确的生活 mutation 不自动套用“先草稿后二次确认”；仍按各自 schema、permission 和高风险规则执行。
 
-详细 contract 见 `docs/44-meal-draft-before-after-contract.md`。
+详细 contract 见 `docs/domains/meal/ai-contract.md`。
 
 ## 7. 实际摄入与完整营养
 
@@ -210,7 +210,7 @@ MEDIA_ATTACHMENT_REQUIRED
 
 当前有效模板：
 
-`docs/46-harbor-mcp-project-instructions.md`
+`docs/architecture/ai/project-instructions.md`
 
 ```text
 Harbor Cat  -> Harbor-Cat  -> OAuth cat
