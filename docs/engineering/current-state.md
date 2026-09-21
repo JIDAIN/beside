@@ -79,7 +79,7 @@ source commit: 0bd6f5fa6a7f96a4dac6311feb73322249fe4245
 }
 ```
 
-当前 Production 已发布的业务代码：共享查询缓存订阅、GET 超时与重试、月历缓存持久化与隔离、页面前台校验、启动预取削减，以及提醒/AI/恢复后的刷新路径。详细机制见 `04-api-and-sync.md`。
+当前 Production 已发布的业务代码：共享查询缓存订阅、GET 超时与重试、月历缓存持久化与隔离、页面前台校验、启动预取削减，以及提醒/AI/恢复后的刷新路径。详细机制见 `../architecture/api-and-sync.md`。
 
 2026-09-21 的 main 额外包含数据库历史维护：将 63 个 Production ledger migration 的仓库文件 version / 相对顺序恢复为真实 Production 顺序，从 Production ledger 原始 statements 补回缺失的 `add_auth_pairing_bootstrap`，并将微信 helper 的非-ledger 历史步骤显式标记为 replay-only。相关改动不改变当前 Production runtime schema。
 

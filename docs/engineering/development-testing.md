@@ -33,7 +33,7 @@
 | 自动测试 | `tests/` |
 | 当前长期事实文档 | `docs/` 顶层 |
 | 历史实施 / 验收记录 | `docs/archive/` |
-| 长期架构决策 | `docs/adr/` |
+| 长期架构决策 | `../architecture/decisions/` |
 
 ## 3. 领域开发原则
 
@@ -48,7 +48,7 @@
 3. wallet / exchange / heatmap / currency semantics；
 4. Supabase compatibility RPC；
 5. 自动测试；
-6. `05-business-rules.md` 等长期文档。
+6. `../domains/legacy-game/business-rules.md` 等长期文档。
 
 ### Island Life
 
@@ -237,18 +237,18 @@ mobile / desktop
 
 | 变化 | 主文档 |
 |---|---|
-| 产品流程 / 能力边界 | `01-product.md` |
-| 系统连接方式 / transport | `02-architecture.md` |
-| schema / Source of Truth | `03-data-model.md` |
-| API / auth / sync | `04-api-and-sync.md` |
-| Legacy Game 业务规则 | `05-business-rules.md` |
-| UI contract | `06-ui-guidelines.md` / `12-island-life-design-system.md` |
+| 产品流程 / 能力边界 | `../product/overview.md` |
+| 系统连接方式 / transport | `../architecture/overview.md` |
+| schema / Source of Truth | `../architecture/data-model.md` |
+| API / auth / sync | `../architecture/api-and-sync.md` |
+| Legacy Game 业务规则 | `../domains/legacy-game/business-rules.md` |
+| UI contract | `../product/ui-guidelines.md` / `../product/design-system.md` |
 | 开发 / 测试方式 | 本文档 |
-| 部署 / security | `08-deployment-security.md` |
-| 当前上线状态 | `09-status-roadmap.md` |
-| 环境变量 | `15-configuration-reference.md` |
-| 生产排障 / 恢复流程 | `16-operations-runbook.md` |
-| 长期架构取舍 | `docs/adr/` |
+| 部署 / security | `deployment-security.md` |
+| 当前上线状态 | `current-state.md` |
+| 环境变量 | `configuration.md` |
+| 生产排障 / 恢复流程 | `operations-runbook.md` |
+| 长期架构取舍 | `../architecture/decisions/` |
 
 一次性实施记录和旧方案进入 `docs/archive/`，不在当前主文档中继续累积版本叙事。
 
