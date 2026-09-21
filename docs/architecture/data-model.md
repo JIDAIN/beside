@@ -274,7 +274,143 @@ idempotency_key nullable
 
 AI 记体重写这里，不自动覆盖旧游戏体重快照。
 
-## 12. Reminder / Notification 系统模型
+## 12. `medicine_items`
+
+家庭药箱是 couple-space shared domain，不按 Cat / Fish 拆成两套库存。
+
+核心字段：
+
+```text
+id
+couple_space_id
+name
+production_date nullable
+shelf_life_months nullable
+package_expiry_date nullable
+opened_date nullable
+opened_shelf_life_days nullable
+quantity
+note nullable
+source
+import_key nullable
+created_at
+updated_at
+archived_at nullable
+```
+
+当前硬约束：
+
+- name 去空格后 1～120 字；
+- shelf_life_months：1～240 或 NULL；
+- opened_shelf_life_days：1～3650 或 NULL；
+- quantity：0～9999；
+- `(couple_space_id, import_key)` 唯一，import_key 可为空。
+
+`openedExpiryDate` 与 `finalExpiryDate` 是 RPC 返回的派生值，不是表字段：
+
+```text
+openedExpiryDate = opened_date + opened_shelf_life_days
+finalExpiryDate = package expiry 与 opened expiry 中更早的有效日期
+```
+
+删除药品当前是 soft archive：`delete_medicine_item` 写 `archived_at`，正常 list 不返回已归档记录。
+
+当前 UI / AI 都通过 service-only RPC 操作药箱。药箱记录本身是共享家庭事实；提醒偏好仍按 Cat / Fish 分开，见 [Reminder Domain](../domains/reminders/overview.md)。
+
+## 13. `mailbox_letters`
+
+小信箱是双方关系数据，但 draft 的可见性和写权限由 sender 身份强制控制。
+
+核心字段：
+
+```text
+id
+couple_space_id
+sender_key
+recipient_key
+format              letter / postcard
+title nullable
+theme_key
+body
+status              draft / sent
+sent_at nullable
+source
+created_at
+updated_at
+deleted_at nullable
+```
+
+当前硬约束：
+
+- sender / recipient 只能是 cat / fish，且不能相同；
+- format 只能是 letter / postcard；
+- body 去空格后 1～2000 字；
+- status 只能是 draft / sent。
+
+当前 authorized contract：
+
+```text
+draft
+→ 只 sender 可见
+→ sender 可 edit / delete / send
+
+draft → sent
+→ 写 sent_at
+→ 创建 recipient 的 mailbox reminder
+
+sent
+→ sender + recipient 可读
+→ 永久只读
+```
+
+postcard 不使用 letter title；authorized create 会将 postcard title 保存为 NULL。
+
+旧 sent-only RPC 仍因历史兼容存在，但当前 Web / AI 应使用 authorized mailbox service，不应绕过 draft/sent 权限模型。
+
+## 14. Shared settings：`app_configs` / `partner_profiles`
+
+当前 Life Settings 并不是单独一张 settings 表。
+
+### `app_configs`
+
+couple-space 级共享配置，当前同时承载 Legacy Game 配置和共享纪念日：
+
+```text
+couple_space_id unique
+heatmap_start_date nullable
+coin_week_start_day
+coin_deficit_streak_days
+visual_rules
+anniversary_date nullable
+```
+
+`anniversary_date` 是双方共享设置。
+
+### `partner_profiles`
+
+每位固定成员一条 profile：
+
+```text
+couple_space_id
+partner_key          cat / fish
+nickname
+emoji
+auth_user_id nullable
+target_weight_kg nullable
+```
+
+`target_weight_kg` 是个人设置，只允许当前 actor 修改自己的值，范围大于 0 且小于 500 kg。
+
+当前固定账号登录身份来自 `life_fixed_accounts`，不是 `partner_profiles.auth_user_id`。不要因为这个 nullable 历史字段推断当前仍使用 Supabase Auth 配对登录。
+
+`get_life_settings / update_life_settings` 将：
+
+- shared anniversaryDate；
+- Cat / Fish 各自 targetWeightKg
+
+组合成一个应用层 settings read model。
+
+## 15. Reminder / Notification 系统模型
 
 提醒系统属于 Shared / System，不属于具体生活事实表。
 
@@ -371,13 +507,13 @@ snooze 后会清空 instance `notified_at`，新的 effective due time 会形成
 
 完整提醒架构见 [`../domains/reminders/overview.md`](../domains/reminders/overview.md)。
 
-## 13. 外部写入与幂等
+## 16. 外部写入与幂等
 
 跨域 AI / import 写入使用稳定幂等边界。`record_write_receipts` 可用于部分外部写入回执语义。
 
 这些控制记录不是生活事实本身。
 
-## 14. 主要 Meal RPC
+## 17. 主要 Meal RPC
 
 ```text
 list_meals
@@ -398,7 +534,7 @@ Meal 数量约束：
 - snack 不进入该唯一索引，同一 morning / afternoon / night 可有多条独立事件；
 - 软删除后的主餐槽可以重新创建；每条 snack 独立持有自己的 `photo_path` 与 items。
 
-## 15. Source / AI 写入
+## 18. Source / AI 写入
 
 统一来源词汇：
 
@@ -416,7 +552,7 @@ AI 入口不获得任意 SQL。AI Access Core 负责 identity / permission / nor
 
 `legacy_home` 是旧版游戏兼容入口，不属于普通 Island Life resource。
 
-## 16. Fact vs Derived
+## 19. Fact vs Derived
 
 Island Life 事实包括 meal、meal item、favorite food template、weight、mood、sleep、activity、medicine、mailbox。
 
@@ -426,10 +562,26 @@ Reminder rule / instance / notification delivery 属于系统编排事实，不�
 
 派生 / 快照包括 wallet current balance、heatmap、nutrition summary、sleep duration、月度心情展示与 UI stale cache。
 
-## 17. Migration 规则
+## 20. Migration 规则
 
 - Production schema / function / view / grant / RLS 变化必须新增 migration；
 - 已执行 migration 不回改；
 - migration 保存在 `supabase/migrations/`；
 - migration 不等于真实数据备份；
 - 当前只做逻辑硬隔离，不迁移 Legacy Game 到独立 PostgreSQL schema；如未来需要物理迁移，必须单独设计 migration 和回归测试。
+
+
+## 21. 当前事实来源
+
+本文已于 2026-09-21 对照 Production Supabase schema / constraints 与当前 server service 复核。修改对应数据结构时至少同步检查：
+
+- `supabase/migrations/` 最新定义；
+- Production runtime schema / constraints；
+- `lib/life/life-service.ts`；
+- `lib/life/medicine-service.ts`；
+- `lib/life/mailbox-service.ts`；
+- `lib/life/settings-service.ts`；
+- `lib/nutrition/meal-service.ts`；
+- 对应 `lib/server/supabase-*.ts` adapter。
+
+业务生命周期不要写回本文；应链接到对应 Domain contract。

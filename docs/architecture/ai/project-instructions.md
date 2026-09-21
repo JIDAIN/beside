@@ -2,7 +2,7 @@
 
 状态：2026-09-21。
 
-本文件是 Harbor Cat / Harbor Fish 当前有效的 ChatGPT Project 数据操作规则。
+本文件同时保存两份**可直接复制**的 ChatGPT Project Instructions 与仓库维护说明。只有第 2、3 节代码块是给 ChatGPT Project 粘贴的完整正文；第 4 节以后属于仓库维护元信息，不要复制进 Project Instructions。
 
 产品关系先固定为：
 
@@ -134,29 +134,11 @@ Harbor Fish
 - ChatGPT 图片可通过 MCP 附件直接写入；正式展示图按当前 meal 规则保存。
 ```
 
-## 4. 已完成验收
+## 4. Project Instructions 维护规则
 
-截至 2026-09-10：
+当前 OAuth / MCP / Production 验证状态不在这份可复制指令中维护，统一看 [Engineering Current State](../../engineering/current-state.md)。
 
-```text
-Harbor-Cat OAuth / read / write          ✅
-Harbor-Cat ChatGPT 图片 → meal + photo   ✅
-Harbor-Fish OAuth / read / write         ✅
-Cat / Fish token-bound identity          ✅
-Cat / Fish AI 昵称统一为团子              ✅
-ChatGPT 写入 → Supabase → 网页自动刷新   ✅
-网页删除 → Supabase                      ✅
-Meal V2 direct / estimated / append / confirm ✅
-```
-
-数据域维护规则见 [`../life-legacy-boundary.md`](../life-legacy-boundary.md)。
-
-
----
-
-## 5. Project Instructions 维护规则
-
-## Canonical source
+### Canonical source
 
 Harbor Cat / Harbor Fish 当前可复制的 ChatGPT Project Instructions 统一以：
 
@@ -164,27 +146,28 @@ Harbor Cat / Harbor Fish 当前可复制的 ChatGPT Project Instructions 统一�
 
 为唯一正文源。
 
-不要再维护 Cat/Fish 两份彼此独立、容易漂移的指令文件；身份差异只保留在同一模板中的固定 OAuth actor 规则。
+不要再维护 Cat/Fish 两份彼此独立、容易漂移的文件；两份可复制正文放在同一文件中，身份差异仅限固定 OAuth actor 与“我 / Ta”映射。
 
-## 需要同步更新的变化
+### 需要同步更新的变化
 
-以下变化发生时，应在同一批修改中检查 `docs/architecture/ai/project-instructions.md`：
+以下变化发生时，应在同一批修改中检查本文件：
 
 - Cat / Fish OAuth 身份或权限语义；
 - `life_query / life_mutate` 的调用约定；
-- meal 的“聊天草稿 → 用户确认 → 正式写入”行为；
+- Meal 的“聊天草稿 → 用户确认 → 正式写入”行为；
 - 图片附件、恢复链接、压缩、旋转、缩放与单图持久化规则；
-- mailbox、medicine、activity、未来 cycle 等 domain 的 AI 规则；
-- 删除、高风险操作和幂等规则；
-- Production 部署授权规则。
+- mailbox、medicine、activity、未来新 domain 的 AI 交互规则；
+- 删除、高风险操作和幂等规则。
 
-## 维护原则
+### 维护原则
 
-- Project Instructions 只保留身份、入口、必要交互规则和安全边界，不充当 schema 数据库。
-- 字段、枚举、默认值和权限细节尽量由 AI Access Core / canonical services 返回和强制。
-- 发生冲突时，以生产行为、当前 `main` 代码和当前主文档为准。
-- 已退役的历史 transport 只保存在 `docs/archive/` 或 Git 历史，不重新写回当前 Project Instructions。
+- Project Instructions 只保留身份、入口、必要交互规则和安全边界，不充当完整 schema 数据库。
+- 具体 action matrix 以 [AI Architecture](architecture.md) 为准。
+- 自然语言 alias / default / clarification 以 [Natural Language Contract](natural-language.md) 为准。
+- Meal 细节以 [Meal AI Contract](../../domains/meal/ai-contract.md) 为准。
+- 发生冲突时，以 Production 行为、当前 main 代码和 canonical docs 为准。
+- 已退役 transport 只保存在 archive / Git 历史。
 
-## 安全要求
+### 安全要求
 
 Project Instructions 与仓库文档中不得写入 OAuth secret、Supabase service-role key、PushPlus token、私钥或其他长期凭据。
