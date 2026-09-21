@@ -1,13 +1,13 @@
 # 当前状态与 Roadmap
 
-**状态日期：2026-09-15**
+**状态日期：2026-09-21**
 **当前正式产品：伴岛 / Beside（小岛）**
 
 本文件只维护“现在是什么状态”。历史实施过程、旧部署记录和阶段验收不在这里重复堆积。
 
 ## 1. 当前结论
 
-2026-09-15 已将月历及全站共享缓存刷新修复发布 Production，部署 READY。自动回归与线上匿名页面检查通过；真实账号保存后的端到端刷新尚缺登录会话验收，不将匿名页面检查等同于真实数据写入验收。
+2026-09-15 已将月历及全站共享缓存刷新修复发布 Production，部署 READY。自动回归与线上匿名页面检查通过；真实账号保存后的端到端刷新尚缺登录会话验收，不将匿名页面检查等同于真实数据写入验收。2026-09-21 又完成 GitHub migration 历史与 Production Supabase ledger 的一致性收口；本次只整理仓库历史与文档，没有修改 Production schema，也没有触发 Web 部署。
 
 当前事实分三层维护：
 
@@ -79,7 +79,9 @@ source commit: 0bd6f5fa6a7f96a4dac6311feb73322249fe4245
 }
 ```
 
-本轮已发布的业务代码：共享查询缓存订阅、GET 超时与重试、月历缓存持久化与隔离、页面前台校验、启动预取削减，以及提醒/AI/恢复后的刷新路径。详细机制见 `04-api-and-sync.md`。
+当前 Production 已发布的业务代码：共享查询缓存订阅、GET 超时与重试、月历缓存持久化与隔离、页面前台校验、启动预取削减，以及提醒/AI/恢复后的刷新路径。详细机制见 `04-api-and-sync.md`。
+
+2026-09-21 的 main 额外包含数据库历史维护：将 63 个 Production ledger migration 的仓库文件 version / 相对顺序恢复为真实 Production 顺序，从 Production ledger 原始 statements 补回缺失的 `add_auth_pairing_bootstrap`，并将微信 helper 的非-ledger 历史步骤显式标记为 replay-only。相关改动不改变当前 Production runtime schema。
 
 验证：66 个测试文件、381 项本地测试通过；Lint 无错误（3 条既有警告），生产构建通过。修复提交及恢复保护后的 main 均通过 GitHub CI。临时部署提交有 4 项断言要求 deploymentEnabled=false 而失败，其余 377 项通过；恢复保护后 CI 全绿，未删除或放宽这些断言。
 
@@ -98,6 +100,8 @@ region: ap-northeast-1
 ```
 
 数据库项目名仍为历史兼容标识，不代表产品品牌回退。
+
+2026-09-21 已核对 `supabase_migrations.schema_migrations` 与 GitHub `supabase/migrations/`：Production ledger 的 63 个 migration 名已全部有仓库对应文件，公共 migration 相对顺序倒置为 0；仓库另保留 1 个 replay-only 微信 helper 兼容步骤。完整 blank-database replay 尚未在一次性空项目执行，因此这仍是灾难恢复链路的待验收项。
 
 当前已生效的重要 schema / runtime 能力包括：
 

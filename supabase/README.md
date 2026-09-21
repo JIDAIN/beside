@@ -1,13 +1,27 @@
 # Supabase 数据库版本管理
 
-本目录保存项目 Supabase PostgreSQL 的数据库变更历史。
+本目录保存项目 Supabase PostgreSQL 的数据库变更 SQL。Production 当前实际 schema / runtime 与 `supabase_migrations.schema_migrations` 仍是数据库事实来源。
 
 ## 目录规则
 
-- `migrations/` 中的文件按 Supabase migration version 排序执行。
-- 2026-09-01 首次把 production 的 `supabase_migrations.schema_migrations` 原始 SQL 回填到仓库；版本号和 migration 名与 production 保持一致。
-- 已经在 production 执行过的历史 migration **不可回头修改**。需要修正时新增 migration。
-- 数据库 schema、function、view、trigger、grant、RLS 等变更都必须进入 migration，禁止只在 production 手工修改后不落库。
+- `migrations/` 按文件名前缀顺序执行。
+- 已经在 Production 执行过的 migration **不可为了修正当前业务而回头改 SQL**；新的 schema / function / view / trigger / grant / RLS 变化继续新增 migration。
+- 2026-09-21 已重新用 Production `supabase_migrations.schema_migrations` 对账仓库：Production ledger 中 63 个 migration 名均已有对应仓库文件，公共 migration 的相对顺序与 Production 一致。
+- 历史缺失的 `20260902150933_add_auth_pairing_bootstrap.sql` 已从 Production ledger 保存的原始 `statements` 恢复到仓库。
+- Production 实际运行过的部分 migration 曾以不同本地时间戳回填；本轮已将这些仓库文件名恢复为 Production ledger 的真实 version，避免按旧文件名重放时产生依赖倒置。
+- 数据库 schema、function、view、trigger、grant、RLS 等变更必须进入 migration，禁止只在 Production 手工修改后长期不落库。
+
+### Replay-only 历史兼容步骤
+
+仓库额外保留：
+
+```text
+20260907110000_replay_only_wechat_test_account_probe.sql
+```
+
+它保存的是当前 Production runtime 中确实存在、且后续 `mailbox_wechat_primary_pushplus_fallback` 依赖的微信测试号 helper SQL；但 Production migration ledger 没有一条独立同名记录，因此它**不是 Production ledger migration**，只作为空库重放的历史兼容步骤。
+
+不要把这个 replay-only 文件误写成“Production 曾执行过同名 migration”，也不要仅凭仓库文件数量判断 Production migration 数量。
 
 ## 当前安全模型
 
@@ -29,13 +43,34 @@ SUPABASE_SERVICE_ROLE_KEY
 
 ## 从空数据库重建
 
-数据库结构的重建顺序是：
+当前仓库已经恢复 Production 公共 migration 的真实顺序，并补齐已知缺失依赖。重建顺序是：
 
-1. 在空 Supabase/PostgreSQL 项目中按文件名顺序执行 `migrations/*.sql`；
-2. 验证 table / view / function / trigger / RLS / grants；
-3. 再单独恢复或导入业务数据。
+1. 在**一次性空 Supabase/PostgreSQL 环境**中按文件名顺序执行 `migrations/*.sql`；
+2. replay-only 微信 helper 会在其依赖方之前执行；
+3. 验证 table / view / function / trigger / RLS / grants；
+4. 再单独恢复或导入业务数据。
 
-migration 只负责数据库结构和规则，不内嵌当前情侣空间的真实业务数据。**schema 可重建不等于 production 数据备份。**
+截至 2026-09-21，本轮完成的是 **Production ledger 对账 + 依赖顺序静态收口**，还没有在一次性空项目上执行整套 64 个 SQL 的完整 blank-database replay。因此在把它作为灾难恢复唯一依据前，仍应完成一次真实空库重放验收。
+
+migration 只负责数据库结构和规则，不内嵌当前情侣空间的真实业务数据。**schema 可重建不等于 Production 数据备份。**
+
+## Production ledger 对账规则
+
+以后排查 migration 漂移时同时看三层：
+
+```text
+Production runtime schema / functions
+Production supabase_migrations.schema_migrations
+GitHub supabase/migrations
+```
+
+判断顺序：
+
+- 当前功能是否存在，以 runtime schema / function 为准；
+- “Production 执行过什么、顺序是什么”，以 `schema_migrations` 为准；
+- “新环境如何重放”，以仓库 migration 序列为准，并显式考虑 replay-only 兼容步骤。
+
+如果三层不一致，不要直接改已执行历史 SQL；先确认是缺失历史快照、ledger 未记录的手工历史步骤，还是需要新的 forward migration。
 
 ## 历史默认值说明
 

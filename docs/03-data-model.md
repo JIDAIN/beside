@@ -1,6 +1,6 @@
 # 数据模型与 Source of Truth
 
-状态：2026-09-11。
+状态：2026-09-21。
 
 ## 1. 核心原则
 
@@ -306,7 +306,7 @@ medicine_offsets
 ```text
 created_by
 recipient_scope      cat / fish / both
-source_kind          custom / medicine / anniversary / system
+source_kind          custom / medicine / anniversary / system / mailbox
 title
 content
 enabled
@@ -325,7 +325,7 @@ archived_at
 ```text
 rule_id nullable
 recipient            cat / fish
-source_kind
+source_kind          custom / medicine / anniversary / system / mailbox
 source_ref nullable
 title
 content nullable

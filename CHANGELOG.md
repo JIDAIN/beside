@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-09-21 — Supabase migration 历史与文档一致性收口
+
+- 直接对账 Production `supabase_migrations.schema_migrations`、当前 runtime schema 与 GitHub `supabase/migrations/`，确认此前仓库 migration 时间戳和相对顺序与 Production ledger 存在明显漂移。
+- 将 Production ledger 中 63 个同名 migration 的仓库文件 version / 顺序恢复为真实 Production 顺序；公共 migration 相对顺序倒置从 45 组收敛为 0。
+- 从 Production ledger 保存的原始 `statements` 恢复缺失的 `20260902150933_add_auth_pairing_bootstrap.sql`，补齐后续 hardening migration 的历史依赖。
+- 微信测试号 helper 在 Production runtime 中存在，但没有独立同名 ledger 记录；仓库将其显式改名为 `20260907110000_replay_only_wechat_test_account_probe.sql`，只承担空库重放兼容，不冒充 Production ledger migration。
+- 同步修正测试与历史文档中的旧 migration 路径；`docs/03-data-model.md` 补齐 Reminder `source_kind=mailbox`，并更新 API / 运维 / 状态文档日期与 migration 排障边界。
+- 本轮没有执行 Production schema 变更，也没有触发 Vercel Preview / Production。完整 64 个 SQL 的一次性空库 replay 尚未实际执行，保留为灾难恢复验收边界。
+
 ## 2026-09-15 — 月历与全站读取刷新修复（已发布）
 
 - 共享缓存增加组件订阅、失效主动重读、跨标签页通知与可见页面每 30 秒校验；MCP/另一设备新记录通过后台读取收敛。

@@ -1,6 +1,6 @@
 # Production 运维与故障恢复手册
 
-状态：2026-09-07。
+状态：2026-09-21。
 
 本文档回答的是：**程序已经上线后，如果出问题，应该按什么顺序查、什么时候停止操作、如何恢复。**
 
@@ -302,10 +302,30 @@ wallet_ledger
 规则：
 
 ```text
-已执行 migration -> 不回写文件
+已执行 migration -> 不为当前业务修复而改写历史 SQL
 schema 修复       -> 新 migration forward fix
 数据修复           -> 明确影响范围 + 先备份 + 可验证
 ```
+
+### 11.1 Production ledger 与仓库不一致
+
+不要只看文件名判断 Production 执行历史。按下面三层核对：
+
+```text
+Production runtime schema / functions
+→ supabase_migrations.schema_migrations
+→ GitHub supabase/migrations
+```
+
+2026-09-21 已完成一次历史收口：Production ledger 中 63 个 migration 名均有仓库对应文件，公共 migration 相对顺序已恢复为 Production 顺序；缺失的 `add_auth_pairing_bootstrap` 已从 Production ledger 原始 statements 恢复。仓库另有一个显式标记的 `replay_only_wechat_test_account_probe`，用于保存 Production runtime 中存在但 ledger 未独立记录的微信 helper 历史步骤。
+
+因此：
+
+- 判断“Production 执行过什么”仍以 `schema_migrations` 为准；
+- 判断“现在数据库里有什么”以 runtime schema / function 为准；
+- 判断“空库如何重放”以仓库排序为准，但在正式灾难恢复前要先在一次性空环境完整 replay；
+- 不要为了让三者表面相同而篡改 Production migration ledger 或已经执行过的历史 SQL。
+
 
 执行前检查：
 
