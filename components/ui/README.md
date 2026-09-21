@@ -1,48 +1,82 @@
 # UI adapter boundary
 
-`components/ui` is the project-facing visual adapter layer. V2 visible UI must also follow `docs/product/design-system.md`.
+`components/ui` 是伴岛面向业务代码的共享 UI adapter / pattern 层。
+
+设计系统总原则与当前视觉 baseline：
+→ `docs/product/design-system.md`
+
+## 长期分层
+
+```text
+Design Tokens
+↓
+App* UI Adapter / Primitive
+↓
+Shared Patterns
+↓
+Domain Components
+↓
+Pages
+```
 
 ## Rules
 
-1. Business screens prefer `App*` components over importing a third-party visual component directly.
-2. `animal-island-ui` may be upgraded or supplemented, but external visual APIs are normalized here first.
-3. External GitHub code with a different design language may contribute interaction/state/layout logic, not its color/shadow/button/card system.
-4. V2 business pages use the approved `--life-*` tokens from `app/island-life-tokens.css`; do not create per-page palettes.
-5. Life-specific presentation belongs in `components/life`; reusable cross-domain patterns graduate into `components/ui`.
-6. `/ui-lab` is fake-data-only and must never write production facts or trigger Legacy Game settlement.
+1. 业务页面优先使用已有 `App*` / shared pattern，而不是直接导入第三方完整视觉组件。
+2. `animal-island-ui` 可以升级、替换或补充，但外部视觉 API 应先在本层归一。
+3. 外部 GitHub UI 可以贡献 interaction / state / layout 思路，但不得把另一套颜色、阴影、Button/Card 体系直接扩散进业务页面。
+4. 当前页面优先使用 `--life-*` token；未来全站重构如替换 token，应从统一 token source 迁移，而不是按页面建立新色板。
+5. Life/domain-specific presentation 先留在对应领域；跨领域且稳定后再提升到 `components/ui`。
+6. `/ui-lab` 只用于假数据 / 视觉状态，不写 Production facts，不触发 Legacy Game settlement。
+7. shared component 负责 interaction + presentation contract，不承载数据库事实或业务权限的唯一判断。
+8. 新视觉重构优先修改本层与 token，不把新增全局 override stylesheet 作为默认长期方案。
 
-## Implemented V2 shared patterns
+## Current shared patterns
 
 ```text
-AppPageShell       V2 page shell / title hierarchy
-AppRoleSwitch      shared 我 / Ta segmented switch
+AppPageShell       page shell / title hierarchy
+AppRoleSwitch      shared 我 / Ta switch
 AppRecordRow       compact factual record row
-AppFeatureTile     Nest / secondary feature entry
-AppNutritionBar    carbs / protein / fat / kcal summary bar
+AppFeatureTile     secondary feature entry
+AppNutritionBar    nutrition summary
+AppButton          shared action
+AppInput           shared input
+AppSelect          shared select
+AppDialog          shared dialog
+MealPhotoFrame     meal photo presentation
 ```
 
-These patterns are the V2-UI1 foundation. They are not allowed to invent game reward semantics in the Life recorder.
+这份列表是当前实现快照，可以随统一 UI 重构演进。
 
-## Approved token source
+## Current token source
 
 ```text
 app/island-life-tokens.css
 ```
 
-The V2 palette is warm ivory/cream with mint/teal identity plus soft yellow/coral/light-blue accents. Large-area brown is not part of the V2 page language.
+当前代码仍存在 `island-life-refactor.css`、`r8-*.css`、`food-compact.css` 等历史 visual adapter / override。它们是现状，不是目标分层。
 
-Legacy Game continues to use its existing visual tokens; V2 `--life-*` tokens intentionally coexist without forcing a visual rewrite of `/game`.
+未来系统级 UI 重构应逐步把稳定规则收敛回 token + App* + shared patterns，并在视觉回归后删除被替代的历史 override。
+
+## Legacy Game
+
+「变美变瘦大作战」当前仍有自己的 legacy UI 实现，这是历史现状，不代表它永久排除在伴岛统一 UI 体系之外。
+
+如果未来进行“伴岛全站 UI 统一”：
+
+- 可以把 /game 作为明确迁移对象；
+- 视觉层逐步接入统一 token / App* / pattern；
+- 但不得借 UI 重构改变 Legacy Game 的数据、奖励、结算和权限语义。
 
 ## Future component rule
 
-Before creating a new visual component:
+新增视觉组件前按顺序判断：
 
 ```text
 existing App*
--> animal-island-ui capability
--> licensed same-language GitHub pattern
--> mature headless interaction
--> project-original component
+→ existing shared pattern
+→ mature external/headless capability
+→ domain-local component
+→ proven reusable pattern graduates to components/ui
 ```
 
-If a new component is cross-domain and stable, place it here. If it is specific to mood/sleep/activity/nutrition/medicine/etc., keep it in that domain until the pattern proves reusable.
+不要因为单个页面需要一次样式就提前制造新的全局 primitive。
