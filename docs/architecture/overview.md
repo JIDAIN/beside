@@ -121,7 +121,7 @@ Island Life maintenance != Legacy Game maintenance
 
 Meal calories 不自动生成 deficit，不自动修改金币、宝石、钱包或旧游戏 heatmap。
 
-任何普通 Life 测试清理、import / restore 默认不得触碰 Legacy Game。完整 allowlist 见 `48-life-legacy-game-data-boundary.md`。
+任何普通 Life 测试清理、import / restore 默认不得触碰 Legacy Game。完整 allowlist 见 `life-legacy-boundary.md`。
 
 ## 5. 饮食数据流
 
@@ -162,7 +162,7 @@ LifeFavoriteFoodsPage / meal editor chooser
 -> Supabase
 ```
 
-饮食草稿不是后台对象。单图实际记录与 `estimated -> confirmed` 生命周期的语义以 `44-meal-draft-before-after-contract.md` 为准。
+饮食草稿不是后台对象。单图实际记录与 `estimated -> confirmed` 生命周期的语义以 `../domains/meal/ai-contract.md` 为准。
 
 ## 6. 餐食图片
 
@@ -252,7 +252,7 @@ mailbox -> 微信公众平台测试号 -> PushPlus fallback
 - 微信和 PushPlus secret 只在服务端 / Vault；
 - RLS server-only 表不为了消除 Advisor INFO 而开放客户端 policy。
 
-完整矩阵见 `17-auth-and-pairing.md`。
+完整矩阵见 `auth-and-identity.md`。
 
 ## 11. 目录职责
 

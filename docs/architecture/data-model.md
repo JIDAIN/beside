@@ -72,7 +72,7 @@ life_reminder_instances
 
 这些属于身份、配置、备份、通知、提醒编排或系统控制层，不能简单当成生活事实或游戏事实。
 
-完整维护规则见 [`48-life-legacy-game-data-boundary.md`](life-legacy-boundary.md)。
+完整维护规则见 [`life-legacy-boundary.md`](life-legacy-boundary.md)。
 
 ## 3. 数据隔离硬规则
 
@@ -365,7 +365,7 @@ PushPlus accepted ≠ 用户已读
 
 snooze 后会清空 instance `notified_at`，新的 effective due time 会形成新的 delivery dedupe key，从而允许合法再次提醒一次。
 
-完整提醒架构见 [`14-wechat-reminders.md`](../domains/reminders/overview.md)。
+完整提醒架构见 [`../domains/reminders/overview.md`](../domains/reminders/overview.md)。
 
 ## 13. 外部写入与幂等
 
