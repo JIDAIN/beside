@@ -22,7 +22,7 @@
 
 2026-09-15：月历及全站共享读取刷新修复已发布 Production；381 项自动测试及恢复自动部署保护后的 CI 通过。线上月历视图、月份切换与页面导航已检查；真实账号写入后的端到端刷新仍需登录会话验收。
 
-完整的 Production / main / Supabase 边界以 [`docs/09-status-roadmap.md`](docs/09-status-roadmap.md) 为准。
+完整的 Production / main / Supabase 边界以 [`docs/engineering/current-state.md`](docs/engineering/current-state.md) 为准。
 
 ## 产品入口
 
@@ -146,7 +146,7 @@ mailbox
 
 每日记录完整性提醒已经在 Production Supabase 启用：Cat / Fish 各自每天 `21:00 Asia/Shanghai` 检查当天的心情、睡眠、confirmed 早餐、午餐、晚餐；五项都完成则静默，否则只发送 1 条汇总缺项提醒。`estimated` 与 `snack` 不计入必填完整性。
 
-详细说明见 [`docs/14-wechat-reminders.md`](docs/14-wechat-reminders.md)。
+详细说明见 [`docs/domains/reminders/overview.md`](docs/domains/reminders/overview.md)。
 
 ## AI 接入
 
@@ -181,7 +181,7 @@ Supabase
 - PushPlus token、微信公众号 secret / OpenID 等只保存在服务端 / Supabase Vault；
 - RLS + service-only / actor-aware RPC 限制直接表访问。
 
-权限矩阵见 [`docs/17-auth-and-pairing.md`](docs/17-auth-and-pairing.md)。
+权限矩阵见 [`docs/architecture/auth-and-identity.md`](docs/architecture/auth-and-identity.md)。
 
 ## Legacy Game 边界
 
@@ -193,7 +193,7 @@ Supabase
 
 展示层可以关联，但一个 domain 不自动覆盖另一个 domain。普通 Life 清理、导入、恢复不得顺手修改 Legacy Game 数据。
 
-详见 [`docs/48-life-legacy-game-data-boundary.md`](docs/48-life-legacy-game-data-boundary.md)。
+详见 [`docs/architecture/life-legacy-boundary.md`](docs/architecture/life-legacy-boundary.md)。
 
 ## 餐食图片
 
@@ -245,14 +245,14 @@ docs/archive/            历史实施与阶段验收
 第一次接手建议依次阅读：
 
 1. [`docs/README.md`](docs/README.md)
-2. [`docs/09-status-roadmap.md`](docs/09-status-roadmap.md)
-3. [`docs/01-product.md`](docs/01-product.md)
-4. [`docs/02-architecture.md`](docs/02-architecture.md)
-5. [`docs/03-data-model.md`](docs/03-data-model.md)
-6. [`docs/04-api-and-sync.md`](docs/04-api-and-sync.md)
-7. [`docs/08-deployment-security.md`](docs/08-deployment-security.md)
-8. [`docs/11-ai-write-architecture.md`](docs/11-ai-write-architecture.md)
-9. [`docs/14-wechat-reminders.md`](docs/14-wechat-reminders.md)
-10. [`docs/17-auth-and-pairing.md`](docs/17-auth-and-pairing.md)
+2. [`docs/engineering/current-state.md`](docs/engineering/current-state.md)
+3. [`docs/product/overview.md`](docs/product/overview.md)
+4. [`docs/architecture/overview.md`](docs/architecture/overview.md)
+5. [`docs/architecture/data-model.md`](docs/architecture/data-model.md)
+6. [`docs/architecture/api-and-sync.md`](docs/architecture/api-and-sync.md)
+7. [`docs/engineering/deployment-security.md`](docs/engineering/deployment-security.md)
+8. [`docs/architecture/ai/architecture.md`](docs/architecture/ai/architecture.md)
+9. [`docs/domains/reminders/overview.md`](docs/domains/reminders/overview.md)
+10. [`docs/architecture/auth-and-identity.md`](docs/architecture/auth-and-identity.md)
 
 AI / 自动化修改前必须先读 [`AGENTS.md`](AGENTS.md) 与 `.agents/skills/beside-maintainer/SKILL.md`。

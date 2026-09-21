@@ -31,20 +31,19 @@ version: 3.1.1
 
 1. `AGENTS.md`
 2. `docs/README.md`
-3. `docs/09-status-roadmap.md`
-4. 当前任务对应主文档与真实源码
+3. `docs/engineering/current-state.md`
+4. 当前任务对应 MOC 与真实源码
 
-任务追加必读：
+任务路由：
 
-- 产品 / 页面：`docs/01-product.md`
-- 架构：`docs/02-architecture.md` + `docs/adr/README.md`
-- 数据：`docs/03-data-model.md`
-- API / Sync / Auth：`docs/04-api-and-sync.md` + `docs/17-auth-and-pairing.md`
-- Legacy Game：`docs/05-business-rules.md`
-- UI：`docs/12-island-life-design-system.md` + `docs/06-ui-guidelines.md`
-- 开发 / 测试：`docs/07-development-testing.md`
-- 部署 / 安全：`docs/08-deployment-security.md` + `docs/15-configuration-reference.md`
-- AI / MCP：`docs/11-ai-write-architecture.md` + `docs/26-ai-access-core-principles.md` + `docs/28-ai-natural-language-contract.md`
+- 产品 / UI → `docs/product/README.md`
+- 架构 / 数据 / API / 身份 → `docs/architecture/README.md`
+- AI / MCP → `docs/architecture/ai/README.md`
+- Meal / Reminder / Legacy Game → `docs/domains/README.md`
+- 开发 / 测试 / 配置 / 发布 / 排障 → `docs/engineering/README.md`
+- Supabase migration → `supabase/README.md`
+
+MOC 负责导航；具体事实以对应 canonical contract 和源码为准。
 
 ## 数据域铁律
 
@@ -88,7 +87,7 @@ wallet_ledger
 
 ## UI / 视觉协议
 
-`docs/12-island-life-design-system.md` 是 V2 可见 UI 唯一主视觉规范。
+`docs/product/design-system.md` 是 V2 可见 UI 唯一主视觉规范。
 
 当前 V2 主导航固定为：
 
@@ -175,7 +174,7 @@ Browser → Next.js API → server-only Supabase
 
 Legacy Game 是伴岛“游戏”中的独立子项目，不代表整个正式产品。
 
-修改金币、宝石、结算、兑换、成长地图等规则前必须读 `docs/05-business-rules.md` 和对应 pure service；不要凭 legacy 变量名猜用户可见语义。
+修改金币、宝石、结算、兑换、成长地图等规则前必须读 `docs/domains/legacy-game/business-rules.md` 和对应 pure service；不要凭 legacy 变量名猜用户可见语义。
 
 普通 V2 生活功能不顺手重写 Legacy Game。
 
@@ -215,7 +214,7 @@ Test/Lint/Build 通过 **不等于** 视觉已验证。
 
 ## 文档同步
 
-当前事实进入对应顶层领域主文档；架构原因进入 ADR；阶段历史进入 archive；当前上线状态进入 `docs/09-status-roadmap.md`；发生了什么进入 `CHANGELOG.md`。
+当前事实进入对应顶层领域主文档；架构原因进入 ADR；阶段历史进入 archive；当前上线状态进入 `docs/engineering/current-state.md`；发生了什么进入 `CHANGELOG.md`。
 
 不要新增一串长期 `*-after-refactor` / `*-migration-report` 文档。
 

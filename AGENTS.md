@@ -26,29 +26,25 @@
 
 ## 2. 开始任务前必读
 
-至少阅读：
+固定入口：
 
 1. `README.md`
 2. `docs/README.md`
-3. `docs/09-status-roadmap.md`
-4. 与任务相关的主文档和源码
+3. `docs/engineering/current-state.md`
+4. 当前任务对应的 MOC、具体 contract 与真实源码
 
-按任务追加：
+按任务进入：
 
-| 任务 | 必读 |
+| 任务 | 先读 |
 |---|---|
-| 产品 / 页面流程 | `docs/01-product.md` |
-| 架构 / 重构 | `docs/02-architecture.md` + `docs/adr/README.md` |
-| 数据字段 / Supabase | `docs/03-data-model.md` |
-| 数据清理 / import / restore / Legacy Game 边界 | `docs/48-life-legacy-game-data-boundary.md` + `docs/16-operations-runbook.md` |
-| API / 同步 / 鉴权 | `docs/04-api-and-sync.md` + `docs/17-auth-and-pairing.md` |
-| AI / MCP | `docs/11-ai-write-architecture.md` + `docs/26-ai-access-core-principles.md` + `docs/28-ai-natural-language-contract.md` |
-| 金币 / 宝石 / 旧游戏规则 | `docs/05-business-rules.md` |
-| **任何 V2 可见 UI** | **`docs/12-island-life-design-system.md` + `docs/06-ui-guidelines.md`** |
-| 开发 / 测试 | `docs/07-development-testing.md` |
-| 环境变量 / 配置 | `docs/15-configuration-reference.md` |
-| 部署 / 安全 | `docs/08-deployment-security.md` + `docs/15-configuration-reference.md` |
-| Production 故障 / 恢复 | `docs/16-operations-runbook.md` |
+| 产品 / 页面 / UI | `docs/product/README.md` |
+| 架构 / 数据 / API / 身份 | `docs/architecture/README.md` |
+| AI / MCP | `docs/architecture/ai/README.md` |
+| Meal / Reminder / Legacy Game | `docs/domains/README.md` 后进入对应 domain MOC |
+| 开发 / 测试 / 配置 / 部署 / 排障 | `docs/engineering/README.md` |
+| 数据库 migration | `supabase/README.md` |
+
+不要通过扫描 `archive/` 或旧编号文件来推断当前实现。一个主题有 MOC 时，先从 MOC 找 canonical 文档。
 
 ## 3. 领域边界
 
@@ -99,7 +95,7 @@ wallet_ledger
 
 ## 4. V2 视觉语言是强制规范
 
-`docs/12-island-life-design-system.md` 是所有 V2 页面唯一主视觉规范。
+`docs/product/design-system.md` 是所有 V2 页面唯一主视觉规范。
 
 任何 AI/开发工具不得在业务 PR 中自行改变已确认方向：
 
@@ -226,7 +222,7 @@ DailyMealsPanelCore -> provider-free nutrition UI
 - 多表写入考虑事务；
 - anon/authenticated 不意外获得 server-only RPC；
 - 真实药箱 Excel/库存、账号密码、PushPlus token 不得提交到 GitHub migration；
-- 环境变量语义以 `docs/15-configuration-reference.md` 为准。
+- 环境变量语义以 `docs/engineering/configuration.md` 为准。
 
 ## 10. Legacy Game
 
@@ -280,7 +276,7 @@ npm run build
 
 ## 13. 当前下一步
 
-`docs/09-status-roadmap.md` 为唯一当前状态页。按该文档继续推进；任何需要 Vercel Preview / Production 的节点都必须先执行第 12 节审批流程。
+`docs/engineering/current-state.md` 为唯一当前状态页。按该文档继续推进；任何需要 Vercel Preview / Production 的节点都必须先执行第 12 节审批流程。
 
 ## 14. 文档治理（强制）
 
