@@ -1,333 +1,218 @@
-# API、云端同步与鉴权
+# API、鉴权与客户端同步
 
-状态：2026-09-21。
+状态：2026-09-21。本文只维护 **transport、鉴权、API 家族和客户端同步机制**。具体业务规则由对应 Domain 文档维护。
 
-## 1. API 总览
+## 1. 总体边界
 
-### 生活与餐食
+浏览器和 AI client 都不能直接持有 Supabase service secret。
 
-| Method | Path | 作用 |
-|---|---|---|
-| GET | `/api/meals?date=...&person=...` | 查询某日餐食 |
-| POST | `/api/meals` | 新增餐食 |
-| PUT | `/api/meals/[id]` | 更新餐食 |
-| DELETE | `/api/meals/[id]` | 软删除餐食 |
-| GET | `/api/meals/[id]/photo` | 读取私有餐食照片 |
-| PUT | `/api/meals/[id]/photo` | 上传 / 更换餐食照片 |
-| PATCH | `/api/meals/[id]/photo` | 修改照片显示旋转 / 大小 |
-| DELETE | `/api/meals/[id]/photo` | 移除餐食照片 |
-| GET | `/api/life/day?date=YYYY-MM-DD` | 读取当天心情、睡眠、活动 |
-| PUT | `/api/life/mood` | 保存 / 修改心情 |
-| DELETE | `/api/life/mood` | 删除自己的心情 |
-| PUT | `/api/life/sleep` | 保存 / 修改睡眠 |
-| DELETE | `/api/life/sleep` | 删除自己的睡眠 |
-| GET | `/api/life/month-bundle?month=YYYY-MM` | 一次读取整月心情、睡眠、活动与餐食，供月度回顾和缓存复用 |
-| POST | `/api/life/activities` | 新增活动 |
-| PUT | `/api/life/activities/[id]` | 修改活动 |
-| DELETE | `/api/life/activities/[id]` | 删除活动 |
+主要链路：
 
-具体生活资源还包括 weight、medicine、mailbox、reminder、settings、data-management 等 API；本页维护稳定入口与契约，不手工枚举所有 route 文件。
+### Web
 
-心情 / 睡眠 DELETE body 只传记录 `id + partnerKey`。服务端先以签名 session 验证 `partnerKey` 是当前 actor，再调用只授权给 service role 的 owner-filtered RPC；不能通过请求体代删 Ta 的个人记录。
-
-### AI / MCP 入口
-
-当前正式入口：
-
-```text
-/mcp
-/api/ai/chat
-```
-
-MCP OAuth 支撑端点：
-
-```text
-/oauth/register
-/oauth/authorize
-/oauth/token
-```
-
-Harbor Cat / Fish 直接通过 MCP OAuth 连接 `/mcp`。旧 `/api/drive-bridge/*`、Harbor Sheet、Apps Script / Fast Wake transport 已退出当前运行链路，只保留在历史 migration、`docs/archive/` 或 Git 历史中。
-
-## 2. 当前鉴权模型
-
-### Web / 程序内置 AI
-
-```text
 Browser
-→ /api/auth/login
-→ Supabase 固定账号凭据校验
-→ life-account-session HttpOnly Cookie
-→ Next.js API / /api/ai/chat
-→ actor-aware canonical service / restricted RPC
+→ Next.js page / API
+→ life-account-session
+→ server-side service / restricted RPC
 → Supabase
-```
-
-浏览器不持有 Supabase service secret，也不能通过页面参数切换真实写入身份。
 
 ### MCP
 
-```text
 MCP client
-→ OAuth register / authorize / token
-→ signed access token（绑定 cat 或 fish）
+→ OAuth 2.0 + PKCE
+→ signed access token
 → /mcp
-→ life_query / life_mutate
-→ AI Access Core / canonical services
+→ AI Access Core
+→ canonical services
 → Supabase
-```
 
-MCP token 的 `partnerKey` 是可信身份来源；昵称、自称、`person=cat/fish` 等普通文本不能改变 OAuth 身份。
+### 程序内置 AI
 
-### Legacy Game
+Browser session
+→ /api/ai/chat
+→ AI Gateway
+→ life-agent executor
+→ canonical services
+→ Supabase
 
-旧 `/game` 兼容同步仍保留 `couple-cloud-session` / `DATA_EDIT_PASSWORD` 等历史路径，但它们不再是 Island Life 登录或 AI/MCP 鉴权的一部分。
+## 2. Web 登录 API
 
-详细身份与权限矩阵见 [`auth-and-identity.md`](auth-and-identity.md)。
+当前固定账号入口：
 
-## 3. Meal API
+| Method | Path | 作用 |
+|---|---|---|
+| POST | /api/auth/login | 固定账号登录并签发 HttpOnly session |
+| GET | /api/auth/session | 读取当前签名身份 |
+| POST | /api/auth/logout | 清除 session |
 
-### 查询
+真实账号凭据只在 Production Supabase 中保存，浏览器不读取 life_fixed_accounts。
 
-```http
-GET /api/meals?date=2026-09-07&person=cat
-```
+身份细节：
+→ [Auth and Identity](auth-and-identity.md)
 
-### 新增 / 更新 / 删除
+## 3. Island Life API 家族
 
-```text
-POST   /api/meals
-PUT    /api/meals/<uuid>
-DELETE /api/meals/<uuid>
-```
+当前 route tree 主要包含：
 
-当前 source：
+- /api/life/day
+- /api/life/month
+- /api/life/month-bundle
+- /api/life/mood
+- /api/life/sleep
+- /api/life/activities
+- /api/life/weights
+- /api/life/medicines
+- /api/life/mailbox
+- /api/life/settings
+- /api/life/reminders
+- /api/life/reminders/settings
+- /api/life/notifications/pushplus
+- /api/life/data-management
 
-```text
-manual / chatgpt / import
-```
+共同规则：
 
-Meal 和 Meal Item 的 kcal / macros 允许 nullable：
+- read 先验证有效 Web session；
+- personal mutation 必须绑定 signed actor；
+- request body 中的 partnerKey/person 不能覆盖真实身份；
+- shared domain 按自己的业务权限处理；
+- server-only secret / RPC 不暴露给浏览器；
+- 正式 read response 使用 no-store，浏览器自己的 stale cache 负责体验优化。
 
-```text
-NULL = 未估算
-0    = 确实为 0
-```
+具体权限矩阵：
+→ [Auth and Identity](auth-and-identity.md)
 
-个人 meal 的 create / update / delete / photo mutation 都必须绑定当前 signed actor；不能只相信 payload 中的 `person` / `partnerKey`。
+## 4. Meal API 家族
 
-## 4. Meal Photo API
+当前：
 
-### 上传 / 更换
+| Method | Path | 作用 |
+|---|---|---|
+| GET | /api/meals | 查询某日某人的 Meal |
+| POST | /api/meals | 创建 Meal |
+| PUT | /api/meals/[id] | 更新 Meal |
+| DELETE | /api/meals/[id] | 软删除 Meal |
+| GET | /api/meals/[id]/photo | 读取 private photo |
+| PUT | /api/meals/[id]/photo | 上传 / 更换 photo |
+| PATCH | /api/meals/[id]/photo | 更新 photo display metadata |
+| DELETE | /api/meals/[id]/photo | 移除 photo |
 
-```text
-PUT /api/meals/<uuid>/photo
-```
+Meal lifecycle、主餐唯一、estimated / confirmed：
+→ [Meal Lifecycle](../domains/meal/lifecycle.md)
 
-服务端执行：
+图片压缩与 Storage：
+→ [Meal Photo Storage](../domains/meal/photo-storage.md)
 
-```text
-鉴权
-→ ownership
-→ 图片校验
-→ EXIF 方向归一
-→ 最长边 600px WebP 压缩
-→ Storage 上传
-→ 根据最终宽高计算默认显示旋转
-→ replace_meal_photo_state
-```
+AI 草稿：
+→ [Meal AI Contract](../domains/meal/ai-contract.md)
 
-竖图默认：
+本页不复制这些业务 contract。
 
-```text
-rotationDegrees = 90
-scale = 1.00
-```
+## 5. Favorite Foods
 
-### 修改显示
+当前独立 API：
 
-```text
-PATCH /api/meals/<uuid>/photo
-```
+- /api/favorite-foods
+- /api/favorite-foods/[id]
 
-Payload 只允许：
+模板只按当前登录身份维护。模板如何进入 Meal 见 Meal Lifecycle。
 
-```text
-rotationDegrees: 0 | 90 | 180 | 270
-scale: 0.60 .. 1.00
-```
+## 6. MCP / OAuth transport
 
-PATCH 不重新压缩 / 上传图片。
+MCP 入口：
 
-### 删除
+- /mcp
+- /oauth/register
+- /oauth/authorize
+- /oauth/token
 
-```text
-DELETE /api/meals/<uuid>/photo
-```
+当前 OAuth 使用：
 
-同时恢复显示元数据到 `0° / 100%`。
+- dynamic client registration；
+- exact redirect URI binding；
+- S256 PKCE；
+- signed authorization code；
+- signed access / refresh token；
+- partnerKey 固定写入可信 token；
+- authorization code redemption 防重放。
 
-## 5. AI 写入统一协议
+MCP 具体 tool action 不在本文维护：
+→ [AI MOC](ai/README.md)
 
-稳定业务工具：
+## 7. Legacy Game compatibility API
 
-```text
-life_capabilities
-life_query
-life_mutate
-```
+旧游戏兼容同步仍保留：
 
-普通已知业务 query/mutate 不应先调用 `life_capabilities`；只有未知能力发现或开发排错时才需要。
+- GET /api/home-data
+- POST /api/save-data
+- /api/cloud-session
 
-Meal create 的业务边界：早餐 / 午餐 / 晚餐若当天同一 owner 已有有效记录，API 返回 `409 MEAL_SLOT_CONFLICT`，调用方应进入原记录编辑或补录；snack create 不受该槽位约束，每次进食均创建独立记录。应用层预检用于给出清楚提示，数据库部分唯一索引用于防止并发竞态。
+这套 compatibility path 与 Island Life fixed-account session / MCP OAuth 不等价。
 
-正式写入统一原则：
+Legacy Game 与 Life 的数据边界：
+→ [Life / Legacy Boundary](life-legacy-boundary.md)
 
-```text
-自然语言
-→ AI 提取语义
-→ canonical normalize / validate
-→ permission
-→ idempotency
-→ domain write
-→ read-back / result
-```
+## 8. 客户端 stale read model
 
-不提供任意 SQL 或任意表修改工具。
+Island Life 的客户端 cache 只用于减少页面闪烁和重复请求。
 
-## 6. 新 Meal 的聊天层草稿流程
+核心规则：
 
-新的饮食记录使用：
+- Supabase / API 仍是事实源；
+- cache 按 cat / fish scope 隔离；
+- 切换 scope 会清空内存 cache，并按 scope 恢复可持久快照；
+- mutation 后更新或 invalidate 对应 key；
+- revision / scope serial 防止旧 in-flight read 覆盖新 mutation；
+- mount 后即使有 cache 也会强制后台校验；
+- focus、visibility、online 和可见期间 30 秒周期都会 revalidate；
+- 同账号其他标签页通过 localStorage mutation signal 触发 invalidate；
+- cache 内容可丢弃、可重建，不参与权限判断。
 
-```text
-用户文字 / 图片
-→ AI 分析实际摄入
-→ 聊天中展示待确认草稿
-→ 用户修改 / 确认
-→ life_mutate 正式写入
-```
+当前持久化 key 主要包括：
 
-关键边界：
+- life-month-bundle
+- life-day
+- life-month
+- meals
+- weights
 
-- 草稿不写数据库；
-- 没有 `meal_drafts` 后台表；
-- 服务端不通过当前 `userText` 是否包含“确认/可以/好的”来决定能不能 create meal；
-- 确认状态属于对话上下文；
-- 如果确认后的写入临时失败，AI 可以在用户明确要求重试时重试已确认操作。
+持久缓存版本为 v2，按当前 actor scope 存放；兼容 key 中保留 couple-better-game 不代表当前品牌名。
 
-身份、删除、高风险覆盖等安全规则仍必须由服务端硬校验。
+## 9. 读取超时与重试
 
-## 7. 饮食实际摄入与营养字段
+当前代码两层约束：
 
-AI 默认统计实际吃下去的量。
+- readFetch 对普通 GET 使用 12 秒 AbortSignal timeout；
+- useStaleQuery 自身 fetch guard 为 15 秒；
+- stale query 失败后最多做有限退避重试；
+- write 不由 readFetch 自动重放。
 
-优先级：
+因此网络失败时允许继续展示已有 stale data，但不能把 stale cache 当作写成功凭证。
 
-```text
-用户明确文字
->
-餐前/餐后图片差分
->
-单图估算
-```
+## 10. 月度读取
 
-能合理判断时，确认后的单次正式写入尽量包含：
+月度回顾主要复用：
 
-```text
-items[].rawName / displayName
-items[].portionDescription
-items[].estimatedWeightG
-items[].caloriesKcal
-items[].proteinG
-items[].carbsG
-items[].fatG
-totalCaloriesKcal
-```
+life-month-bundle:YYYY-MM
 
-真正未知字段允许 `null`，不能编造精确值。
+该 bundle 一次读取月度心情、睡眠、活动与 Meal，用于减少各页面重复请求。
 
-## 8. 多图与单图持久化
+月度 bundle 不应反向覆盖独立日详情 / Meal cache 的更新事实。
 
-聊天里可以同时使用餐前 / 餐后多张图片做差分，但当前正式 meal 只绑定 1 张展示图。
+## 11. 数据导入 / 恢复
 
-默认：
+Life data-management 使用独立 server API，并受 Life / Legacy Game 边界保护。
 
-```text
-餐前 + 餐后都参与分析
-→ 未指定时正式保存餐前图
-→ 餐后图只作为估算依据
-```
+导入 / 恢复后必须清理或 invalidate 受影响的生活读 cache，使 UI 重新从 API / Supabase 收敛。
 
-用户明确指定“保存餐后图”时覆盖默认。
+## 12. 事实来源
 
-当前系统不能声称同一 meal 永久保存两张照片，也不支持 `beforePhotoPath / afterPhotoPath`。
+代码层：
 
-## 9. MCP 图片恢复
+- app/api/**
+- lib/client/read-fetch.ts
+- lib/client/use-stale-query.ts
+- lib/server/life-api.ts
+- lib/server/fixed-life-auth.ts
+- lib/server/life-mcp-auth.ts
 
-如果用户要求正式保存图片，但 MCP 客户端没有传真实图片字节：
-
-```text
-life_mutate attachPhoto=true
-→ MEDIA_ATTACHMENT_REQUIRED
-→ recovery.uploadUrl
-→ 用户浏览器补传
-→ 服务端完成原操作
-```
-
-收到恢复链接后：
-
-- 不重新 create meal；
-- 不重复 life_mutate；
-- 不再生成第二套业务参数；
-- 未完成前不能声称照片已保存。
-
-支持真实附件直传的 MCP 客户端可以直接完成图片保存，不进入 browser recovery。
-
-## 10. 游戏云端同步
-
-Legacy Game 兼容同步仍保持：
-
-```text
-GET  /api/home-data
-POST /api/save-data
-```
-
-这条 compatibility path 与 Island Life 的 fixed-account session / MCP OAuth 是不同的身份与同步路径。
-
-Supabase 仍是正式云端事实源；Meal calories 不自动生成 deficit，也不自动修改金币、宝石、钱包或 heatmap。
-
-## 11. 缓存与同步原则
-
-Island Life 浏览器缓存只属于可重建的 stale read model：
-
-```text
-先展示 scope-aware stale cache
-→ mount / focus / visibility / online 后台校验
-→ 服务端 / Supabase 返回最新事实
-```
-
-缓存不参与权限判断，也不是第二数据库。mutation 后必须防止旧 in-flight read 覆盖新写入结果。
-
-当前客户端读取策略（2026-09-15，已发布）：
-
-- `useStaleQuery` 按 key 通知已挂载组件；写入回读同步到页面，失效时主动重读，不依赖手动刷新。
-- 缓存按 Cat / Fish scope 隔离；请求带 scope 与 revision 校验，切账号、切日期/月或写入后不接受旧请求回滚。
-- 普通 GET 在 12 秒终止下载，共享查询另设 15 秒期限，失败清除占用；页面失败后按 2 秒、4 秒退避重试。写入不自动重放。
-- mount、focus、重新可见、online 均后台校验；可见且联网时每 30 秒校验，供 MCP / 另一设备写入收敛。它不是服务端实时推送，刷新延迟还包含网络耗时。
-- 同账号其他标签页收到 localStorage 变更信号后失效重读，不广播查询结果，避免循环刷新。
-- 月历三视图共享 `life-month-bundle:YYYY-MM`，该 key 纳入持久缓存；月度请求不再批量覆盖独立的日详情/餐食缓存。
-- 启动预取先完成今日、设置和饮食等必要读取，再预取当月；体重、药箱、信箱按页面需要加载，减少并发争用。
-- 提醒中心、微信绑定状态、Legacy Game 饮食组件复用共享刷新；内置 AI 完成操作、Life 导入/恢复后失效或清理生活读缓存。
-- Legacy Game 使用独立的前台/30 秒校验，保留未同步本地编辑及同步中保护，不改游戏事实或结算规则。
-
-
-## 12. 安全与部署边界
-
-- 浏览器不持有 Supabase secret；
-- server-only RPC 不开放给任意浏览器；
-- Web session / MCP token 都绑定固定 actor；
-- 个人数据写权限由服务端 / RPC 再校验；
-- 写入使用稳定幂等边界；
-- 图片 bucket 为 private；
-- Production 自动部署默认关闭；
-- 每一次新的 Preview / Production deployment 都必须获得用户当次明确授权。
+具体业务规则不要复制到本文；进入 Product / Domains / AI 对应 MOC。
