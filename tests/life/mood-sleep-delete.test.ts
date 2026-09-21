@@ -19,7 +19,7 @@ describe("mood and sleep deletion", () => {
 
   it("authorizes sleep deletion server-side and keeps the RPC service-only", () => {
     const route = source("app/api/life/sleep/route.ts");
-    const migration = source("supabase/migrations/20260910100837_add_sleep_delete.sql");
+    const migration = source("supabase/migrations/20260910102639_add_sleep_delete.sql");
     expect(route).toContain("export async function DELETE");
     expect(route).toContain("authorizePersonalPartnerWrite(request, partnerKey)");
     expect(migration).toContain("and s.partner_key = p_partner_key");

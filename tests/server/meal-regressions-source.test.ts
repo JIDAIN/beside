@@ -6,7 +6,7 @@ const foodPagePath = new URL("../../components/life/LifeFoodPage.tsx", import.me
 const executorPath = new URL("../../lib/server/life-agent-executor.ts", import.meta.url);
 const calendarPath = new URL("../../components/life/LifeCalendarPage.tsx", import.meta.url);
 const cssPath = new URL("../../app/island-life-refactor.css", import.meta.url);
-const migrationPath = new URL("../../supabase/migrations/20260910132221_enforce_unique_main_meal_slots.sql", import.meta.url);
+const migrationPath = new URL("../../supabase/migrations/20260910133615_enforce_unique_main_meal_slots.sql", import.meta.url);
 
 describe("meal regression source contracts", () => {
   it("preserves the original meal idempotency key during updates", async () => {

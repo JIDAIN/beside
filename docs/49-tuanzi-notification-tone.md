@@ -115,8 +115,8 @@ public.test_life_pushplus
 对应 migration：
 
 ```text
-20260907183000_unify_tuanzi_reminders.sql
-20260907183500_cute_tuanzi_pushplus_messages.sql
+20260907102454_unify_tuanzi_reminders.sql
+20260907103640_cute_tuanzi_pushplus_messages.sql
 ```
 
 TypeScript 兼容 helper：

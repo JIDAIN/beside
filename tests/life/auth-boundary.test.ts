@@ -22,7 +22,7 @@ describe("V2 fixed account boundary", () => {
     const loginPage = source("app/login/page.tsx");
     const login = source("components/life/LifeLoginPage.tsx");
     const openMailbox = source("app/open/mailbox/route.ts");
-    const migration = source("supabase/migrations/20260907205500_mailbox_wechat_deep_link_login_return.sql");
+    const migration = source("supabase/migrations/20260907125804_mailbox_wechat_deep_link_login_return.sql");
 
     expect(login).toContain("router.replace(nextPath)");
     expect(loginPage).toContain('candidate.startsWith("/")');
@@ -46,7 +46,7 @@ describe("V2 fixed account boundary", () => {
   });
 
   it("keeps credential rows server-only and password hashes out of source data", () => {
-    const migration = source("supabase/migrations/20260903112500_add_fixed_life_account_credentials.sql");
+    const migration = source("supabase/migrations/20260902172113_add_fixed_life_account_credentials.sql");
     expect(migration).toContain("life_fixed_accounts");
     expect(migration).toContain("password_hash");
     expect(migration).toContain("extensions.crypt");
@@ -102,7 +102,7 @@ describe("V2 fixed account boundary", () => {
   });
 
   it("keeps actor-aware RPCs service-role only", () => {
-    const migration = source("supabase/migrations/20260907093000_harden_cat_fish_write_permissions.sql");
+    const migration = source("supabase/migrations/20260907013612_harden_cat_fish_write_permissions.sql");
     for (const name of [
       "create_activity_record_authorized",
       "update_activity_record_authorized",

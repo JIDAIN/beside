@@ -97,7 +97,7 @@ R8.1 已完成结构和主要交互收口，但 2026-09-03 Production 手机实�
 新增：
 
 ```text
-20260903194500_r8_2_full_data_management.sql
+20260903103243_r8_2_full_data_management.sql
 ```
 
 只新增 `import_life_full_data` RPC，不复制新的生活数据表。

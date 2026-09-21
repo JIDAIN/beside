@@ -3,11 +3,11 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const migration = readFileSync(
-  join(process.cwd(), "supabase/migrations/20260910120000_meal_v2_lifecycle.sql"),
+  join(process.cwd(), "supabase/migrations/20260910033522_meal_v2_lifecycle.sql"),
   "utf8",
 );
 const repairMigration = readFileSync(
-  join(process.cwd(), "supabase/migrations/20260910133000_repair_fish_20260909_meal_slot.sql"),
+  join(process.cwd(), "supabase/migrations/20260910033535_repair_fish_20260909_meal_slot.sql"),
   "utf8",
 );
 

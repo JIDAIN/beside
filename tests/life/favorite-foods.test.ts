@@ -61,7 +61,7 @@ describe("frequent food templates", () => {
   });
 
   it("adds a minimal RLS-protected schema and backup coverage", () => {
-    const migration = source("supabase/migrations/20260911150000_add_favorite_food_templates.sql");
+    const migration = source("supabase/migrations/20260911070928_add_favorite_food_templates.sql");
     expect(migration).toContain("create table if not exists public.favorite_food_templates");
     expect(migration).toContain("alter table public.favorite_food_templates enable row level security");
     expect(migration).toContain("revoke all on table public.favorite_food_templates from public, anon, authenticated");
@@ -71,7 +71,7 @@ describe("frequent food templates", () => {
   });
 
   it("keeps canonical meal and snack storage unchanged", () => {
-    const lifecycle = source("supabase/migrations/20260910120000_meal_v2_lifecycle.sql");
+    const lifecycle = source("supabase/migrations/20260910033522_meal_v2_lifecycle.sql");
     expect(lifecycle).toContain("meal_type in ('breakfast', 'lunch', 'dinner', 'snack')");
     expect(lifecycle).toContain("snack_period is null or snack_period in ('morning', 'afternoon', 'night')");
     const editor = source("components/life/LifeMealEditorPage.tsx");

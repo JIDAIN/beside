@@ -191,7 +191,7 @@ EXIF 方向归一
 
 迁移文件：
 
-`supabase/migrations/20260906160000_add_meal_photo_display_transform.sql`
+`supabase/migrations/20260906085721_add_meal_photo_display_transform.sql`
 
 已在 Production Supabase 执行成功。
 
