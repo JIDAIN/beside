@@ -1,196 +1,154 @@
 ---
 name: beside-maintainer
-description: JIDAIN/beside 的项目专属维护 Skill。用于伴岛 / Beside / Island Life 的功能开发、UI 修改、Supabase/API、AI 写入、生活数据、Legacy Game、测试和发布安全。任何项目修改都应先读 AGENTS.md；本 Skill 负责把项目事实和执行顺序收敛成可重复工作流。
-version: 3.1.1
+description: JIDAIN/beside 的项目专属维护 Skill。定义伴岛代码、数据库、UI、AI、测试与文档修改的标准执行流程；项目事实必须从 AGENTS.md、MOC、canonical docs、源码与 runtime 读取。
+version: 4.0.0
 ---
 
 # Beside Maintainer
 
 ## 定位
 
-这是**项目专属 Skill**。它回答“伴岛 / Beside 这个产品应该怎样安全地修改”，不替代 Obsidian 中的通用 UI / 编码 Skill。
+本 Skill 只回答：**接到一个伴岛开发任务后，应该怎样安全、可验证地执行。**
 
-正式产品名是 **伴岛 / Beside**，日常称呼 **小岛**。`couple-better-game` 只在历史名称、兼容 slug、缓存 key、内部标识或 Production 兼容地址中保留。
+它不维护当前功能清单、主导航、视觉色板、数据库表清单、Meal / Reminder / Legacy Game 具体规则或 Production 状态。
 
-优先级：
-
-```text
-用户当前明确要求
-→ AGENTS.md
-→ 本 Skill
-→ docs 当前主文档 / Accepted ADR
-→ 通用 Skill
-→ archive / 历史记录
-```
-
-若文档与当前 Production / main 代码冲突，不从旧 Skill 复制结论，先核验当前事实。
-
-## 启动协议
-
-每次开始前至少阅读：
-
-1. `AGENTS.md`
-2. `docs/README.md`
-3. `docs/engineering/current-state.md`
-4. 当前任务对应 MOC 与真实源码
-
-任务路由：
-
-- 产品 / UI → `docs/product/README.md`
-- 架构 / 数据 / API / 身份 → `docs/architecture/README.md`
-- AI / MCP → `docs/architecture/ai/README.md`
-- Meal / Reminder / Legacy Game → `docs/domains/README.md`
-- 开发 / 测试 / 配置 / 发布 / 排障 → `docs/engineering/README.md`
-- Supabase migration → `supabase/README.md`
-
-MOC 负责导航；具体事实以对应 canonical contract 和源码为准。
-
-## 数据域铁律
-
-始终区分：
+这些事实必须从：
 
 ```text
-Island Life facts
-≠ Legacy Game facts
-
-intake
-≠ deficit
-≠ weight
-≠ exercise / activity
+AGENTS.md
+→ docs/README.md
+→ 当前任务 MOC
+→ canonical contract
+→ 真实源码
+→ 必要时 Production / Supabase runtime
 ```
 
-Island Life 当前主要生活域：
+读取。
+
+## 1. 启动协议
+
+每次任务开始：
+
+1. 读 `AGENTS.md`；
+2. 读 `docs/README.md`；
+3. 读 `docs/engineering/current-state.md`；
+4. 根据任务进入对应 MOC；
+5. 只读本次任务需要的 canonical contract 与源码；
+6. 涉及线上事实时再核 Production / Supabase。
+
+任务入口：
+
+| 任务 | MOC |
+|---|---|
+| 产品能力 / 页面 / UI | `docs/product/README.md` |
+| 架构 / 数据 / API / 身份 | `docs/architecture/README.md` |
+| AI / MCP | `docs/architecture/ai/README.md` |
+| 具体业务领域 | `docs/domains/README.md` |
+| 开发 / 测试 / 配置 / 发布 / 排障 | `docs/engineering/README.md` |
+| migration | `supabase/README.md` |
+
+不要先全仓大扫荡，也不要从 archive 反推 current behavior。
+
+## 2. 先定义任务边界
+
+在修改前内部确认：
 
 ```text
-meals / meal_items
-favorite_food_templates
-mood_entries
-sleep_records
-activity_entries
-weight_measurements
-medicine_items
-mailbox_letters
+用户真正要求改变什么？
+哪些东西必须保持不变？
+当前事实源在哪里？
+成功标准是什么？
+是否涉及 Production / Supabase 写入？
 ```
 
-Legacy Game：
+如果用户要求“其他不要动”，按外科手术式修改执行，不顺手重构邻近代码。
+
+## 3. 判断变化属于哪一层
 
 ```text
-daily_records
-daily_record_sides
-exchange_categories
-exchange_records
-wallets
-wallet_ledger
+未来产品设计，还没开发
+→ Obsidian「伴岛」
+
+当前产品能力 / 当前入口变化
+→ Product Overview
+
+稳定交互 contract 变化
+→ UI Guidelines
+
+统一视觉架构 / token / shared pattern 变化
+→ Design System
+
+具体业务生命周期变化
+→ Domain
+
+跨领域机制 / schema / auth / API 变化
+→ Architecture
+
+运行、配置、发布、排障变化
+→ Engineering
+
+长期架构取舍变化
+→ ADR
+
+阶段过程 / 一次性验收
+→ Archive / CHANGELOG
 ```
 
-普通 Life 清理、导入、恢复不得顺手修改 Legacy Game。关联展示不等于跨域自动写回。代码级表边界以 `lib/server/life-data-domains.ts` 为准。
+避免把同一事实写进多层文档。
 
-## UI / 视觉协议
+## 4. 实现原则
 
-`docs/product/design-system.md` 是 V2 可见 UI 唯一主视觉规范。
+- 优先修改 canonical service / shared layer，不复制第二套业务逻辑；
+- 权限必须由服务端 / 数据层强制，UI 隐藏按钮不是权限控制；
+- 不根据旧变量名、历史文档或 archive 猜当前用户语义；
+- 不把一个 domain 的事实自动写回另一个 domain，除非当前 contract 明确允许；
+- 数据库变更只新增 forward migration，不回改已执行 migration；
+- secret、密码、token、私人业务数据不得提交仓库；
+- 已退役 transport / bridge 不因历史文件仍存在而恢复。
 
-当前 V2 主导航固定为：
+## 5. UI 任务工作流
+
+UI 任务先读：
+
+- `docs/product/design-system.md`；
+- `docs/product/ui-guidelines.md`；
+- 必要时 `components/ui/README.md`。
+
+执行顺序优先：
 
 ```text
-今日 / 饮食 / 日历 / 小窝 / 我的
+现有 token / App* / shared pattern
+→ domain component
+→ page composition
 ```
 
-当前视觉原则：
+系统级 UI 重构优先收敛公共层，再迁移页面并清理被替代的历史 override；不要把新增一层 `r9/r10` 全局 CSS 当默认长期方案。
 
-- 暖白 / 奶油底；
-- 薄荷 / 青绿主识别；
-- 柔黄 / 珊瑚 / 浅蓝点缀；
-- 不使用大面积棕色；
-- 数字是事实，不是成绩；
-- 记录，不评价；观察，不排名；
-- 低密度页面允许更明显岛屿感，高密度数据页优先可读。
+页面重构不得顺手改变业务 contract、权限、数据写入或游戏结算语义。
 
-复用顺序：
+视觉验收按受影响范围覆盖窄屏、safe-area、loading / empty / error、只读、未保存、删除确认和真实中文长度。
 
-```text
-已有 components/ui App* / 项目 Pattern
-→ animal-island-ui 已验证能力
-→ 许可兼容的成熟 GitHub Pattern
-→ 成熟 headless / 通用交互
-→ 项目原创组件
-```
+没有真实视觉检查时，不写“视觉已验证”。
 
-禁止：
+## 6. 数据 / API / AI 任务工作流
 
-- 因为通用 UI Skill 推荐某风格就覆盖项目 design system；
-- 每页发明新色板 / Button / Card / Modal；
-- 用头像代替心情；
-- 把生活页做成竞争、排名、streak、金币体系；
-- 把 `cat` 写死为“我”；
-- 为新增功能擅自修改五项主导航。
+涉及数据时：
 
-### UI 修改工作流
+1. 先找 canonical domain service；
+2. 再核 API / adapter / RPC；
+3. 涉及 schema 时新增 migration；
+4. 核 ownership / shared permission / idempotency；
+5. 写后 read-back 或用对应测试验证。
 
-1. 读 design system 和当前组件；
-2. 锁定用户允许修改的区域；
-3. 先复用 token / App* / Pattern；
-4. 使用通用 `ui-ux-pro-max` / `frontend-design` 时，只补充专业判断，不重新定义品牌；
-5. 验证真实中文长度、窄屏、safe-area、触控、空/错/加载/禁用状态；
-6. 没有真实浏览器/手机视觉检查时，不写“视觉已验证”。
+涉及 AI 时，优先扩展现有 AI Access Core / registry / normalizer / canonical services，不为新模块另造一套身份或任意 SQL 通道。
 
-## 身份与权限
+具体 resource / action / media / natural-language 规则从 AI MOC 与对应 Domain contract 读取，不在本 Skill 固化。
 
-数据库稳定身份是 `cat / fish`，界面“我 / Ta”必须相对当前登录用户。
+## 7. 测试与验证
 
-业务页面消费 `LifeIdentityContext` 的 `mePartnerKey / taPartnerKey`，不要重新引入固定 `SELF_KEY=cat`。
+根据改动范围执行最小充分验证。
 
-权限不能只靠隐藏按钮实现；服务端 / 数据层仍必须校验。
-
-## AI 写入协议
-
-通用原则：
-
-```text
-查询 / 讨论 → 不写
-明确新增 / 修改 → normalize → permission → idempotency → canonical write → read-back
-删除 / 高风险覆盖 → 额外安全校验
-```
-
-新 meal 使用项目已定义的草稿确认流程；不要把 meal 的特殊二次确认机械扩展到所有资源。
-
-AI 不获得任意 SQL 权限，不在浏览器或普通聊天暴露 Supabase secret / service role / 同步密码。
-
-## Supabase / API
-
-保持：
-
-```text
-Browser → Next.js API → server-only Supabase
-```
-
-- DDL 只通过新 migration；
-- 不回改已经执行的 migration；
-- 多表写入考虑事务；
-- server-only RPC 不误授给 anon/authenticated；
-- 新功能不复制 legacy storage / transport 债务；
-- 已退役的 Harbor Sheet / Apps Script / Fast Wake / Drive Bridge 不恢复。
-
-## Legacy Game
-
-Legacy Game 是伴岛“游戏”中的独立子项目，不代表整个正式产品。
-
-修改金币、宝石、结算、兑换、成长地图等规则前必须读 `docs/domains/legacy-game/business-rules.md` 和对应 pure service；不要凭 legacy 变量名猜用户可见语义。
-
-普通 V2 生活功能不顺手重写 Legacy Game。
-
-## 修改纪律
-
-同时遵守通用 `karpathy-guidelines`：
-
-- 只改任务必须区域；
-- 不顺手整理相邻代码；
-- 先读取事实再假设；
-- 成功标准必须可验证；
-- 用户说“其他不要动”时严格做外科手术式修改。
-
-## 验证
-
-代码改动每阶段至少：
+通常代码改动包括：
 
 ```bash
 npm run test
@@ -198,27 +156,64 @@ npm run lint
 npm run build
 ```
 
-按改动类型追加针对性验证。纯文档 / Skill 只需核对路径、当前事实和链接，不为了形式运行完整 build。
+但不要机械认为三条全绿就代表所有验收完成；还要按任务补：
 
-Test/Lint/Build 通过 **不等于** 视觉已验证。
+- targeted unit / service test；
+- schema / RPC / migration 核验；
+- UI 人工状态检查；
+- runtime / Production 检查（仅在有必要且有权限时）。
 
-## Vercel 硬停止
+纯文档改动不为了形式跑完整 build，但要检查路径、链接、事实源和是否产生第二份 canonical fact。
 
-任何 Preview 或 Production 部署都必须获得**该次部署**的用户明确授权。
+## 8. 文档同步
 
-允许修改代码、commit、push、PR、merge 均不等于允许部署。未获授权时停在：
+代码改变事实时，同批判断是否需要更新：
 
-> 代码已完成并验证，等待允许部署。
+```text
+Product
+Architecture
+Domain
+Engineering
+ADR
+code-local README
+CHANGELOG
+```
 
-不得削弱 `vercel.json` 中关闭 Git 自动部署的保护。
+不是每次都全部更新，只更新真正受影响的 canonical home。
 
-## 文档同步
+未来设计仍未实现时，不更新 GitHub current docs。
 
-当前事实进入对应顶层领域主文档；架构原因进入 ADR；阶段历史进入 archive；当前上线状态进入 `docs/engineering/current-state.md`；发生了什么进入 `CHANGELOG.md`。
+## 9. 发布硬停止
 
-不要新增一串长期 `*-after-refactor` / `*-migration-report` 文档。
+GitHub push、merge、CI success 都不等于部署授权。
 
-## 完成报告
+任何 Vercel Preview / Production deployment 都必须获得用户针对**该次部署**的明确授权。
+
+未获授权时可以完成代码、测试、文档和 GitHub 提交，但必须停在部署之前。
+
+如果任务需要 Supabase Production 写入，也必须明确区分：
+
+```text
+只读核验
+≠ migration / data write
+```
+
+不要因为用户允许代码修改而推定允许 Production 数据库变更。
+
+## 10. 完成前自审
+
+提交前检查：
+
+- 是否真的只改了任务需要的范围；
+- 是否读了正确 canonical docs；
+- 是否把未来设计误写成当前事实；
+- 是否复制了第二份业务规则；
+- 是否破坏 Life / Legacy Game 或 owner / shared 边界；
+- 是否留下历史 CSS / API / migration 的新债务；
+- 测试结论是否与实际运行过的检查一致；
+- 是否错误声称部署、视觉验收或 Production 验证已经完成。
+
+## 11. 完成报告
 
 用中文说明：
 
@@ -228,4 +223,5 @@ Test/Lint/Build 通过 **不等于** 视觉已验证。
 4. 实际验证结果；
 5. 未运行检查及原因；
 6. 数据 / 安全 / 发布风险；
-7. 未完成项和下一步。
+7. 未完成项；
+8. 是否部署，若未部署明确写未部署。
