@@ -1,6 +1,6 @@
 # 伴岛 / Legacy Game 数据边界
 
-状态：2026-09-11。
+状态：2026-09-21。已重新核对当前代码边界与 Production Supabase 表。
 
 ## 1. 产品关系
 
@@ -64,6 +64,8 @@ life_backup_snapshots
 life_mcp_code_redemptions
 life_notification_preferences
 life_notification_deliveries
+life_reminder_rules
+life_reminder_instances
 ```
 
 这些属于身份、配置、备份、通知或系统控制层，不能简单视为 Life 或 Legacy Game 的业务事实。
@@ -135,11 +137,13 @@ Life export、Life import、Life backup、Life restore 默认只处理当前生�
 
 Legacy Game 的导入、覆盖、备份如需执行，必须走明确的游戏流程。
 
-代码层 `lib/server/life-data-domains.ts` 维护当前表级 allowlist，并对混入 Legacy Game 的 Life import 做拒绝。
+代码层 `lib/server/life-data-domains.ts` 维护 **Life maintenance 安全 allowlist / Legacy denylist**，并对混入 Legacy Game 的 Life import 做拒绝。
+
+注意：该文件不是 Production schema 的完整目录。当前 `SHARED_SYSTEM_TABLES` 只列维护边界需要识别的一部分共享表；例如 Production 已存在的 `life_reminder_rules` / `life_reminder_instances` 属于 Shared / System，但当前不在该数组中。判断完整 schema 必须以 Production runtime / migrations 为准。
 
 ## 7. 工程维护规则
 
-- 新增 Life 表时，同时更新 `ISLAND_LIFE_TABLES`、备份/恢复 payload 和本文件；
+- 新增 Life 表时，先判断它是否参与 Life maintenance；需要参与时同步更新 `ISLAND_LIFE_TABLES`、备份/恢复 payload 和本文件；
 - 新增 Legacy Game 表时，同时更新 `LEGACY_GAME_TABLES` 和本文件；
 - 旧游戏未来即使新增小游戏，也不能默认并入 Life cleanup；
 - 不因为两套数据位于同一个 Supabase project，就把它们视为同一业务域；

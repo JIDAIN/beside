@@ -1,6 +1,6 @@
 # 当前游戏业务规则
 
-> 本文档以当前 `lib/home/settlement-rules.ts`、`home-stat-service.ts` 和 currency semantics v2 为准。
+状态：2026-09-21。本文档已重新对照当前 `lib/home/settlement-rules.ts`、`home-stat-service.ts` 与 Production `app_configs`。Production 当前 `coin_week_start_day=6`、`coin_deficit_streak_days=5`，热力图阈值与本文一致。
 
 ## 1. 先理解金币 / 宝石的 legacy 命名
 

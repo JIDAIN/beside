@@ -1,7 +1,8 @@
 # AI Access Core 架构原则
 
 > 状态：长期架构基线 / 约束性文档  
-> 更新：2026-09-06
+> 建立：2026-09-06  
+> 最近复核：2026-09-21
 
 ## 1. 核心目标
 
@@ -166,3 +167,10 @@ photo/file behavior
 7. Production 真实只读 / 最小写入验收（按部署和数据安全规则执行）。
 
 不能只验证“网页能用”，也不能只验证“AI 说成功了”。
+
+
+## 8. 当前实现复核
+
+2026-09-21 已重新对照当前 `life-agent-registry.ts`、`life-agent-executor.ts`、MCP OAuth 与 Meal media path。上述 P1–P12 仍与当前实现一致。
+
+具体“现在注册了哪些 query / mutate action”不在本原则文档复制维护，见 [AI Architecture](architecture.md)。
