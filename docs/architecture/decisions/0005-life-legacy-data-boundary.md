@@ -47,8 +47,8 @@ Life maintenance ≠ Legacy Game maintenance
 
 ## Related
 
-- `docs/03-data-model.md`
-- `docs/05-business-rules.md`
-- `docs/16-operations-runbook.md`
-- `docs/48-life-legacy-game-data-boundary.md`
+- `docs/architecture/data-model.md`
+- `docs/domains/legacy-game/business-rules.md`
+- `docs/engineering/operations-runbook.md`
+- `docs/architecture/life-legacy-boundary.md`
 - `lib/server/life-data-domains.ts`

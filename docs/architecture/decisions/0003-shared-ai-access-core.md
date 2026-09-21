@@ -49,8 +49,8 @@ life_mutate
 
 ## Related
 
-- `docs/02-architecture.md`
-- `docs/04-api-and-sync.md`
-- `docs/11-ai-write-architecture.md`
-- `docs/26-ai-access-core-principles.md`
-- `docs/28-ai-natural-language-contract.md`
+- `docs/architecture/overview.md`
+- `docs/architecture/api-and-sync.md`
+- `docs/architecture/ai/architecture.md`
+- `docs/architecture/ai/access-core.md`
+- `docs/architecture/ai/natural-language.md`

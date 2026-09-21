@@ -47,6 +47,6 @@ PushPlus 只负责最终渠道投递，不定义业务提醒语义。
 
 ## Related
 
-- `docs/03-data-model.md`
-- `docs/14-wechat-reminders.md`
-- `docs/16-operations-runbook.md`
+- `docs/architecture/data-model.md`
+- `docs/domains/reminders/overview.md`
+- `docs/engineering/operations-runbook.md`

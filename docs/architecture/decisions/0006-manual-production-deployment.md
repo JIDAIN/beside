@@ -42,6 +42,6 @@ Git 提交、PR、merge 与 Production 发布分离。
 
 - `vercel.json`
 - `AGENTS.md`
-- `docs/08-deployment-security.md`
-- `docs/09-status-roadmap.md`
-- `docs/16-operations-runbook.md`
+- `docs/engineering/deployment-security.md`
+- `docs/engineering/current-state.md`
+- `docs/engineering/operations-runbook.md`

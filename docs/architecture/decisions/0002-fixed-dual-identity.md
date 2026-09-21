@@ -43,8 +43,8 @@ MCP 通过 OAuth 签发绑定 `partnerKey` 的 access token。
 
 ## Related
 
-- `docs/08-deployment-security.md`
-- `docs/15-configuration-reference.md`
-- `docs/17-auth-and-pairing.md`
+- `docs/engineering/deployment-security.md`
+- `docs/engineering/configuration.md`
+- `docs/architecture/auth-and-identity.md`
 - `lib/server/fixed-life-auth.ts`
 - `lib/server/life-mcp-auth.ts`
