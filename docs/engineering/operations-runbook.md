@@ -4,7 +4,7 @@
 
 本文档回答的是：**程序已经上线后，如果出问题，应该按什么顺序查、什么时候停止操作、如何恢复。**
 
-它不替代架构、数据模型和安全文档；长期设计分别以 `02`、`03`、`08`、`17`、`48` 为准。
+它不替代当前 MOC 与 canonical contract。架构从 `../architecture/README.md` 进入，业务从 `../domains/README.md` 进入，发布安全以 `deployment-security.md` 为准。
 
 ## 1. 总原则
 
@@ -37,7 +37,7 @@
 | Life 数据不对 | Supabase 当前表 / RPC | Web stale cache |
 | MCP 失败 | OAuth / `/mcp` 返回 | `life-mcp-auth` / AI Access Core |
 | 内置 AI 失败 | `/api/ai/chat` 返回 | AI Gateway credential / tool result |
-| 微信提醒没到 | reminder instance / delivery | pg_cron / PushPlus accepted |
+| 提醒没到 | `../domains/reminders/overview.md` 对应路径 | pg_cron / delivery / provider |
 | 图片不显示 | `meals.photo_path` / private Storage | photo API / cache |
 | 恢复问题 | `life_backup_snapshots` | restore/import RPC |
 | Legacy Game 同步 | `/api/home-data` / `/api/save-data` | legacy cloud-session |
@@ -158,43 +158,64 @@ AI_GATEWAY_API_KEY
 
 `LIFE_CLARIFICATION_REQUIRED` 不是系统故障；这是正常的“需要用户补信息”契约。
 
-## 7. Reminder / PushPlus 不提醒
+## 7. Reminder / 通知不提醒
 
-按链路逐层查，不直接重复发送：
+先确认是哪一条真实路径，不要把所有提醒都当成 reminder instance。
+
+完整 contract：
+→ [Reminder Domain](../domains/reminders/overview.md)
+
+### 7.1 Reminder Center instance
+
+custom / medicine / anniversary / mailbox：
 
 ```text
-业务事件 / reminder rule
-→ life_reminder_instances
-→ effective due time / completed / dismissed / notified_at
-→ pg_cron 调度
+life_reminder_instances
+→ effective due time / status / notified_at
+→ life-pushplus-reminders-v1
 → life_notification_deliveries
-→ PushPlus accepted / failed
-→ 对应 actor 的 Vault token
+→ provider
 ```
+
+mailbox 当前是微信测试号主通道，失败后 PushPlus fallback；其他 Reminder Center source 当前走 PushPlus。
+
+### 7.2 每日 21:00 完整性提醒
+
+它当前不创建 life_reminder_instances：
+
+```text
+life_notification_preferences
+→ life_daily_record_completeness
+→ claim_life_notification_reminders
+→ life_notification_deliveries
+→ PushPlus
+```
+
+排查时核对 actor、timezone、21:00 时间窗、当天 completeness 和 dedupe key，不要去找不存在的 daily_record instance。
 
 ### 小信箱来信
 
-特别检查：
-
 ```text
-mailbox draft -> 不应提醒
-第一次 draft -> sent / 直接 sent -> recipient 应生成 1 条 mailbox instance
-已 sent 的读取 / 刷新 -> 不应重复生成
+draft -> 不应提醒
+第一次 draft -> sent / direct sent
+→ recipient 只生成 1 条 mailbox instance
+→ dispatcher
+→ WeChat primary
+→ PushPlus fallback on failure
 ```
 
-如果 instance 已存在但微信没到，不要再次制造第二条 mailbox instance；继续查 delivery / cron / PushPlus。
+如果 instance / delivery 已存在，不要为了“再试”创建第二条信件提醒。
 
 ### Snooze
 
-用户点击“1 小时后”后：
-
 ```text
-effective due time 改变
-notified_at 重置
-新的 due time 使用新的 delivery dedupe key
+status = snoozed
+snoozed_until = new effective due
+notified_at = null
+→ 新 due time 使用新的 delivery dedupe key
 ```
 
-这属于合法再次提醒，不等于重复投递 bug。
+这是合法再次提醒，不是重复投递 bug。
 
 ## 8. 餐食照片异常
 
