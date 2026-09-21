@@ -35,7 +35,7 @@ Git 提交、PR、merge 与 Production 发布分离。
 
 - 通过 CI 不等于已经上线；
 - 每次需要真实 Preview / Production 时都多一个显式发布步骤；
-- `09-status-roadmap.md` 必须区分“main 已完成”和“Production 已上线”；
+- `../../engineering/current-state.md` 必须区分“main 已完成”和“Production 已上线”；
 - 任何自动化维护工具都不得把过去的部署授权视为仍然有效。
 
 ## Related

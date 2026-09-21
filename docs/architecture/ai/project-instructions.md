@@ -149,7 +149,7 @@ ChatGPT 写入 → Supabase → 网页自动刷新   ✅
 Meal V2 direct / estimated / append / confirm ✅
 ```
 
-数据域维护规则见 [`48-life-legacy-game-data-boundary.md`](../life-legacy-boundary.md)。
+数据域维护规则见 [`../life-legacy-boundary.md`](../life-legacy-boundary.md)。
 
 
 ---
