@@ -55,6 +55,28 @@ Obsidian 产品设计
 | [Engineering](engineering/README.md) | 当前运行状态是什么？怎么开发、测试、配置、部署和排障？ |
 | [Archive](archive/README.md) | 以前怎样实现、迁移和验收？ |
 
+## Code-local README
+
+除 `docs/**` 的跨目录 canonical docs 外，仓库允许在源码目录旁维护 **code-local README**。
+
+它们只回答“这个具体实现目录应该怎样维护”，不能成为跨系统事实的第二来源。
+
+当前典型例子：
+
+- [components/ui/README](../components/ui/README.md)：共享 UI adapter / pattern 的代码实现规则；
+- [supabase/README](../supabase/README.md)：migration 目录、ledger、replay 与数据库变更规则。
+
+判断原则：
+
+```text
+跨产品 / 跨目录 / 跨领域事实
+→ docs/
+
+只对某个代码目录成立的实现维护规则
+→ 该目录 README
+```
+
+code-local README 必须链接回对应 canonical docs；如果两者冲突，应先核当前代码 / runtime，再修正文档，不能长期维护两份不同结论。
 ## AI 开始任务时
 
 先读本页，再根据任务进入对应 MOC：
@@ -95,7 +117,7 @@ GitHub 文档应与当前程序保持同步；发现文档与代码或 Productio
 
 - 顶层只按稳定知识区域组织，不按开发轮次编号。
 - 每个区域必须有 `README.md` 作为 MOC。
-- 一个事实只设一个 canonical home；其他文档链接过去，不复制维护第二份。
+- 一个事实只设一个 canonical home；其他文档或 code-local README 链接过去，不复制维护第二份。
 - 只有一个领域出现多份长期 contract 时才建立子目录。
 - 阶段验收、迁移过程、一次性调研进入 `archive/`。
 - 未来产品想法不写成当前工程事实。
