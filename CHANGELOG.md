@@ -1,5 +1,19 @@
 # Changelog
 
+## 使用说明
+
+本文件按时间记录**当时发生了什么**，属于历史演进记录，不是当前产品状态或当前工程事实源。
+
+历史条目保留当时的验收结论、未完成项和运行状态，不因为后来情况变化而回写篡改。
+
+判断当前状态时统一看：
+
+- [Engineering Current State](docs/engineering/current-state.md)：Production / GitHub main / Supabase 当前状态；
+- [Docs MOC](docs/README.md)：当前工程事实的导航与优先级。
+
+如果 CHANGELOG 与 current docs、当前代码或已核验 runtime 不一致，应理解为“历史状态后来发生了变化”，不能用旧条目覆盖当前事实。
+
+
 ## 2026-09-21 — Supabase migration 历史与文档一致性收口
 
 - 直接对账 Production `supabase_migrations.schema_migrations`、当前 runtime schema 与 GitHub `supabase/migrations/`，确认此前仓库 migration 时间戳和相对顺序与 Production ledger 存在明显漂移。
