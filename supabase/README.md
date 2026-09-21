@@ -50,7 +50,7 @@ SUPABASE_SERVICE_ROLE_KEY
 3. 验证 table / view / function / trigger / RLS / grants；
 4. 再单独恢复或导入业务数据。
 
-截至 2026-09-21，本轮完成的是 **Production ledger 对账 + 依赖顺序静态收口**，还没有在一次性空项目上执行整套 64 个 SQL 的完整 blank-database replay。因此在把它作为灾难恢复唯一依据前，仍应完成一次真实空库重放验收。
+截至 2026-09-21，本轮完成的是 **Production ledger 对账 + 依赖顺序静态收口**，尚未在一次性空项目上执行整套 64 个 SQL 的完整 blank-database replay。该 replay 属于**可选的长期灾备 / 新环境可重建性验证**，不阻塞当前开发、日常使用或 Production。未来正好新建 staging、新 Supabase project、灾备演练或迁移环境时再顺带执行即可；不要仅为了完成文档清单单独创建可能产生费用的环境。
 
 migration 只负责数据库结构和规则，不内嵌当前情侣空间的真实业务数据。**schema 可重建不等于 Production 数据备份。**
 
