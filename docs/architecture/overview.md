@@ -1,35 +1,19 @@
-# 当前架构
+# Architecture Overview
 
-状态：2026-09-14。
+状态：2026-09-21。本文只维护 **当前系统的跨领域架构**；具体业务规则进入 Domains，运行/发布状态进入 Engineering。
 
 ## 1. 一句话架构
 
-**伴岛 / Beside** 是一个 Next.js 一体化 Web 应用：
+伴岛是一个 Next.js 一体化 Web 应用：
 
 ```text
-浏览器 UI / AI Client
--> Next.js / Vercel API
--> canonical domain services / AI Access Core
--> Supabase PostgreSQL + Private Storage
+Browser / AI client
+→ Next.js on Vercel
+→ server-side domain services / AI Access Core
+→ Supabase PostgreSQL + Private Storage
 ```
 
-AI 与 Web 共享同一个业务事实层，不维护第二套数据库。
-
-当前产品关系：
-
-```text
-伴岛 / Beside（正式产品）
-├─ Island Life / 生活域
-│  ├─ 今日
-│  ├─ 饮食
-│  ├─ 日历
-│  ├─ 小窝
-│  └─ 我的
-└─ 游戏
-   └─ 变瘦变美大作战（Legacy Game）
-```
-
-`couple-better-game` 继续作为数据库 slug、缓存 key、MCP 内部标识或 Production 兼容地址时不需要机械改名。
+Supabase 是正式数据事实源。浏览器缓存与 Service Worker 只用于读取体验优化，不是第二数据库。
 
 ## 2. 主要运行入口
 
@@ -37,178 +21,94 @@ AI 与 Web 共享同一个业务事实层，不维护第二套数据库。
 
 ```text
 Browser
--> Next.js API
--> signed session identity
--> domain service
--> service-role / actor-aware RPC / Storage
--> Supabase
+→ Next.js page / API
+→ signed Web session
+→ domain service / server adapter
+→ service-role or actor-aware RPC
+→ Supabase
 ```
 
-### MCP / ChatGPT Project
+### MCP
 
 ```text
-Harbor Cat
--> Harbor-Cat MCP
--> OAuth cat
--> /mcp
--> life_query / life_mutate
--> AI Access Core
--> Supabase
-
-Harbor Fish
--> Harbor-Fish MCP
--> OAuth fish
--> /mcp
--> life_query / life_mutate
--> AI Access Core
--> Supabase
+MCP client
+→ OAuth 2.0 + PKCE
+→ /mcp
+→ signed access identity
+→ life_query / life_mutate
+→ AI Access Core
+→ canonical domain services
+→ Supabase
 ```
 
-其他支持的 MCP client 走同一个 `/mcp` 与 AI Access Core。
-
-Cat / Fish 身份由 OAuth token / 服务端签名上下文绑定，不能由昵称、自称或 `person` 文本切换。
+OAuth token 固定携带 `partnerKey` 与 scope；聊天文字不能改变授权身份。
 
 ### 程序内置 AI
 
 ```text
 /ai
--> /api/ai/chat
--> Vercel AI Gateway
--> life-agent-registry
--> AI Access Core
--> Supabase
+→ /api/ai/chat
+→ AI model gateway
+→ life-agent-registry / executor
+→ AI Access Core
+→ canonical domain services
+→ Supabase
 ```
 
-## 3. Source of Truth
+所有 AI 入口共用同一业务事实层，不维护第二套业务数据库。
 
-正式生活数据事实源始终是 Supabase。
+## 3. 身份
 
-浏览器 stale cache、Service Worker cache 等只属于可重建读模型，不是第二数据库，也不参与权限判断。
-
-文档事实优先级见 `docs/README.md`；特别要区分 Production Web、GitHub main 与已经独立执行的 Supabase migration。
-
-## 4. 领域边界
-
-主要生活域：
+Web 使用固定双账号登录。
 
 ```text
-meal
-favorite_food
-weight
-mood
-sleep
-activity
-medicine
-mailbox
-reminder
-settings
+username/password
+→ authenticate_fixed_life_account
+→ server-signed HttpOnly session
+→ partnerKey = cat | fish
 ```
 
-Legacy Game 独立保留：
+MCP 使用单独的签名 OAuth code / access token / refresh token，但最终同样解析成稳定 `partnerKey`。
+
+完整身份与权限：
+→ [Auth and Identity](auth-and-identity.md)
+
+## 4. 数据域
+
+系统必须区分：
 
 ```text
-daily_records / daily_record_sides
-wallet / wallet_ledger
-exchange / settlement
+Island Life
+Legacy Game
+Shared / System infrastructure
 ```
 
-核心关系：
+Island Life 与 Legacy Game 当前仍位于同一个 Supabase project，但在业务、权限、导入恢复和维护流程上保持逻辑硬隔离。
+
+完整边界：
+→ [Life / Legacy Boundary](life-legacy-boundary.md)
+
+数据库结构：
+→ [Data Model](data-model.md)
+
+## 5. API 与同步
+
+Web 页面通过 Next.js API 访问服务端能力，不直接持有 Supabase secret。
+
+读取层采用 scope-aware stale cache：
 
 ```text
-intake != deficit != weight != exercise / activity
-Island Life maintenance != Legacy Game maintenance
+可用快照先展示
+→ 后台重新读取事实源
+→ focus / visibility / online 等时机再次校验
 ```
 
-Meal calories 不自动生成 deficit，不自动修改金币、宝石、钱包或旧游戏 heatmap。
+mutation 成功后由对应 client/service 主动更新或失效相关 cache。
 
-任何普通 Life 测试清理、import / restore 默认不得触碰 Legacy Game。完整 allowlist 见 `life-legacy-boundary.md`。
+完整 API / cache / OAuth transport：
+→ [API and Sync](api-and-sync.md)
 
-## 5. 饮食数据流
-
-### Web
-
-```text
-LifeFoodPage / LifeMealEditorPage
--> meal-client
--> /api/meals + /api/meals/:id/photo
--> auth
--> supabase-nutrition
--> canonical RPC / Storage
--> meals + meal_items
-```
-
-主餐每天每人 breakfast / lunch / dinner 各最多一条；snack 是独立事件，同一时段允许多条。
-
-### 常吃食物
-
-```text
-LifeFavoriteFoodsPage / meal editor chooser
--> /api/favorite-foods
--> supabase-favorite-foods
--> favorite_food_templates
-```
-
-常吃食物是用户隔离模板。加入餐食时只复制模板字段到普通 `meal_items`，历史餐食与模板之间没有持续引用。
-
-### AI
-
-```text
-用户文字 / 图片
--> AI 在聊天里给草稿
--> 用户修改 / 确认
--> life_mutate
--> meal adapter
--> canonical meal service
--> Supabase
-```
-
-饮食草稿不是后台对象。单图实际记录与 `estimated -> confirmed` 生命周期的语义以 `../domains/meal/ai-contract.md` 为准。
-
-## 6. 餐食图片
-
-```text
-原图
--> EXIF normalize
--> 最长边 600px WebP
--> Private Storage meal-photos
--> meals.photo_path
-```
-
-显示元数据：
-
-```text
-photo_rotation_degrees
-photo_scale
-```
-
-当前正式 Meal 只绑定一张展示图；多图可以参与 AI 分析，但没有多图持久化模型。
-
-如果 MCP 客户端无法传真实图片字节：
-
-```text
-life_mutate attachPhoto=true
--> MEDIA_ATTACHMENT_REQUIRED
--> recovery.uploadUrl
--> browser upload
--> 服务端完成同一次业务写入
-```
-
-## 7. 生活读写与同步
-
-页面采用 scope-aware stale cache：
-
-```text
-先显示本地可用快照
--> mount 后后台校验
--> focus / visibilitychange 后校验
--> online 后校验
-```
-
-mutation 成功后同步相关 day / month / month-bundle cache，避免返回页面时旧快照覆盖新记录。
-
-首页“今天”的业务日期由服务端按 `Asia/Shanghai` 每次请求计算并传给客户端；这一修复当前在 `main`，在下一次获得 Production 授权后发布。
-
-## 8. AI 写入架构
+## 6. AI Access Core
 
 稳定工具面：
 
@@ -218,58 +118,79 @@ life_query
 life_mutate
 ```
 
-AI Access Core 负责身份、权限、归一化、幂等、媒体边界与 canonical resource dispatch；模型负责对话语义，但不能替代服务端权限。
+AI Access Core 负责：
 
-`legacy_home` 属于 Legacy Game 兼容入口，不是普通生活 resource。
+- 可信身份；
+- resource / action normalization；
+- 权限；
+- 幂等；
+- canonical domain dispatch；
+- 媒体恢复边界；
+- 高风险写入保护。
 
-## 9. Reminder Engine 与通知 Provider
+Adapter 只负责协议与 transport，不拥有业务规则。
+
+→ [AI MOC](ai/README.md)
+
+## 7. Meal 架构
 
 ```text
-业务模块 / 自定义提醒
--> Reminder Engine
--> life_reminder_rules / life_reminder_instances
--> pg_cron
--> life_notification_deliveries
--> provider
+Web editor / AI
+→ canonical Meal payload
+→ Next.js server
+→ nutrition service / RPC
+→ meals + meal_items
+→ optional private meal-photos Storage
 ```
 
-当前 provider 选择：
+具体 MealType、主餐唯一、estimated/confirmed、照片和 AI 草稿规则不在本文复制维护：
+→ [Meal MOC](../domains/meal/README.md)
+
+## 8. Reminder 架构
 
 ```text
-mailbox -> 微信公众平台测试号 -> PushPlus fallback
-其他提醒 -> PushPlus
+domain event / custom reminder
+→ reminder rule / instance
+→ Supabase scheduler
+→ delivery
+→ provider
 ```
 
-业务模块不直接调用微信 API。每日 21:00 完整性提醒由 Supabase 云端判断并投递，不依赖网站是否打开。
+Reminder Engine 与具体通知 provider 解耦。
 
-## 10. 身份与安全
+具体 21:00 完整性提醒、微信测试号、PushPlus fallback 与 notification tone：
+→ [Reminder MOC](../domains/reminders/README.md)
 
-- Web 使用签名 session；
-- MCP OAuth token 绑定 `partnerKey`；
-- 个人记录 owner-only 写入；
-- couple-space 共享数据按明确共享规则维护；
-- 浏览器不持有 service-role / secret；
-- 微信和 PushPlus secret 只在服务端 / Vault；
-- RLS server-only 表不为了消除 Advisor INFO 而开放客户端 policy。
+## 9. Private media
 
-完整矩阵见 `auth-and-identity.md`。
+Meal 正式展示照片使用 private Supabase Storage。
 
-## 11. 目录职责
+Browser / AI media 最终都必须进入服务端权限、压缩和绑定流程；客户端不能直接把任意 Storage path 写进 Meal。
+
+→ [Meal Photo Storage](../domains/meal/photo-storage.md)
+
+## 10. 代码分层
 
 ```text
-components/life/        生活系统页面与交互
+app/                    Next.js routes / pages
+components/life/        Island Life UI
 components/home/        Legacy Game UI
-lib/life/               生活 domain client / service
-lib/nutrition/          Meal service / protocol
-lib/server/             鉴权、AI、通知、Supabase adapters
-lib/ai/                 自然语言 normalization / contract
-supabase/migrations/    不可回写的 schema / RPC / grant 历史
+components/ui/          shared App* UI primitives / patterns
+lib/life/               Life client + domain helpers
+lib/nutrition/          Meal domain contract
+lib/ai/                 natural-language normalization helpers
+lib/server/             auth / adapters / AI / Supabase server boundary
+supabase/migrations/    database history
 ```
 
-表级维护边界由 `lib/server/life-data-domains.ts` 约束。
+## 11. Migration 与发布
 
-## 12. Migration 与 Production
+数据库结构变更只能新增 migration，不回写已执行 migration。
 
-数据库结构变化必须新增 migration，已执行 migration 不回改。
+Vercel 自动 Git deployment 默认关闭；Production / Preview 发布遵守逐次授权。
 
-Vercel Git 自动部署长期关闭。任何 Preview / Production deployment 都必须获得用户对该次发布的明确授权；完成后继续保持 `deploymentEnabled=false`。
+当前 GitHub main、Production Web、Supabase runtime 的具体状态：
+→ [Engineering Current State](../engineering/current-state.md)
+
+架构为什么这样设计：
+→ [Architecture Decisions](decisions/README.md)

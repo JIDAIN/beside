@@ -1,6 +1,6 @@
 # 数据模型与 Source of Truth
 
-状态：2026-09-21。
+状态：2026-09-21。本文记录数据库当前可表达的事实与硬约束；产品流程规则由对应 Domain 文档维护。
 
 ## 1. 核心原则
 
@@ -72,7 +72,9 @@ life_reminder_instances
 
 这些属于身份、配置、备份、通知、提醒编排或系统控制层，不能简单当成生活事实或游戏事实。
 
-完整维护规则见 [`life-legacy-boundary.md`](life-legacy-boundary.md)。
+完整维护规则见 [Life / Legacy Boundary](life-legacy-boundary.md)。
+
+> 注意：`lib/server/life-data-domains.ts` 当前是 **Life 数据维护安全边界的代码清单**，不是 Production schema 的完整表目录。它的 `SHARED_SYSTEM_TABLES` 只列当前数据管理边界需要识别的共享表；Reminder rule / instance 等仍属于 Shared / System 架构，但目前没有全部枚举进该数组。因此不能用该数组反推“数据库只有这些 shared tables”。
 
 ## 3. 数据隔离硬规则
 
@@ -95,7 +97,7 @@ wallet_ledger
 
 禁止仅凭 `created_at`、业务日期或“本周”这种跨域条件直接扫所有表。
 
-代码层表级边界定义在 `lib/server/life-data-domains.ts`。
+代码层用于阻止 Life maintenance 误碰 Legacy Game 的安全边界在 `lib/server/life-data-domains.ts`；完整数据库事实仍以 Production schema / migrations 与本文表说明为准。
 
 ## 4. `meals`
 
@@ -163,7 +165,9 @@ updated_at
 
 AI 记录时应尽量补全实际摄入量、重量和宏量营养，但数据库不会为了“完整”强制未知字段非空。
 
-正式 meal 默认应保存可识别的食物详细 items，并同时保存整餐汇总；总热量不能代替详细项。
+Production schema 允许 item 营养字段和 Meal 汇总为 `NULL`，通用 Meal payload 也允许空 items；这表示“未知 / 未估算”在底层是合法状态。
+
+当前 Web 编辑器与 ChatGPT 正常记录流程会额外要求至少一个真实 food item。这个要求属于产品 / AI contract，不是数据库对所有写入口的硬约束。详见 [Meal Lifecycle](../domains/meal/lifecycle.md)。
 
 ## 6. `favorite_food_templates`
 

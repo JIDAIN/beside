@@ -1,281 +1,188 @@
-# 产品与功能
+# Product Overview
 
-状态：2026-09-14。
+状态：2026-09-21。本文只描述 **当前代码提供给用户的产品能力**；实现细节、数据库约束和部署状态分别由 Architecture、Domains 与 Engineering 文档维护。
 
 ## 1. 产品定位
 
-正式产品是 **伴岛 / Beside**，日常称呼 **小岛**。它是两个人共同使用的私人生活记录与陪伴应用。
+**伴岛 / Beside** 是两个人共同使用的私人生活记录与陪伴 Web App，日常称呼 **小岛**。
 
-现有 `couple-better-game` Production 地址、数据库 slug、缓存 key 等继续作为兼容标识存在，但不再代表当前正式产品名称。
+正式产品包含两部分：
 
-当前产品同时包含：
+- **Island Life**：当前生活记录、共同生活与陪伴功能；
+- **Legacy Game**：旧“变美变瘦大作战”，现在作为「游戏机」中的独立子项目保留。
 
-1. **生活记录**：今日、饮食、心情、睡眠、活动、体重、药箱、小信箱、日历、提醒等；
-2. **Legacy Game**：旧“变瘦变美大作战”的 deficit、运动奖励、金币 / 宝石、兑换和成长地图；
-3. **AI 接入**：MCP 与程序内置 AI 通过同一个 AI Access Core 读写正式生活数据。
+生活记录与 Legacy Game 可以关联展示，但不会自动互相改值。
 
-生活事实与游戏事实可以按日期关联展示，但不能互相自动覆盖。
+## 2. 固定双人身份
 
-## 2. 固定角色与身份
+底层固定身份只有：
 
 ```text
-cat  = 猫猫
-fish = 鱼鱼
+cat
+fish
 ```
 
-界面“我 / Ta”始终相对当前登录用户。
+界面中的“我 / Ta”始终相对当前登录账号解释。用户不需要在页面里学习或操作内部 `cat / fish` key。
 
-Harbor Cat / Fish 等 AI 入口中的昵称、自称、`cat / fish` 文本都不是身份凭证；真正身份只来自登录、OAuth token 或服务端签名上下文。
+## 3. 主导航
 
-## 3. 当前主导航
+当前底部主导航由代码固定为：
 
 ```text
 今日 / 饮食 / 日历 / 小窝 / 我的
 ```
 
-- 今日：心情、睡眠、活动；
-- 饮食：Meal、营养、照片、常吃食物；
-- 日历：心情 / 饮食 / 睡眠统一月度回顾与历史日详情；
-- 小窝：体重、家庭药箱、小信箱、游戏机；
-- 我的：身份、Reminder Center、通知设置、数据管理。
-
-Legacy Game 独立保留，不为了生活页改造而重写旧游戏规则。
-
-## 4. 饮食记录
-
-饮食事实主要存放在：
+对应路由：
 
 ```text
-meals
-meal_items
+/         今日
+/food     饮食
+/calendar 日历
+/nest     小窝
+/me       我的
 ```
 
-当前枚举：
+## 4. 今日
+
+首页当前只承担三个高频生活记录入口：
+
+- 心情；
+- 睡眠；
+- 活动。
+
+心情和睡眠同时展示“我 / Ta”的当天事实，但当前账号只能维护自己的个人记录。
+
+睡眠按**起床日**归档：今天记录的是“昨晚入睡 → 今天起床”。
+
+活动支持个人活动和双方共同活动。
+
+首页还显示当前日期和纪念日推导出的“一起度过的第 N 天”。
+
+## 5. 饮食
+
+饮食页一次查看“我”或“Ta”其中一人，并可以切换日期。
+
+用户可见餐次为：
 
 ```text
-mealType     breakfast | lunch | dinner | snack
-snackPeriod  morning | afternoon | night
-status       estimated | confirmed
+早餐
+上午加餐
+午餐
+下午加餐
+晚餐
+晚上加餐
 ```
 
-支持：
+早餐 / 午餐 / 晚餐是每日固定主餐；加餐是独立饮食事件。
 
-- 吃饭时间；
-- 食物名称与份量；
-- estimated weight；
-- calories / calorie range；
-- protein / carbs / fat；
-- 单餐营养汇总；
-- 手动新增 / 编辑 / 删除；
-- 餐次与加餐时段纠正；
-- private 餐食照片；
-- AI 写入；
-- `source = manual / chatgpt / import`；
-- 幂等写入与读回确认。
+当前账号可以维护自己的餐食，Ta 的餐食只读。餐食支持：
 
-数量语义：
+- 食物明细和份量；
+- kcal 与三大营养素；
+- 吃饭时间和备注；
+- 一张正式展示照片；
+- 新增、编辑、删除；
+- 常吃食物复用。
 
-- 每人每天早餐 / 午餐 / 晚餐各最多 1 条有效主餐；
-- snack 是独立事件，同一时段允许多条；
-- 每条加餐独立保存时间、照片、items 与营养并独立编辑 / 删除。
+常吃食物有独立维护页 `/food/favorites`，模板加入当天餐食后会成为独立食物明细，之后互不联动。
 
-Meal calories / macros 允许未知：
+饮食的完整业务 contract：
+→ [Meal MOC](../domains/meal/README.md)
 
-```text
-NULL = 未估算
-0    = 确实为 0
-```
+## 6. 日历 / 月度回顾
 
-正式 meal 默认应保存可识别的食物 items，并同时保存整餐汇总；不能只保存“本餐 / 合计”占位项来替代真实食物明细。
-
-## 5. 常吃食物
-
-常吃食物存放在 `favorite_food_templates`，是按 Cat / Fish 隔离的复用模板，不是某一天的餐食记录。
-
-适用场景主要是咖啡、酸奶、饼干、零食等相对固定的食品。
-
-当前规则：
-
-- 有独立维护入口；
-- 可以新增 / 编辑 / 删除模板；
-- 餐食编辑时可以从常吃食物直接加入；
-- 加入时复制模板字段到普通 `meal_items`；
-- 当日临时份量不会覆盖模板默认份量；
-- 以后修改模板不会回写历史 Meal。
-
-## 6. AI 记录一顿饭
-
-新 meal 默认流程：
-
-```text
-用户发文字 / 图片
--> 团子分析实际摄入
--> 给出待确认营养草稿
--> 用户修改或确认
--> 正式写入
-```
-
-第一句“帮我记录 / 记一下 / 保存”表示最终记录意图，不等于已经确认 AI 的营养估算。
-
-草稿只存在聊天上下文，没有 `meal_drafts` 数据表。
-
-单图配合“记录这顿饭 / 记录全部热量”等实际记录意图时，草稿确认后直接创建 `confirmed` Meal；只有明确“还没吃 / 先估算 / 饭后确认”时才创建 `estimated`。
-
-补充已有餐食更新原 Meal；饭后确认更新同一 Meal，并保留原 `mealDate / eatenAt`。
-
-## 7. 实际摄入与营养草稿
-
-估算优先级：
-
-```text
-用户明确文字
->
-餐前 / 餐后照片差分
->
-单图合理估算
-```
-
-“没吃”“只吃一半”“后来又添了几口”等用户信息必须优先覆盖纯视觉推断。
-
-能合理判断时，草稿尽量包含每种食物的：
-
-- 名称；
-- 实际份量；
-- estimated weight；
-- calories；
-- protein；
-- carbs；
-- fat。
-
-真正不知道的字段允许 `null`，不假装精确测量。
-
-## 8. 餐食照片
-
-当前每条正式 meal 只绑定 1 张展示照片。
-
-多图可以参与 AI 分析；默认展示图按餐前图处理，用户明确指定时可以保存其他图。不能假装当前支持同一 meal 永久绑定两张正式图片。
-
-图片处理：
-
-```text
-EXIF normalize
--> 最长边 600px
--> WebP quality 70
--> >120 KB 再逐步降质量
--> 最低 quality 55
--> 一般目标 50~100 KB
-```
-
-照片使用 private Storage。编辑页支持旋转、显示缩放、更换和移除。
-
-餐食主记录成功而照片上传失败时，必须立即锁定同一 Meal，后续只重试该 Meal 的照片，不能再次创建第二条记录。
-
-## 9. 睡眠与心情
-
-`sleep_date` 表示**起床日 / 归档日**。
-
-用户在今天记录睡眠时输入“昨晚入睡 + 今天起床”，无需返回昨天页面。
-
-心情与睡眠都允许当前登录用户删除自己的记录；Ta 的个人记录保持只读。按钮可见性不是权限边界，API / RPC 仍需校验 owner。
-
-## 10. 活动与历史日
-
-活动支持本人活动与 `both` 共同活动；服务端继续按 owner / participantScope 校验权限。
-
-日历任意日期都可进入历史日详情：
-
-- 当前账号可维护该日自己的心情、睡眠和饮食；
-- 活动按权限新增 / 修改 / 删除；
-- Ta 的个人记录可查看但不可代写；
-- 历史活动新增时 `occurred_at` 使用所选业务日期；
-- 写入后同步 day / month / month-bundle 缓存。
-
-## 11. 统一月度回顾
-
-日历顶部固定提供：
+日历当前提供三个视图：
 
 ```text
 心情 / 饮食 / 睡眠
 ```
 
-- 心情：双人月历，不显示我 / Ta 切换；
-- 饮食：按我 / Ta 单人查看，每日显示 kcal；
-- 睡眠：按我 / Ta 单人查看，每日显示时长；
-- 三种视图保持统一月历视觉；
-- 数字是事实，不产生评分、排名或好坏标签。
+- 心情：同一月历同时展示我 / Ta；
+- 饮食：按我 / Ta 切换，展示每日 kcal；
+- 睡眠：按我 / Ta 切换，展示每日睡眠时长；
+- 点击日期进入历史日详情。
 
-## 12. 小信箱
+数字只表达记录事实，不做评分、排名或健康好坏判断。
 
-```text
-收信箱 / 已寄出 / 待寄出
-```
+## 7. 小窝
 
-数据规则：
+小窝当前包含：
 
-```text
-draft -> 只有寄件人可见，可编辑 / 删除 / 寄出
-sent  -> 寄件人与收件人可见，永久只读
-```
+- 共享纪念日；
+- 体重；
+- 小信箱；
+- 家庭药箱；
+- 游戏机。
 
-手札支持信纸分页；明信片始终水平横向。
+其中游戏机目前提供“变美变瘦大作战”入口，并保留未来小游戏扩展位。
 
-第一次真正进入 `sent` 时，只为 recipient 生成一次 mailbox reminder；保存 / 编辑 draft 不提醒，微信通知不展示正文。
+### 小信箱
 
-## 13. Reminder Center / 微信提醒
-
-业务模块只生成 reminder instance，不直接依赖具体微信 provider。
-
-当前通道：
+当前模型：
 
 ```text
-mailbox -> 微信公众平台测试号 -> 失败时 PushPlus fallback
-其他提醒 -> PushPlus
+待寄出 / 已寄出 / 收信箱
 ```
 
-其他提醒包括自定义提醒、药箱到期、纪念日 / 整百日和每日记录完整性提醒。
+draft 只对寄件人可见，可编辑、删除、寄出；sent 对双方可见但永久只读。
 
-每日完整性提醒当前在 Production Supabase 启用：Cat / Fish 每天 `21:00 Asia/Shanghai` 分别检查心情、睡眠、confirmed 早餐、午餐、晚餐；完整则静默，缺项则只发一条汇总提醒。`estimated` 与 `snack` 不算必填完成。
+## 8. 我的
 
-## 14. AI 入口
+“我的”当前实际提供：
 
-当前多个入口共享一个 AI Access Core：
+- 当前登录身份；
+- 云端连接状态；
+- 当前账号自己的 PushPlus / 微信提醒绑定、测试和解绑；
+- 数据管理（备份、导出、导入、恢复）；
+- 退出登录。
+
+Reminder Center 本身存在独立页面 `/me/reminders`，但**不是底部主导航项，也不是当前“我的”页面的独立列表入口**。
+
+提醒业务规则：
+→ [Reminder MOC](../domains/reminders/README.md)
+
+## 9. AI
+
+伴岛当前有 MCP / ChatGPT Project 与程序内置 AI 等入口。
+
+从用户角度，AI 可以在授权身份范围内查询和维护已经接入的生活数据；身份不能通过聊天中的自称切换。
+
+AI 的技术架构与自然语言 contract：
+→ [AI MOC](../architecture/ai/README.md)
+
+## 10. Legacy Game 边界
+
+旧游戏继续保留自己的：
+
+- deficit；
+- 运动奖励；
+- 金币 / 宝石；
+- 钱包；
+- 兑换；
+- 热力图和成长记录。
+
+必须保持：
 
 ```text
-Harbor Cat / Fish MCP
-其他 MCP client
-程序内置 AI
-        ↓
-AI Access Core
-        ↓
-canonical services / restricted RPC
-        ↓
-Supabase
+meal intake
+!= Legacy Game deficit
+!= weight
+!= Life activity / Legacy Game exercise
 ```
 
-AI 不获得任意 SQL，不通过昵称切换身份。新增 `cycle` 等生活 domain 时扩展 canonical domain service + registry；需要提醒时接入 Reminder Engine，不重做整套基础设施。
+详细规则：
+→ [Legacy Game MOC](../domains/legacy-game/README.md)
 
-## 15. Legacy Game 边界
+## 11. 当前产品边界
 
-```text
-intake != deficit != weight != exercise / activity
-```
-
-因此：
-
-- meal calories 不自动修改 Legacy Game deficit；
-- meal 不自动触发金币 / 宝石；
-- meal 不自动修改旧游戏 heatmap；
-- 真实体重写 `weight_measurements`；
-- 普通 Life 清理、导入、恢复不得顺手修改 Legacy Game 表。
-
-## 16. 当前明确边界
-
-当前不做：
+当前程序不声称提供：
 
 - 医疗诊断；
-- 营养精确测量声明；
-- AI 任意 SQL；
-- 未授权跨身份个人写入；
-- 同一 meal 的多图正式持久化；
-- meal 自动驱动旧游戏 deficit / 奖励；
-- 未经当次明确授权自动部署 Production。
+- 实验室级营养测量；
+- AI 任意数据库权限；
+- 未授权跨身份写入；
+- 一条 Meal 的多图正式持久化；
+- Meal 自动驱动 Legacy Game deficit / 奖励。
+
+当前 Production / GitHub main / Supabase 的发布差异不在本文维护：
+→ [Engineering Current State](../engineering/current-state.md)
