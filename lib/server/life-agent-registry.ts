@@ -280,7 +280,7 @@ export const LIFE_AGENT_TOOLS = [
     type: "function",
     function: {
       name: "life_capabilities",
-      description: "查看岛屿生活 AI 当前可查询和可修改的资源、字段边界与安全规则。普通读写不要例行调用。",
+      description: "查看伴岛 AI 当前可查询和可修改的生活数据资源、字段边界与安全规则。普通读写不要例行调用。",
       parameters: { type: "object", properties: {}, additionalProperties: false },
     },
   },
@@ -288,7 +288,7 @@ export const LIFE_AGENT_TOOLS = [
     type: "function",
     function: {
       name: "life_query",
-      description: "查询岛屿生活真实数据。day 是单日完整汇总（心情、睡眠、活动、饮食）；mood/sleep/activity 可单独查询。日期按 Asia/Shanghai 处理。",
+      description: "查询伴岛正式生活数据。day 是单日完整汇总（心情、睡眠、活动、饮食）；mood/sleep/activity 可单独查询。日期按 Asia/Shanghai 处理。",
       parameters: {
         type: "object",
         properties: {
@@ -366,7 +366,7 @@ function capabilities(identity: FixedLifeIdentity) {
       medicine: "家庭药箱，可按药名/关键词过滤",
       mailbox: "当前账号可见的小信箱：自己的 draft + 双方相关的 sent；可用 limit 取最近 N 条",
       settings: "周年日、当前两人的目标体重",
-      life_export: "V2 生活数据完整导出",
+      life_export: "伴岛生活数据完整导出",
       legacy_home: "旧 /game 完整同步快照",
     },
     mutate: {
