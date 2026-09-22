@@ -1,55 +1,44 @@
 # Starlit Nook Domain
 
-> Status: Foundation / under development
+> Status: Current code foundation / not user-facing
 >
 > Product: 隅星 / Starlit Nook；小名：星星角。
 
-本 Domain 负责共同回忆的正式数据与展示 contract，不负责完整相册管理或重型照片整理。
+本文只记录 **已经进入 GitHub main 的 Starlit Nook Domain contract**。尚未实现的 UI、数据库、MCP、媒体 provider 与阶段计划继续维护在 Obsidian `13_Projects/隅星`，不提前写成 GitHub current fact。
 
-## 1. Product Boundary
+## 1. Current Domain Boundary
 
-第一版正式内容：
-
-~~~text
-星影  watch
-足迹  place
-烟火  food
-拾趣  activity
-
-+ 旅行聚合
-+ 精选展示媒体
-~~~
-
-Starlit Nook 是：
-
-> 共同回忆的正式事实层 + 展示层。
-
-不是：
-
-- 完整照片库；
-- 本地相册管理器；
-- 相册扫描 / 聚类程序；
-- 旅行自动生成器；
-- Beside Life 历史页。
-
-相册梳理、旅行足迹生成等重处理以后进入独立“回忆整理程序”。
-
-## 2. Ownership
-
-Starlit Nook 第一版是 couple-space shared resource。
+当前代码 foundation 已定义四类共同回忆 item：
 
 ~~~text
-Fish → read / create / update / delete
-Cat  → read / create / update / delete
+watch
+place
+food
+activity
 ~~~
 
-participant_scope = fish / cat / both 只描述谁参与了回忆，不参与授权。
+并定义 trip、trip-item relation、media record interface。
 
-可信 actor 继续来自 signed Web session / MCP OAuth。
+当前这只是代码 contract，不是已经可运行的 Web 产品。
+
+Starlit Nook 的长期产品边界与 Beside Life 分离；共享基础设施但保持独立 Domain 的长期原因见 ADR-0008。
+
+## 2. Current Ownership Contract
+
+当前 foundation 采用 couple-space shared 语义：
+
+~~~text
+Fish → shared-domain actor
+Cat  → shared-domain actor
+~~~
+
+`participantScope = fish | cat | both` 描述谁参与了回忆，不是权限来源。
+
+`StarlitNookMutationContext.actor` 只接受 `fish | cat`。真正 Web / MCP authorization 尚未接入；未来 adapter 必须继续从可信 Web session / MCP OAuth 注入 actor，不能信任普通 payload 自报身份。
 
 ## 3. Current Code Foundation
 
-当前已建立：
+已经存在：
 
 ~~~text
 lib/starlit-nook/types.ts
@@ -61,166 +50,184 @@ lib/starlit-nook/service.ts
 tests/starlit-nook/domain-contract.test.ts
 ~~~
 
-当前只建立 Domain contract。
-
-尚未建立：
-
-- Production table；
-- migration；
-- Supabase Repository implementation；
-- Web API；
-- MCP tools；
-- Web UI。
-
-因此不能把当前 foundation 描述成已经可运行的 Starlit Nook 产品。
-
-## 4. Planned Fact Store
-
-待 migration 审查：
-
-~~~text
-starlit_nook_items
-
-starlit_nook_watch_details
-starlit_nook_place_details
-starlit_nook_food_details
-starlit_nook_activity_details
-
-starlit_nook_trips
-starlit_nook_trip_items
-
-starlit_nook_media
-starlit_nook_item_media
-starlit_nook_trip_media
-~~~
-
-Production DDL 必须通过新增 migration，当前尚未执行。
-
-## 5. Canonical Service Boundary
-
-最终正式入口：
-
-~~~text
-Web API ───────────────┐
-                       ├→ StarlitNookService → Repository → Supabase
-MCP / ChatGPT ─────────┘
-~~~
-
-Adapter 不拥有业务规则。
-
-当前 StarlitNookService 已负责：
-
+当前已实现：
+- item / trip TypeScript contract；
 - item / trip input validation；
-- UUID / query contract；
-- canonical item / trip operation；
-- source provenance normalization；
-- trip-item relation contract。
+- bounded item query parsing；
+- UUID/date/rating/participant validation；
+- Repository interface；
+- canonical StarlitNookService；
+- item/trip CRUD method contract；
+- trip-item link/unlink contract；
+- media lookup interface；
+- domain-contract tests。
 
-Repository interface 是 Domain 与数据库之间的边界。
+## 4. Current Item Contract
 
-真正 Supabase adapter 等 migration contract 审查后再实现，避免先写假 CRUD。
+### Common item fields
 
-## 6. Provenance
-
-source 不是权限字段。
-
-计划支持：
-
-~~~text
-manual
-chatgpt
-notion
-beside
-import
-~~~
-
-source / sourceRef 应由可信 adapter / importer 注入，不允许普通业务 payload 伪造调用来源。
-
-## 7. Media Boundary
+当前 base write contract 包含：
 
 ~~~text
-本地 / 网盘
-= 完整原始影像
-
-R2
-= 精选 Web 展示副本
-
-Starlit Nook DB
-= media metadata + relation
+title
+occurredOn nullable
+occurredAt nullable
+participantScope
+fishRating nullable
+catRating nullable
+note nullable
 ~~~
 
-第一版 Starlit Nook 只消费已经选定的展示媒体。
+稳定 validation：
+- title 最长 200；
+- participantScope：fish / cat / both，缺省 both；
+- rating：1～5 整数或 null；
+- note 最长 2000；
+- occurredOn 为 YYYY-MM-DD 或 null；
+- occurredAt 为有效 timestamp 或 null。
 
-不做：
+### Watch
 
-- 本地目录扫描；
-- 批量相册导入；
-- EXIF 全库索引；
-- AI 大批量挑片；
-- 自动旅行生成。
+当前：
+- mediaKind：movie / series / anime / variety / documentary；
+- watchStatus：watching / completed / dropped；
+- startedOn / finishedOn 可空；
+- finishedOn 不能早于 startedOn。
 
-这些属于未来独立“回忆整理程序”。
+### Place
 
-## 8. AI Boundary
+当前：
+- placeKind：city / attraction / restaurant / cafe / park / venue / hotel / mall / other；
+- address / cityName 可空；
+- latitude：-90～90；
+- longitude：-180～180。
 
-计划新增独立 MCP tools：
+### Food
+
+当前：
+- foodMode：dine_out / homemade；
+- foodKind：meal / dish / dessert / drink / snack / other 或 null；
+- linkedPlaceItemId 可空，非空必须是 UUID；
+- recipeRef 可空。
+
+### Activity
+
+当前：
+- activityKind：非空、最长 80；
+- durationMinutes：1～10080 整数或 null；
+- linkedPlaceItemId 可空，非空必须是 UUID。
+
+## 5. Current Trip / Query Contract
+
+Trip 当前包含：
 
 ~~~text
-starlit_nook_capabilities
-starlit_nook_query
-starlit_nook_mutate
+title
+startDate nullable
+endDate nullable
+regionText nullable
+note nullable
+participantScope
 ~~~
 
-不塞进 life_query / life_mutate。
+约束：
+- title 最长 200；
+- endDate 不能早于 startDate；
+- regionText 最长 300；
+- note 最长 3000；
+- participantScope 缺省 both。
 
-AI 不获得任意 SQL / table CRUD。
+Item query 当前支持：
+- itemType；
+- date / dateFrom / dateTo；
+- city；
+- activityKind；
+- tripId；
+- limit。
 
-破坏性操作继续沿用服务端显式删除意图与“不猜 UUID”原则。
+limit 当前为 1～500，默认 100。
 
-## 9. Development Phases
+## 6. Current Service / Repository Boundary
 
-当前：**Phase 2B — Web UI / UX design validation**。
+当前真实结构：
 
-已完成：
+~~~text
+StarlitNookService
+→ StarlitNookRepository interface
+→ no Production persistence adapter yet
+~~~
 
-- types；
-- validation；
-- query contract；
-- repository interface；
-- canonical service；
-- validation tests；
-- Domain 文档。
+Service 当前负责：
+- parse / validation；
+- UUID contract；
+- item/trip canonical operation；
+- mutation context normalization；
+- trip-item relation调用。
 
-当前进度：
+Repository interface 当前定义：
+- item list/get/create/update/soft-delete；
+- trip list/get/create/update/soft-delete；
+- trip-item link/unlink；
+- media get。
 
-- Phase 1 Domain foundation：已完成；
-- Phase 2A GitHub reference implementation review：已完成并收口；
-- Phase 2B Web UI / UX design validation：进行中。
+Adapter 不应拥有第二套业务规则。
 
-下一步：
+## 7. Current Provenance Contract
 
-1. 在 Obsidian 完成 Starlit Nook 页面树与静态原型；
-2. 验证首页、时间线、四类列表、回忆详情、旅行、足迹地图与 Viewer；
-3. 用 UI contract 反向复审当前 types / validation / repository / service；
-4. 只有 UI 验证通过后，再生成 migration 草案；
-5. migration 之后再建 Supabase Repository、CRUD regression、Web API；
-6. 核心 Web UI 接真实数据后，再接 MCP / ChatGPT。
+当前 mutation context：
+
+~~~text
+actor
+source
+sourceRef optional
+~~~
+
+当前代码只约束：
+- actor = fish / cat；
+- source 为 1～64 字符；
+- sourceRef 最长 1000。
+
+**当前没有 persisted provenance enum，也没有 Production source table contract。**
+
+未来 importer/adapter 的 source 设计属于未实现目标方案，应在 Obsidian `13_Projects/隅星` 设计，真正实现后再同步本文。
+
+## 8. Current Persistence / Media / API / AI State
+
+当前 **没有**：
+- Starlit Nook Production table；
+- Starlit Nook migration；
+- Supabase Repository implementation；
+- Starlit Nook Web API；
+- Starlit Nook Web UI；
+- Starlit Nook MCP tools；
+- Starlit Nook media storage provider。
+
+`StarlitNookMediaRecord` 与 `Repository.getMedia` 目前只是代码 interface contract，不代表 R2/Supabase/其他 provider 已经接入。
+
+因此：
+- Product Overview 当前不把 Starlit Nook 列为用户可用 capability；
+- Data Model 当前不列 Starlit Nook Production schema；
+- API & Sync 当前不列 Starlit Nook route；
+- AI Architecture 当前不列 Starlit Nook tool surface。
+
+## 9. Architecture Boundary
+
+ADR-0008 已决定：Starlit Nook 与 Beside 可以共享当前 repo / identity / transport foundation，但保持独立 Domain。
+
+这个 ADR 是长期架构取舍，不等于上述未实现层已经存在。
+
+Life / Starlit Nook 不应互相直接改表；若未来 Beside fact promotion 到 Starlit Nook，需要单独定义明确 contract。
 
 ## 10. Documentation Sync
 
-产品定位、范围、设计理由：
-
-~~~text
-Obsidian / 13_Projects / 隅星
-~~~
-
-当前代码 contract：
-
+当前实现事实：
 - 本文；
-- Architecture；
-- Auth；
-- AI Architecture；
-- migrations；
+- [Architecture Overview](../../architecture/overview.md)；
+- [ADR-0008](../../architecture/decisions/0008-starlit-nook-shared-infra-independent-domain.md)；
+- current source；
 - tests。
 
-代码 contract 变化必须同步本文。
+未实现的产品定位细化、UI/UX、schema 草案、媒体/provider、AI tool 设计与阶段计划：
+- Obsidian `13_Projects/隅星`。
+
+当这些目标真正实现并经过测试/runtime 核验后，再按 [Documentation Maintenance Guide](../../engineering/documentation-maintenance.md) 同批更新 GitHub canonical docs。
