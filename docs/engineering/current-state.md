@@ -21,10 +21,11 @@ GitHub main 已领先于 Production Web。
 
 领先内容主要包括：
 - Supabase migration 历史/顺序收口；
-- current docs 的 MOC/canonical 架构重构；
-- 本轮正式文档迁移。
+- current docs 的 MOC/canonical 架构重构与迁移后精度修正；
+- 少量测试/维护配置调整；
+- AI exposed tool description 的品牌文案收口（不改变业务写入语义）。
 
-这些 docs-only 变化不代表 Production Web 已上线相同 commit。
+这些尚未部署的 main 变化不代表 Production Web 已运行相同 commit。
 
 ## 3. Production Supabase
 
