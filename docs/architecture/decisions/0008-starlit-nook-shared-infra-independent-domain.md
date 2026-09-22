@@ -50,15 +50,18 @@ Life / Beside Domain
 Starlit Nook Domain
 ~~~
 
-Starlit Nook 使用独立：
+Starlit Nook 保持独立 Domain 边界。
 
+当前已经独立：
 - lib/starlit-nook/*
-- starlit_nook_* 数据表
-- canonical service
-- Web API family
-- MCP tool surface
-- UI route
+- canonical service / Repository interface
 - Domain docs / tests
+
+后续真正实现 persistence / transport / UI 时，也应保持独立：
+- starlit_nook_* 数据表；
+- Web API family；
+- MCP tool surface；
+- UI route。
 
 Starlit Nook 不进入 life_query / life_mutate，也不把业务字段塞进 Life 表。
 
