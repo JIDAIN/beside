@@ -13,15 +13,15 @@ History 解释伴岛怎样走到今天，但不定义 current behavior。
 
 ## 2. Curated History
 
-- Product Evolution：产品从最初游戏雏形演变为伴岛 / Beside，以及术语为什么仍存在。
-- Changelog：对理解产品状态有价值的工程/产品里程碑。
+- [Product Evolution](product-evolution.md)：产品从最初游戏雏形演变为伴岛 / Beside，以及术语为什么仍存在。
+- [Changelog](changelog.md)：对理解产品状态有价值的工程/产品里程碑。
 
 ## 3. Raw Historical Evidence
 
-- v2-evolution/：生活系统与 UI 演进阶段文档。
-- ai-integration/：AI/MCP 接入与阶段验收。
-- harbor/：旧 Harbor bridge / project instructions 历史。
-- deployments/：历史发布授权与发布记录。
+- [v2-evolution/](v2-evolution/)：生活系统与 UI 演进阶段文档。
+- [ai-integration/](ai-integration/)：AI/MCP 接入与阶段验收。
+- [harbor/](harbor/)：旧 Harbor bridge / project instructions 历史。
+- [deployments/](deployments/)：历史发布授权与发布记录。
 
 Raw evidence 通常保留当时语境，不把旧“current”改造成今天的 current。
 
@@ -57,5 +57,6 @@ History never overrides current docs/code/runtime.
 
 ## 7. What Must Stay in Current Docs
 
-当前能力、schema、权限、Domain lifecycle、部署状态必须维护在 Product/Architecture/Domains/Engineering。
+当前能力、schema、权限、Domain lifecycle、部署状态必须维护在 [Product](../product/README.md) / [Architecture](../architecture/README.md) / [Domains](../domains/README.md) / [Engineering](../engineering/README.md)。
+
 不要让 History 成为第二 current source。

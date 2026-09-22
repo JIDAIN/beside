@@ -69,7 +69,13 @@ life_notification_preferences
 用户创建 rule，指定 cat/fish/both、title/content、dueAt；再物化实例。
 
 ### Medicine
-药箱事实提供到期信息；每个 actor 的 reminder enabled/offsets 独立。当前默认 offsets 为 30/7/1/0，合法范围由 current RPC 约束。
+药箱事实提供到期信息；每个 actor 的 reminder enabled/offsets 独立。
+
+必须区分两层事实：
+- current schema default：`medicine_offsets = [30,7,1,0]`；
+- 2026-09-22 Production 只读核验：Cat/Fish 当前实际 preference 均为 `[7,0]`。
+
+settings RPC 要求 1～10 个 offsets，每个值 0～90 天。materializer 读取 actor 当前 preference；不能把 schema default 当成所有账号的当前提醒计划。
 
 ### Anniversary
 共享 anniversaryDate + actor notification preferences 生成提醒。provider 当前 PushPlus。
@@ -79,7 +85,18 @@ draft 不提醒。
 第一次真正 sent（direct sent 或 draft→sent）只为 recipient 生成一条 mailbox instance。重复读取/编辑已 sent 信件不得重复生成。
 
 ### Daily Completeness
-当前 Cat/Fish 都有独立 preference；当前生产设置为 21:00 Asia/Shanghai。条件检查当日记录完整性并直接 claim delivery。
+当前 Cat/Fish 都有独立 preference；2026-09-22 Production 只读核验均为 21:00 Asia/Shanghai。
+
+当前 `complete` 定义为当前 actor 当日同时满足：
+- mood 已记录；
+- sleep 已记录；
+- confirmed breakfast 已记录；
+- confirmed lunch 已记录；
+- confirmed dinner 已记录。
+
+`estimated` Meal 不计为完成；snack 不参与完整性判断。
+
+若任一项缺失，Condition Nudge 才 claim 当日 delivery，并把 missingItems / missingKeys 带入正式 PushPlus renderer；complete 时保持 silent。
 
 ## 7. Instance State / Snooze
 

@@ -62,6 +62,18 @@ UI 的“我 / Ta”不进入持久化 schema。
 
 fixed-account credential 位于 life_fixed_accounts；真实密码只保存 hash，不进入 migration seed。
 
+`life_fixed_accounts` current core fields：
+
+~~~text
+partner_key
+username
+password_hash
+created_at
+updated_at
+~~~
+
+账号认证流程与 session/OAuth 边界见 Auth & Identity；本文只记录数据事实。
+
 ## 5. Personal Fact Domains
 
 ### 5.1 Mood
@@ -174,48 +186,263 @@ notification preferences 不属于普通 Life settings contract，见 Reminder D
 
 ## 7. Meal Data Model
 
-Meal 复杂业务见 Meal Domain；本文只维护 schema fact。
+Meal 复杂业务见 [Meal Domain](../domains/meal/README.md)；本文维护 current schema / constraint / RPC fact。
 
-主要正式事实：
-- meals
-- meal_items
-- favorite_food_templates
+### 7.1 `meals`
 
-主餐 active unique：同一 couple space + partner + meal_date + breakfast/lunch/dinner 最多一条未删除 Meal；snack 不受该唯一槽约束。
+current core fields：
 
-一条 Meal 当前只有一个正式 photo_path，rotation / scale 是显示 metadata。
+~~~text
+id
+couple_space_id
+partner_key
+meal_date
+meal_type
+eaten_at
+snack_period
+status
+source
+total_calories_kcal
+calorie_min_kcal
+calorie_max_kcal
+note
+idempotency_key
+photo_path
+photo_rotation_degrees
+photo_scale
+created_at
+updated_at
+deleted_at
+~~~
 
-完整 lifecycle / photo / AI contract 见 Meal 文档。
+current constrained values：
+- meal_type：breakfast / lunch / dinner / snack；
+- snack_period：morning / afternoon / night 或 null，且非 snack 必须为 null；
+- status：estimated / confirmed；
+- partner_key：cat / fish；
+- photo_rotation_degrees：0 / 90 / 180 / 270；
+- photo_scale：0.60～1.00。
 
+关键约束 / index：
+- `meals_main_slot_active_unique`：同一 couple_space + partner + meal_date + breakfast/lunch/dinner 最多一条未删除 Meal；
+- snack 不进入主餐唯一索引，可有多条独立事件；
+- `meals_idempotency_unique`：couple_space_id + idempotency_key 唯一；
+- deleted_at 为 soft delete 边界。
+
+`total_calories_kcal` 与区间字段在 runtime schema 可为 null；业务语义保持 `null = 未知/未估算`，`0 = 确认为 0`。数据库仍有历史 default，调用方不能用“省略字段”代替“明确未知”的语义。
+
+一条 Meal 当前只有一个正式 `photo_path`；rotation / scale 是显示 metadata。图片处理 contract 见 [Meal Photo Storage](../domains/meal/photo-storage.md)。
+
+### 7.2 `meal_items`
+
+current core fields：
+
+~~~text
+id
+meal_id
+food_id nullable
+raw_name
+display_name
+portion_description nullable
+estimated_weight_g nullable
+calories_kcal nullable
+calorie_min_kcal nullable
+calorie_max_kcal nullable
+protein_g nullable
+carbs_g nullable
+fat_g nullable
+sort_order
+created_at
+updated_at
+~~~
+
+`meal_id` 删除时 item cascade；`food_id` 删除时 set null。营养/重量允许 null，数据库不会为了“字段完整”伪造未知值。
+
+### 7.3 `favorite_food_templates`
+
+current core fields：
+
+~~~text
+id
+couple_space_id
+partner_key
+name
+portion_description nullable
+calories_kcal nullable
+carbs_g nullable
+protein_g nullable
+fat_g nullable
+created_at
+updated_at
+~~~
+
+模板按 partner 隔离。模板加入餐食时复制为独立 `meal_items` 数据；当前 `meal_items` 不保存 template foreign key，因此修改模板不会回写历史 Meal。
+
+### 7.4 Canonical Meal RPC Boundary
+
+Production/current schema 中主要 RPC：
+
+~~~text
+list_meals
+create_meal_record
+update_meal_record
+delete_meal_record
+create_chatgpt_meal_record
+get_chatgpt_meal_record
+replace_meal_photo_state
+update_meal_photo_display
+~~~
+
+`append_meal_item` / `confirm_estimated_meal` 是 AI Access Core 在 canonical Meal read/update 之上提供的业务动作，不是第二套 Meal 表或任意 SQL path。
+
+完整 lifecycle 见 [Meal Lifecycle](../domains/meal/lifecycle.md)，AI 会话规则见 [Meal AI Contract](../domains/meal/ai-contract.md)。
 ## 8. Reminder / Notification Model
 
-Reminder 属于 Shared/System orchestration。
+Reminder 属于 Shared/System orchestration。业务 generation / snooze / provider routing 见 [Reminder Domain](../domains/reminders.md)；本文维护 current table / field / constraint fact。
 
-主要表：
-- life_notification_preferences
-- life_reminder_rules
-- life_reminder_instances
-- life_notification_deliveries
+### 8.1 `life_notification_preferences`
 
-Instance 是用户可操作的提醒状态；Delivery 是一次投递尝试。
+一行对应一个 couple space + actor。
+
+~~~text
+couple_space_id
+actor
+enabled
+timezone
+daily_record_reminder_enabled
+daily_record_reminder_time
+anniversary_reminder_enabled
+anniversary_reminder_time
+anniversary_offsets
+medicine_reminder_enabled
+medicine_offsets
+created_at
+updated_at
+~~~
+
+primary key：`(couple_space_id, actor)`；actor 只能 cat/fish。offset arrays 在 DB 层要求 1～10 个值。
+
+current schema defaults：
+- timezone = Asia/Shanghai；
+- daily_record_reminder_time = 21:00；
+- anniversary_reminder_time = 09:15；
+- anniversary_offsets = [7,3,0]；
+- medicine_offsets = [30,7,1,0]。
+
+**schema default 不等于当前 Production 每个账号的 preference。** 2026-09-22 只读核验时 Cat/Fish 的 medicine_offsets 实际均为 `[7,0]`。Reminder materializer 读取 actor 当前 preference。
+
+### 8.2 `life_reminder_rules`
+
+~~~text
+id
+couple_space_id
+created_by
+recipient_scope
+source_kind
+title
+content
+enabled
+schedule_type
+due_at
+metadata
+created_at
+updated_at
+archived_at
+~~~
+
+current constrained values：
+- recipient_scope：cat / fish / both；
+- source_kind：custom / medicine / anniversary / system / mailbox；
+- schedule_type：once / daily；
+- title：1～120 字。
+
+### 8.3 `life_reminder_instances`
+
+~~~text
+id
+couple_space_id
+rule_id nullable
+recipient
+source_kind
+source_ref nullable
+title
+content nullable
+due_at
+status
+snoozed_until nullable
+notified_at nullable
+dedupe_key
+metadata
+created_at
+updated_at
+completed_at nullable
+~~~
+
+current status：pending / snoozed / completed / dismissed。`(couple_space_id, recipient, dedupe_key)` 唯一。
+
+### 8.4 `life_notification_deliveries`
+
+~~~text
+id
+couple_space_id
+actor
+kind
+local_date
+dedupe_key
+status
+attempt_count
+metadata
+provider
+provider_message_id nullable
+provider_error nullable
+reserved_at
+completed_at nullable
+created_at
+updated_at
+~~~
+
+current constrained values：
+- kind：daily_record / anniversary / reminder；
+- status：reserved / accepted / failed；
+- attempt_count：1～3；
+- `(couple_space_id, dedupe_key)` 唯一。
 
 必须保持：
+~~~text
 instance completed != provider accepted
-provider accepted != 用户已读。
+provider accepted != 用户已读
+~~~
 
-Stateful / Condition Nudge、snooze、dedupe 与 provider routing 见 Reminder Domain。
-
+Stateful / Condition Nudge、snooze、dedupe 与 provider routing 见 [Reminder Domain](../domains/reminders.md)。
 ## 9. Legacy Game Data Boundary
 
 Legacy Game 的 daily record、wallet、exchange 等事实由 Legacy Game Domain 解释。
 
 普通 Life CRUD / import / backup / AI 不应把这些表视为普通 Life resource。
 
-## 10. External Write / Idempotency Facts
+## 10. System Control / External Write / Idempotency Facts
 
-部分 AI/import 外部写入使用稳定 idempotency / write receipt 边界。控制记录不是生活事实本身。
+### 10.1 `record_write_receipts`
 
-AI 不获得任意 SQL；正式写入必须经过 canonical service / restricted RPC。
+部分 AI/import 外部写入使用稳定 write receipt：
+
+~~~text
+id
+couple_space_id
+source
+domain
+idempotency_key
+entity_id
+created_at
+~~~
+
+current source：chatgpt / import。current domain：meal / mood / sleep / activity / weight / medicine。
+
+`(couple_space_id, idempotency_key)` 唯一。receipt 是写入控制事实，不是生活事实。
+
+### 10.2 AI / External Write Boundary
+
+AI 不获得任意 SQL；正式写入必须经过 canonical service / restricted RPC。Meal 自身同时保留 `meals.idempotency_key` 作为 Meal 写入边界。
 
 ## 11. Fact vs Derived
 
@@ -242,13 +469,41 @@ Derived/read model 示例：
 
 Life data-management 使用 allowlist，而不是“整个 Supabase dump”。
 
+### 12.1 `life_backup_snapshots`
+
+~~~text
+id
+couple_space_id
+scope
+reason
+schema_version
+payload
+row_counts
+created_by nullable
+created_at
+~~~
+
+current scope：user / config / full。
+current reason：manual / scheduled / pre_restore / import。
+
+snapshot 保存可恢复 payload 与 row counts；schema 可重建不等于用户数据已经备份。
+
+### 12.2 Import / Restore RPC Boundary
+
+current major data-management RPC：
+
+~~~text
+import_life_full_data
+restore_life_backup_snapshot
+~~~
+
 stable rule：
 - Life facts + 明确 shared config 可以进入 Life backup/import；
 - Legacy Game 默认排除；
-- schema rebuild != personal data backup；
+- restore 前建立 pre_restore snapshot；
 - import/restore 后 UI cache 必须重新收敛。
 
-具体恢复流程见 Operations。
+具体恢复流程见 [Operations](../engineering/operations-runbook.md)。
 
 ## 13. Migration Boundary
 

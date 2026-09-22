@@ -4,23 +4,23 @@
 
 ## 文档
 
-- Current State：Production Web、GitHub main、Supabase runtime 当前差异与未完成验证。
-- Development & Testing：标准变更流程、change recipe、测试与文档同步。
-- Configuration：环境变量、Vault/DB-managed secrets 与轮换影响。
-- Deployment & Security：发布授权、安全基线、Vercel/Supabase 变更纪律。
-- Operations Runbook：Production 故障、恢复、migration/ledger/replay 排查。
+- [Current State](current-state.md)：Production Web、GitHub main、Supabase runtime 当前差异与未完成验证。
+- [Development & Testing](development-testing.md)：标准变更流程、change recipe、测试与文档同步。
+- [Configuration](configuration.md)：环境变量、Vault/DB-managed secrets 与轮换影响。
+- [Deployment & Security](deployment-security.md)：发布授权、安全基线、Vercel/Supabase 变更纪律。
+- [Operations Runbook](operations-runbook.md)：Production 故障、恢复、migration/ledger/replay 排查。
 
 ## 最小阅读路径
 
 | 任务 | 先读 |
 |---|---|
-| 判断线上/主干/数据库现在分别是什么 | Current State |
-| 开发/测试/文档更新 | Development & Testing |
-| env / secret | Configuration |
-| 部署与 Production 写操作 | Deployment & Security |
-| 故障/恢复/migration | Operations Runbook |
+| 判断线上/主干/数据库现在分别是什么 | [Current State](current-state.md) |
+| 开发/测试/文档更新 | [Development & Testing](development-testing.md) |
+| env / secret | [Configuration](configuration.md) |
+| 部署与 Production 写操作 | [Deployment & Security](deployment-security.md) |
+| 故障/恢复/migration | [Operations Runbook](operations-runbook.md) |
 
-业务规则必须回到 Product/Domain/Architecture，不从 Runbook 反推 contract。
+业务规则必须回到 [Product](../product/README.md) / [Domains](../domains/README.md) / [Architecture](../architecture/README.md)，不从 Runbook 反推 contract。
 
 ## 维护原则
 

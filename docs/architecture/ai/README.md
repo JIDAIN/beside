@@ -24,10 +24,10 @@ AI / MCP Adapter
 
 ## 3. Canonical Documents
 
-- AI Architecture：stable tools、registry、身份、安全、dispatch、media、扩展流程。
-- Natural Language：alias、default、relative date、unit、clarification、target resolution。
-- Project Instructions：可直接复制到 Cat/Fish ChatGPT Project 的 client policy。
-- Meal AI Contract：Meal 特殊聊天草稿/确认/餐前餐后流程。
+- [AI Architecture](architecture.md)：stable tools、registry、身份、安全、dispatch、media、扩展流程。
+- [Natural Language](natural-language.md)：alias、default、relative date、unit、clarification、target resolution。
+- [Project Instructions](project-instructions.md)：可直接复制到 Cat/Fish ChatGPT Project 的 client policy。
+- [Meal AI Contract](../../domains/meal/ai-contract.md)：Meal 特殊聊天草稿/确认/餐前餐后流程。
 
 AI Access Core 不再单独维护第二份文档；长期原则统一进入 AI Architecture。
 
@@ -35,13 +35,13 @@ AI Access Core 不再单独维护第二份文档；长期原则统一进入 AI A
 
 | Concern | Canonical |
 |---|---|
-| stable tools / query-mutator registry | AI Architecture |
-| identity / permission | Auth & Identity |
-| aliases/defaults/clarification | Natural Language |
-| Meal conversation draft | Meal AI Contract |
-| Meal media persistence | Meal Photo Storage |
-| Project client policy | Project Instructions |
-| regression | Development & Testing |
+| stable tools / query-mutator registry | [AI Architecture](architecture.md) |
+| identity / permission | [Auth & Identity](../auth-and-identity.md) |
+| aliases/defaults/clarification | [Natural Language](natural-language.md) |
+| Meal conversation draft | [Meal AI Contract](../../domains/meal/ai-contract.md) |
+| Meal media persistence | [Meal Photo Storage](../../domains/meal/photo-storage.md) |
+| Project client policy | [Project Instructions](project-instructions.md) |
+| regression | [Development & Testing](../../engineering/development-testing.md) |
 
 ## 5. Change Routing
 

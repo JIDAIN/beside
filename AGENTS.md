@@ -39,18 +39,21 @@ README.md
 
 不要从 docs/history、旧聊天、旧 migration 注释或 Git 历史直接推断 current behavior。
 
-## 3. Fact Priority
+## 3. Fact Source Selection
 
-~~~text
-verified Production behavior / Supabase runtime
-→ current GitHub main code
-→ current canonical docs
-→ Accepted ADR
-→ History
-→ Git history / old chats
-~~~
+先判断任务在问哪一种事实，不使用一条线性优先级覆盖所有场景：
+
+- 线上用户实际运行行为 → deployed Production Web + 对应 runtime；
+- 下一步开发基线 / 当前仓库实现 → GitHub main code；
+- 数据库 schema / function / cron → Production Supabase runtime，再核 repo migration/ledger；
+- 产品 / Domain / Architecture contract → current canonical docs + current main，必要时核 runtime；
+- main 与 Production 差异 → docs/engineering/current-state.md；
+- 长期架构原因 → Accepted ADR；
+- 历史实现 → History。
 
 Production Web != GitHub main != Supabase runtime/ledger。
+
+若 canonical docs 与 main/runtime 冲突，应修 docs；不能因为 Production 暂时落后 main，就把下一步开发基线回退到旧 deployment。
 
 ## 4. High-risk Data Boundary
 
@@ -154,4 +157,6 @@ Past implementation/acceptance → History
 
 一个事实只设一个 canonical home。MOC 可以导航，不复制业务细节。
 
-尚未实现的产品设计属于 Obsidian「伴岛」项目；完成开发后再同步 GitHub current docs。
+Obsidian「伴岛」负责未实现需求、设计探索、方案讨论和开发前决策；GitHub current docs 负责已实现并核验的 current fact。
+开发 Obsidian 方案时先以 GitHub current docs + main/runtime 为基线，再把 Obsidian 作为目标变化。
+实现并验证后同批更新 GitHub canonical docs；Obsidian 不继续维护第二份 current schema/lifecycle/permission/runtime contract。

@@ -10,30 +10,30 @@ Domain 不是代码文件夹的同义词。简单功能可以由 Product + Data 
 
 | Domain | Level | Ownership | Product area | Canonical contract | Current implementation anchor | AI | Reminder |
 |---|---|---|---|---|---|---|---|
-| mood | simple | personal | Today/Calendar | Data Model + Auth | lib/life/life-service.ts | query/upsert/delete | completeness input |
-| sleep | simple | personal | Today/Calendar | Data Model + Auth | lib/life/life-service.ts | query/upsert | completeness input |
-| activity | simple | personal/shared | Today | Data Model + Auth | lib/life/life-service.ts | CRUD | context |
-| weight | simple | personal | Nest | Data Model + Auth | lib/life/weight-service.ts | CRUD | no |
-| medicine | simple | shared | Nest | Data Model + Auth | lib/life/medicine-service.ts | CRUD | Stateful source |
-| mailbox | simple lifecycle-sensitive | sender/recipient | Nest | Data Model + Auth + UI | lib/life/mailbox-service.ts | draft/send | Stateful source |
-| settings | simple mixed | shared/personal | Nest/Me | Data Model + Auth | lib/life/settings-service.ts | update | config input |
-| Meal | complex | personal | Food | Meal MOC | lib/nutrition/* | rich | no direct |
-| Reminder | complex/system | actor/system | Me | reminders.md | reminder client/server + DB funcs | limited | self |
-| Legacy Game | complex/legacy | game-specific | Game Machine | legacy-game.md | lib/home/* | legacy_home | separate |
+| mood | simple | personal | Today/Calendar | [Data Model](../architecture/data-model.md) + [Auth](../architecture/auth-and-identity.md) | lib/life/life-service.ts | query/upsert/delete | completeness input |
+| sleep | simple | personal | Today/Calendar | [Data Model](../architecture/data-model.md) + [Auth](../architecture/auth-and-identity.md) | lib/life/life-service.ts | query/upsert | completeness input |
+| activity | simple | personal/shared | Today | [Data Model](../architecture/data-model.md) + [Auth](../architecture/auth-and-identity.md) | lib/life/life-service.ts | CRUD | context |
+| weight | simple | personal | Nest | [Data Model](../architecture/data-model.md) + [Auth](../architecture/auth-and-identity.md) | lib/life/weight-service.ts | CRUD | no |
+| medicine | simple | shared | Nest | [Data Model](../architecture/data-model.md) + [Auth](../architecture/auth-and-identity.md) | lib/life/medicine-service.ts | CRUD | Stateful source |
+| mailbox | simple lifecycle-sensitive | sender/recipient | Nest | [Data Model](../architecture/data-model.md) + [Auth](../architecture/auth-and-identity.md) + [UI](../product/ui-guidelines.md) | lib/life/mailbox-service.ts | draft/send | Stateful source |
+| settings | simple mixed | shared/personal | Nest/Me | [Data Model](../architecture/data-model.md) + [Auth](../architecture/auth-and-identity.md) | lib/life/settings-service.ts | update | config input |
+| Meal | complex | personal | Food | [Meal MOC](meal/README.md) | lib/nutrition/* | rich | no direct |
+| Reminder | complex/system | actor/system | Me | [Reminder Domain](reminders.md) | reminder client/server + DB funcs | limited | self |
+| Legacy Game | complex/legacy | game-specific | Game Machine | [Legacy Game Domain](legacy-game.md) | lib/home/* | legacy_home | separate |
 
-详细权限始终以 Auth 为准，当前入口以 Product Overview 为准。
+详细权限始终以 [Auth & Identity](../architecture/auth-and-identity.md) 为准，当前入口以 [Product Overview](../product/overview.md) 为准。
 
 ## 2. Complex Domains
 
-- Meal：多 contract，保留子目录。
-- Reminder：单文件复杂 Domain，覆盖 generation/state/delivery/provider。
-- Legacy Game：单文件复杂 Domain，覆盖 settlement/currency/wallet/heatmap 等。
+- [Meal](meal/README.md)：多 contract，保留子目录。
+- [Reminder](reminders.md)：单文件复杂 Domain，覆盖 generation/state/delivery/provider。
+- [Legacy Game](legacy-game.md)：单文件复杂 Domain，覆盖 settlement/currency/wallet/heatmap 等。
 
 ## 3. Simple Domains
 
 mood、sleep、activity、weight、medicine、mailbox、settings 当前不单独建目录。
 
-简单不等于没有 contract：它们的 data fact 在 Data Model，ownership 在 Auth，用户交互在 Product/UI，AI normalization 在 AI 文档。
+简单不等于没有 contract：它们的 data fact 在 [Data Model](../architecture/data-model.md)，ownership 在 [Auth](../architecture/auth-and-identity.md)，用户交互在 [Product/UI](../product/README.md)，AI normalization 在 [AI](../architecture/ai/README.md)。
 
 ## 4. Domain Upgrade Rule
 

@@ -47,6 +47,29 @@ Browser session → /api/ai/chat → AI Gateway → registry/executor → canoni
 
 本表只做 transport 导航，不复制各 Domain contract。
 
+### 4.1 Current Web Route Inventory
+
+这里维护紧凑 route 导航，避免新增/重构 API 时重新 enumerate 整个 `app/api`。业务语义仍回到对应 Domain。
+
+| Family | Current routes | Trusted actor / scope | Canonical service |
+|---|---|---|---|
+| auth | `/api/auth/login` `/api/auth/session` `/api/auth/logout` | signed fixed account | fixed-life-auth |
+| day/month | `/api/life/day` `/api/life/month` `/api/life/month-bundle` | Web session；read scope 可 me/Ta | life-api / supabase-life |
+| mood/sleep | `/api/life/mood` `/api/life/sleep` | Web session；personal write = signed actor | life-api / supabase-life |
+| activity | `/api/life/activities` `/api/life/activities/[id]` | Web session；actor/both contract | life-api / supabase-life |
+| weight | `/api/life/weights` `/api/life/weights/[id]` | Web session；personal owner | weight-service / supabase-weight |
+| medicine | `/api/life/medicines` `/api/life/medicines/[id]` | Web session；shared | medicine-service / supabase-medicine |
+| mailbox | `/api/life/mailbox` `/api/life/mailbox/[id]` | Web session；sender/recipient lifecycle | mailbox-service / supabase-mailbox |
+| settings | `/api/life/settings` | Web session；shared/personal field-specific | settings-service / data-management |
+| reminders | `/api/life/reminders` `/api/life/reminders/settings` `/api/life/notifications/pushplus` | Web session；actor-bound | life-reminder-center / provider helpers |
+| data management | `/api/life/data-management` | Web session + explicit high-risk confirmation | life-data-management |
+| Meal | `/api/meals` `/api/meals/[id]` `/api/meals/[id]/photo` | Web session；personal owner | meal-service / supabase-nutrition |
+| favorite foods | `/api/favorite-foods` `/api/favorite-foods/[id]` | Web session；personal owner | favorite-food service |
+| built-in AI | `/api/ai/chat` | Web session → trusted actor | AI Gateway / Access Core |
+| Legacy compatibility | `/api/home-data` `/api/save-data` `/api/cloud-session` | legacy compatibility session | Legacy adapters |
+
+route 新增/删除/改名时更新本表；method/业务 lifecycle 只在需要理解 transport 时记录，不在此复制完整 Domain contract。
+
 ## 5. Meal / Favorite Food API
 
 当前主要 API：
