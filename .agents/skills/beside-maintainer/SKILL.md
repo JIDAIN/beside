@@ -33,6 +33,21 @@ AGENTS.md
 
 不要从 History 反推 current behavior。
 
+### Obsidian plan vs GitHub current baseline
+
+- Obsidian「伴岛」中的未实现方案是 **target change**，不是 current implementation source；
+- 执行 Obsidian 方案前，先用 GitHub current docs + main source/runtime 建立现状基线；
+- 实现并验证后，同批更新对应 GitHub canonical docs；
+- 已进入 GitHub canonical docs 的 current contract 不在 Obsidian 再维护第二份 schema/lifecycle/permission/runtime 副本。
+
+### Fact source by question
+
+- Production 用户当前行为 → deployed Production + runtime；
+- 下一步开发基线 → GitHub main source；
+- DB schema/function/cron → Production Supabase runtime + repo migration/ledger；
+- Product/Domain/Architecture contract → current canonical docs + current main；
+- rationale → ADR；past implementation → History。
+
 ## 2. Define Change Boundary
 
 修改前内部确认：
