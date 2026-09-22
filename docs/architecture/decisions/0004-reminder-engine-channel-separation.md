@@ -1,52 +1,51 @@
-# ADR-0004 Reminder Engine 与 PushPlus 投递通道解耦
+# ADR-0004 Reminder Engine 与投递 Provider 解耦
 
 - Status: Accepted
 - Date: 2026-09-07
 
 ## Context
 
-药箱、纪念日、小信箱、自定义提醒以及未来生理期/预约等都可能产生提醒。如果每个业务模块直接调用 PushPlus，会重复实现调度、收件人、去重、snooze 和投递状态，并把“提醒业务”与“微信渠道”锁死。
+药箱、纪念日、小信箱、自定义提醒以及未来其他业务都可能产生提醒。如果每个业务模块直接调用 PushPlus，会重复实现调度、收件人、去重、snooze 与投递状态，并把提醒业务与单一渠道锁死。
 
 ## Decision
 
-所有生活提醒统一进入 Reminder Engine：
+Reminder 的业务编排与最终 Provider 分层：
 
-```text
-业务事件 / reminder rule
-→ life_reminder_rules / life_reminder_instances
-→ scheduler / pg_cron
-→ life_notification_deliveries
-→ PushPlus
-```
+~~~text
+Reminder generation / user state
+→ Notification Delivery
+→ Provider
+~~~
 
-Reminder Engine 决定：
+Reminder 层决定谁应收到、何时到期、用户状态以及 dedupe 语义；Provider 只负责最终渠道投递，不定义业务提醒语义。
 
-- 谁应该收到；
-- 什么时候到期；
-- completed / dismissed / snooze；
-- 同一业务事件是否已物化；
-- 投递 dedupe key。
-
-PushPlus 只负责最终渠道投递，不定义业务提醒语义。
+当时主要实现使用 rule / instance → delivery → PushPlus，这一结构继续适用于 Stateful Reminder。
 
 ## Consequences
 
 优点：
+- 新提醒来源复用统一状态/投递能力；
+- Cat/Fish 可以独立接收；
+- 网络重试与用户主动 snooze 可区分；
+- 可以增加其他渠道而不重写业务模块。
 
-- 新提醒来源复用同一状态机与调度；
-- Cat / Fish 可以保持独立实例和独立微信 token；
-- 网络重试和用户主动 snooze 可以被区分；
-- 未来可以增加其他通知渠道而不重写业务模块。
+约束：
+- 业务模块不应直接自行发送 Provider；
+- 用户 reminder state 与 delivery state 分离；
+- 调度粒度决定实际提醒精度；
+- 排障要按 generation/state → scheduler → delivery → provider 分层。
 
-代价 / 约束：
+## Current Refinement
 
-- 业务模块不能自行直接发 PushPlus；
-- Reminder instance 与 notification delivery 必须分层维护；
-- 调度粒度决定提醒精度，当前约 5 分钟不是秒级实时系统；
-- 故障排查必须按 instance -> scheduler -> delivery -> channel 分层进行。
+Production 后续加入了不需要长期 reminder instance 的 daily completeness 条件提醒。
+
+因此“所有提醒都必须进入 rule/instance”不再是通用 current model；Reminder Generation 现分为 Stateful Reminder 与 Condition Nudge。
+
+这一细化由 ADR-0007 记录。它 refine 本 ADR，但不否定 Reminder/Provider separation。
 
 ## Related
 
-- `docs/architecture/data-model.md`
-- `docs/domains/reminders/overview.md`
-- `docs/engineering/operations-runbook.md`
+- ../data-model.md
+- ../../domains/reminders.md
+- ../../engineering/operations-runbook.md
+- 0007-reminder-generation-model.md
