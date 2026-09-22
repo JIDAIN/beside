@@ -11,5 +11,6 @@ Accepted baseline：
 - ADR-0005：Life / Legacy Game 数据隔离
 - ADR-0006：Production 逐次授权
 - ADR-0007：Reminder Generation Model（Stateful vs Condition Nudge）
+- ADR-0008：Starlit Nook 与 Beside 共享基础设施但保持独立 Domain
 
 若长期方向变化，新增 ADR supersede/refine 旧决策，不回写旧 Context/Decision 使历史失真。
