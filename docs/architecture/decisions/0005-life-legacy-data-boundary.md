@@ -50,5 +50,4 @@ Life maintenance ≠ Legacy Game maintenance
 - `docs/architecture/data-model.md`
 - `docs/domains/legacy-game.md`
 - `docs/engineering/operations-runbook.md`
-- `docs/architecture/data-model.md` + `docs/architecture/decisions/0005-life-legacy-data-boundary.md`
 - `lib/server/life-data-domains.ts`
