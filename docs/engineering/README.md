@@ -6,6 +6,7 @@
 
 - [Current State](current-state.md)：Production Web、GitHub main、Supabase runtime 当前差异与未完成验证。
 - [Development & Testing](development-testing.md)：标准变更流程、change recipe、测试与文档同步。
+- [Documentation Maintenance Guide](documentation-maintenance.md)：开发结束后如何判断哪些文档要更新、何时不更新、何时才新建文档，以及 Obsidian → GitHub current docs 的收口流程。
 - [Configuration](configuration.md)：环境变量、Vault/DB-managed secrets 与轮换影响。
 - [Deployment & Security](deployment-security.md)：发布授权、安全基线、Vercel/Supabase 变更纪律。
 - [Operations Runbook](operations-runbook.md)：Production 故障、恢复、migration/ledger/replay 排查。
@@ -15,7 +16,8 @@
 | 任务 | 先读 |
 |---|---|
 | 判断线上/主干/数据库现在分别是什么 | [Current State](current-state.md) |
-| 开发/测试/文档更新 | [Development & Testing](development-testing.md) |
+| 开发/测试 | [Development & Testing](development-testing.md) |
+| 开发结束后的文档收口 | [Documentation Maintenance Guide](documentation-maintenance.md) |
 | env / secret | [Configuration](configuration.md) |
 | 部署与 Production 写操作 | [Deployment & Security](deployment-security.md) |
 | 故障/恢复/migration | [Operations Runbook](operations-runbook.md) |
@@ -25,7 +27,8 @@
 ## 维护原则
 
 - Current State 保持短、动态；
-- Development & Testing 是“改什么 → 读什么/测什么”的总路由；
+- Development & Testing 是“改什么 → 读什么/测什么”的开发总路由；
+- Documentation Maintenance Guide 是“开发结束后文档怎么收口”的操作手册；
 - Configuration 只写变量名/用途/安全，不写真实 secret；
 - Deployment & Security 维护授权与长期安全 invariant；
 - Operations 维护可复用排障，不堆一次事故流水。
