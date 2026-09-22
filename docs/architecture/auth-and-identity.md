@@ -1,207 +1,164 @@
-# 固定双账号身份与权限
+# Auth & Identity
 
-状态：2026-09-21。本文维护 **身份来源和授权边界**，不承担部署、UI 或具体 Domain 生命周期说明。
+本文维护可信身份来源、ownership 与授权边界。部署、UI 和具体 Domain lifecycle 不属于本文。
 
-## 1. 固定身份
+## 1. Identity Model
 
 伴岛当前只有两位固定使用者：
-
 - cat
 - fish
 
-进入应用后：
+UI：
+- cat 登录 → 我=cat，Ta=fish
+- fish 登录 → 我=fish，Ta=cat
 
-- cat 登录：我 = cat，Ta = fish；
-- fish 登录：我 = fish，Ta = cat。
+数据库只保存稳定 partnerKey；“我 / Ta”是相对当前 signed identity 的展示语义。
 
-数据库保存稳定 partnerKey；“我 / Ta”只是相对当前 signed identity 的 UI 语义。
+当前不开放注册、邮箱验证、邀请码、配对或第三账号。
 
-不开放：
+## 2. Trusted Actor Sources
 
-- 注册；
-- 邮箱验证；
-- 邀请码；
-- 配对流程；
-- 第三个账号。
+### 2.1 Web Session
 
-## 2. Production 固定账号
+~~~text
+username/password
+→ authenticate_fixed_life_account
+→ server-signed HttpOnly life-account-session
+→ partnerKey
+~~~
 
-Production Supabase 当前存在且只存在 cat / fish 两条 life_fixed_accounts 凭据记录。
-
-每条记录包含：
-
-- partner_key；
-- username；
-- password_hash。
-
-密码只保存 hash，不进入 Git，也不写 migration seed。
-
-2026-09-21 已直接核验 Production 两个账号均存在 username 与 password_hash。
-
-## 3. 登录验证
-
-Web 登录通过 server-side RPC：
-
-public.authenticate_fixed_life_account(username, password)
-
-2026-09-21 Production 权限核验：
-
-- anon：无 EXECUTE；
-- authenticated：无 EXECUTE；
-- service_role：有 EXECUTE。
-
-浏览器不能直接调用该 RPC 读取或验证凭据。
-
-## 4. Web session
-
-登录成功后服务器签发：
-
-life-account-session
-
-属性：
-
+session：
 - HttpOnly；
 - SameSite=Lax；
 - Production Secure；
 - path=/；
-- 30 天 max age。
+- 当前 max-age 30 天。
 
-payload 只有 partnerKey 与 expiresAt。
+payload 只包含 partnerKey 与 expiresAt。
 
-签名使用 server-side Supabase secret 派生的 HMAC-SHA256 secret；session 不依赖用户明文密码或旧同步密码。
+### 2.2 MCP OAuth
 
-GET /api/auth/session 只读取签名 cookie；无效 session 会返回 authenticated=false 并清除无效 cookie。
+~~~text
+authorize
+→ signed authorization code
+→ signed access/refresh token
+→ partnerKey + scope
+→ /mcp
+~~~
 
-## 5. MCP OAuth identity
+scopes 当前为 life:read / life:write / offline_access。
 
-MCP OAuth 的 authorization code / access token / refresh token 同样携带稳定 partnerKey。
+## 3. Untrusted Identity Inputs
 
-当前 token identity 不能被以下内容覆盖：
-
+以下内容不能切换真实 actor：
+- request body 的 actor / partnerKey；
+- AI 的 person 参数；
+- “我是 Fish / Cat”等聊天自称；
 - AI 昵称；
-- 聊天自称；
-- person 参数；
-- payload actor；
+- UI role switch；
 - prompt 文本。
 
-MCP scopes 当前为 life:read / life:write / offline_access。
+## 4. Authorization Principles
 
-## 6. 总权限原则
+personal mutation：
+signed actor == owner → 可维护；
+signed actor != owner → 拒绝。
 
-个人数据 mutation：
+前端按钮不是安全边界。Next.js API、AI Access Core 与 Supabase RPC 必须保持服务端约束。
 
-signed actor == record owner
-→ 允许
+shared / sender-recipient / system resource 必须明确自己的授权模型。
 
-signed actor != record owner
-→ 拒绝
+## 5. Resource Permission Matrix
 
-前端是否显示按钮不是安全边界；Next.js API、AI Access Core 和 Supabase RPC 必须各自保持授权约束。
-
-## 7. 当前资源权限矩阵
-
-| 资源 | 读取 | 写入 |
+| Resource | Read | Write |
 |---|---|---|
-| mood | 双方可查看 | 当前 actor 只能 upsert/delete 自己 |
-| sleep | 双方可查看 | Web/API 当前 actor 可 upsert/delete 自己；AI registry 当前只暴露 upsert |
-| meal / photo | 双方可查看 | 只能维护自己的 Meal / photo |
-| weight | 双方可查看 | 只能维护自己的记录 |
-| activity: cat/fish | 双方按页面语义查看 | 只有对应 participant 本人维护 |
-| activity: both | 双方可查看 | 双方可维护；不能被任一方静默降成单方 |
-| medicine | 家庭共享 | 双方都可维护 |
-| mailbox draft | 只寄件人可见 | 只寄件人可编辑、删除、寄出 |
-| mailbox sent | sender + recipient 可见 | 永久只读 |
-| targetWeightKg | 双方可查看 | 只修改当前账号自己的目标 |
+| mood | 双方可查看 | 当前 actor 仅自己的 upsert/delete |
+| sleep | 双方可查看 | Web 当前 actor 可 upsert/delete 自己；AI 当前只暴露 upsert |
+| Meal/photo | 双方可查看 | 只能维护自己的 |
+| weight | 双方可查看 | 只能维护自己的 |
+| activity cat/fish | 页面按语义查看 | 只有对应本人维护 |
+| activity both | 双方可查看 | 双方可维护；不能静默降成单方 |
+| medicine | 家庭共享 | 双方可维护 |
+| mailbox draft | 仅 sender | 仅 sender 可 edit/delete/send |
+| mailbox sent | sender + recipient | 永久只读 |
+| targetWeightKg | 双方可查看 | 只改自己 |
 | anniversaryDate | 双方共享 | 双方可维护 |
-| reminder instances | 当前账号只看自己的 instance | instance action 绑定当前 actor |
-| custom reminder | 由 actor 创建 | 可以选择 cat / fish / both 为 recipient |
-| PushPlus token | 只看自己是否配置 | 只能维护当前账号自己的 token |
-| favorite food | 当前账号自己的模板 | 只能维护自己的模板 |
+| reminder instance | 当前 actor 自己 | action 绑定当前 actor |
+| custom reminder | actor 创建 | recipient 可 cat/fish/both |
+| PushPlus token | 只看自己配置状态 | 只维护自己 |
+| favorite food | 自己模板 | 只维护自己 |
 
-## 8. Activity 特殊规则
+## 6. Shared-resource Patterns
 
-participant_scope：
+### Activity
+participant_scope = cat / fish / both。
+Cat 不能维护 fish-only；Fish 不能维护 cat-only；both 双方可维护；both 不能被任一方静默降为单方；个人活动可以由本人升级为 both。
 
-- cat
-- fish
-- both
+### Medicine
+药箱 inventory 是 couple-space shared fact；提醒偏好仍按 actor 独立。
 
-规则：
+### Settings
+anniversaryDate shared；targetWeightKg personal。
 
-- Cat 不能维护 fish-only；
-- Fish 不能维护 cat-only；
-- both 双方都可维护；
-- both 不能被任一方直接降成单方；
-- 个人活动可由本人升级为 both。
+## 7. Lifecycle-sensitive Resources
 
-服务端 actor-aware RPC 重新校验，不相信浏览器或 AI 自报 scope。
+### Mailbox
+draft sender-only；send 后写 sent_at；sent 双方可见且永久只读。
 
-## 9. Weight 特殊规则
+### Reminder Instances
+instance action 与当前 actor 绑定；both recipient 会物化成独立 actor state，而不是一条共享完成状态。
 
-weight create / update / delete 同时核对：
+## 8. AI Additional Safety
 
-- signed actor；
-- existing row partner_key；
-- payload partnerKey。
+在普通 ownership 之外：
+- delete 需要用户当前消息明确删除意图；
+- update/delete 不猜 UUID；
+- mailbox sent 即使知道 UUID 也不可改；
+- Legacy Game 全量 replace 需要高风险确认。
 
-三者必须一致。
+具体 tool surface 见 AI Architecture。
 
-Legacy Game 关联的旧 weight 仍遵循旧游戏自己的兼容边界。
+## 9. Database Permission Boundary
 
-## 10. Mailbox 特殊规则
+核心 Life 表启用 RLS。
+当前模式是 server-only service role / restricted actor-aware RPC；anon/authenticated 不应获得任意业务表高权限写。
 
-状态只有：
+不要为了消除安全 Advisor 信息而开放浏览器直写。
 
-draft
-→ sent
+## 10. Legacy Compatibility Identity
 
-sender 永远是 signed actor，recipient 按业务规则为另一方。
+旧 /game 可继续使用 DATA_EDIT_PASSWORD / cloud-session 兼容路径，但它不是 Life 登录、MCP OAuth 或 AI 身份来源。
 
-- 自己 draft：可见、可改、可删、可寄；
-- Ta draft：不可见；
-- sent：双方可见、双方只读。
+## 11. New Resource Ownership Checklist
 
-draft → sent 由授权后的 server/RPC 完成，并写 sent_at。
+新增资源先回答：
+- personal / shared / sender-recipient / system / legacy？
+- 谁可 read？
+- 谁可 create？
+- 谁可 update/delete？
+- Ta 是否只读？
+- shared 是否双方都可维护？
+- AI 是否有额外限制？
+- DB/RPC 是否重新校验？
+- backup/import 是否遵守同一 ownership？
 
-当前没有“只从自己的已寄出列表删除副本”能力。
+先定 ownership，再做 UI。
 
-## 11. AI / MCP 额外约束
+## 12. Implementation Anchors
 
-AI mutation 继续受同样 owner/shared 权限约束。
+- lib/server/fixed-life-auth.ts
+- lib/server/life-mcp-auth.ts
+- lib/server/life-api.ts
+- lib/server/supabase-*.ts
+- lib/server/life-agent-registry.ts
+- app/api/auth/**
+- app/oauth/**
+- tests/life/auth-boundary.test.ts
+- tests/life/relative-identity.test.ts
+- tests/server/life-mcp-auth.test.ts
+- tests/server/life-agent-*.test.ts
 
-此外：
+## 13. Regression / Maintenance
 
-- delete 需要当前用户消息明确删除意图；
-- update/delete 不能猜 UUID；
-- mailbox sent 即使知道 UUID 也不可修改；
-- Legacy Game 整体 replace 需要高风险确认。
-
-AI 当前具体注册了哪些 action：
-→ [AI Architecture](ai/architecture.md)
-
-## 12. 数据库权限
-
-当前核心 Life 表已启用 RLS。
-
-Production 采用 server-only service role / restricted RPC 访问模型；anon/authenticated 不获得绕过服务器的任意表写能力。
-
-2026-09-21 已直接核验 RLS 至少启用于：
-
-- life_fixed_accounts
-- mood_entries
-- sleep_records
-- activity_entries
-- meals
-- weight_measurements
-- medicine_items
-- mailbox_letters
-
-## 13. Legacy Game compatibility
-
-旧 /game 可继续保留历史 cloud session / DATA_EDIT_PASSWORD 兼容路径，但它不是 Island Life 登录、MCP OAuth 或 AI 身份来源。
-
-API transport：
-→ [API and Sync](api-and-sync.md)
-
-Production 发布规则：
-→ [Deployment & Security](../engineering/deployment-security.md)
+ownership、actor source、shared semantics、permission matrix 改变时更新本文并补 cross-owner regression。
+一次性 Production 核验结果进入 Current State / History，不写成长期身份 contract。

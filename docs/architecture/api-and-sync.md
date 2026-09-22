@@ -1,218 +1,169 @@
-# API、鉴权与客户端同步
+# API & Sync
 
-状态：2026-09-21。本文只维护 **transport、鉴权、API 家族和客户端同步机制**。具体业务规则由对应 Domain 文档维护。
+本文维护 transport、API family、可信身份进入点、客户端 read model 与 mutation 后收敛机制。具体业务规则进入 Domains；具体资源权限进入 Auth。
 
-## 1. 总体边界
+## 1. Boundary
 
 浏览器和 AI client 都不能直接持有 Supabase service secret。
 
-主要链路：
+不同 transport 只能复用同一 canonical service / domain contract，不能各自重建业务 CRUD。
+
+## 2. Transport Families
 
 ### Web
-
-Browser
-→ Next.js page / API
-→ life-account-session
-→ server-side service / restricted RPC
-→ Supabase
+Browser → Next.js page/API → signed life-account-session → canonical service/server adapter → Supabase。
 
 ### MCP
+MCP client → OAuth 2.0 + PKCE → signed token → /mcp → AI Access Core → canonical service。
 
-MCP client
-→ OAuth 2.0 + PKCE
-→ signed access token
-→ /mcp
-→ AI Access Core
-→ canonical services
-→ Supabase
+### Built-in AI
+Browser session → /api/ai/chat → AI Gateway → registry/executor → canonical service。
 
-### 程序内置 AI
+### Legacy compatibility
+/game 与旧 home-data/save-data/cloud-session 只服务 Legacy Game compatibility，不等于 Life fixed-account auth。
 
-Browser session
-→ /api/ai/chat
-→ AI Gateway
-→ life-agent executor
-→ canonical services
-→ Supabase
-
-## 2. Web 登录 API
-
-当前固定账号入口：
-
-| Method | Path | 作用 |
-|---|---|---|
-| POST | /api/auth/login | 固定账号登录并签发 HttpOnly session |
-| GET | /api/auth/session | 读取当前签名身份 |
-| POST | /api/auth/logout | 清除 session |
-
-真实账号凭据只在 Production Supabase 中保存，浏览器不读取 life_fixed_accounts。
-
-身份细节：
-→ [Auth and Identity](auth-and-identity.md)
-
-## 3. Island Life API 家族
-
-当前 route tree 主要包含：
-
-- /api/life/day
-- /api/life/month
-- /api/life/month-bundle
-- /api/life/mood
-- /api/life/sleep
-- /api/life/activities
-- /api/life/weights
-- /api/life/medicines
-- /api/life/mailbox
-- /api/life/settings
-- /api/life/reminders
-- /api/life/reminders/settings
-- /api/life/notifications/pushplus
-- /api/life/data-management
-
-共同规则：
-
-- read 先验证有效 Web session；
-- personal mutation 必须绑定 signed actor；
-- request body 中的 partnerKey/person 不能覆盖真实身份；
-- shared domain 按自己的业务权限处理；
-- server-only secret / RPC 不暴露给浏览器；
-- 正式 read response 使用 no-store，浏览器自己的 stale cache 负责体验优化。
-
-具体权限矩阵：
-→ [Auth and Identity](auth-and-identity.md)
-
-## 4. Meal API 家族
+## 3. Web Authentication API
 
 当前：
+- POST /api/auth/login
+- GET /api/auth/session
+- POST /api/auth/logout
 
-| Method | Path | 作用 |
-|---|---|---|
-| GET | /api/meals | 查询某日某人的 Meal |
-| POST | /api/meals | 创建 Meal |
-| PUT | /api/meals/[id] | 更新 Meal |
-| DELETE | /api/meals/[id] | 软删除 Meal |
-| GET | /api/meals/[id]/photo | 读取 private photo |
-| PUT | /api/meals/[id]/photo | 上传 / 更换 photo |
-| PATCH | /api/meals/[id]/photo | 更新 photo display metadata |
-| DELETE | /api/meals/[id]/photo | 移除 photo |
+登录成功签发 HttpOnly signed session。真实账号凭据只在 server/Supabase 使用。
 
-Meal lifecycle、主餐唯一、estimated / confirmed：
-→ [Meal Lifecycle](../domains/meal/lifecycle.md)
+## 4. Life API Family Map
 
-图片压缩与 Storage：
-→ [Meal Photo Storage](../domains/meal/photo-storage.md)
+| Family | Caller | Trusted actor | Canonical service / adapter | Read model | Domain |
+|---|---|---|---|---|---|
+| day/mood/sleep/activity | Life UI | Web session | life-api + supabase-life | day/month/bundle | simple Life |
+| weight | Weight UI | Web session | weight-service + supabase-weight | weights | weight |
+| medicine | Medicine UI | Web session | medicine-service + supabase-medicine | domain client | medicine |
+| mailbox | Mailbox UI | Web session | mailbox-service + supabase-mailbox | domain client | mailbox |
+| settings | Nest/Me | Web session | settings-service / data-management | settings | settings |
+| reminders | Reminder Center | Web session | reminder-center | reminder client | Reminder |
+| data-management | Me/Data | Web session | life-data-management | cache invalidated after restore | system |
+| Meal | Food UI | Web session | meal-service + supabase-nutrition | meals | Meal |
+| favorite-foods | Food UI | Web session | favorite-food service | own templates | Meal adjunct |
 
-AI 草稿：
-→ [Meal AI Contract](../domains/meal/ai-contract.md)
+本表只做 transport 导航，不复制各 Domain contract。
 
-本页不复制这些业务 contract。
+## 5. Meal / Favorite Food API
 
-## 5. Favorite Foods
-
-当前独立 API：
-
+当前主要 API：
+- GET/POST /api/meals
+- PUT/DELETE /api/meals/[id]
+- GET/PUT/PATCH/DELETE /api/meals/[id]/photo
 - /api/favorite-foods
 - /api/favorite-foods/[id]
 
-模板只按当前登录身份维护。模板如何进入 Meal 见 Meal Lifecycle。
+Meal lifecycle、photo 与 AI draft 见 Meal Domain。
 
-## 6. MCP / OAuth transport
+## 6. MCP / OAuth Transport
 
-MCP 入口：
-
+当前入口：
 - /mcp
 - /oauth/register
 - /oauth/authorize
 - /oauth/token
 
-当前 OAuth 使用：
-
+当前 OAuth contract：
 - dynamic client registration；
 - exact redirect URI binding；
 - S256 PKCE；
 - signed authorization code；
 - signed access / refresh token；
-- partnerKey 固定写入可信 token；
+- partnerKey 固定进入 token；
 - authorization code redemption 防重放。
 
-MCP 具体 tool action 不在本文维护：
-→ [AI MOC](ai/README.md)
+MCP tool surface 见 AI Architecture。
 
-## 7. Legacy Game compatibility API
+## 7. Built-in AI Transport
 
-旧游戏兼容同步仍保留：
+/ai → /api/ai/chat → life-ai-gateway → life-agent-registry/executor。
 
+Web session 提供可信 actor；模型文字不覆盖 actor。
+
+## 8. Legacy Compatibility API
+
+当前仍保留：
 - GET /api/home-data
 - POST /api/save-data
 - /api/cloud-session
 
-这套 compatibility path 与 Island Life fixed-account session / MCP OAuth 不等价。
+它们是 Legacy Game compatibility path，不应被新 Life module 复用为通用 API。
 
-Legacy Game 与 Life 的数据边界：
-→ [Life / Legacy Boundary](life-legacy-boundary.md)
+## 9. Client Read Model
 
-## 8. 客户端 stale read model
+Life UI 使用 scope-aware stale cache。
 
-Island Life 的客户端 cache 只用于减少页面闪烁和重复请求。
+stable invariants：
+- API/Supabase 仍是事实源；
+- cache 按 cat/fish scope 隔离；
+- cache 可丢弃、可重建；
+- mount 后即使有 cache 也后台校验；
+- focus/visibility/online 等时机重新校验；
+- multi-tab mutation signal 触发 invalidate；
+- cache 不参与权限。
 
-核心规则：
-
-- Supabase / API 仍是事实源；
-- cache 按 cat / fish scope 隔离；
-- 切换 scope 会清空内存 cache，并按 scope 恢复可持久快照；
-- mutation 后更新或 invalidate 对应 key；
-- revision / scope serial 防止旧 in-flight read 覆盖新 mutation；
-- mount 后即使有 cache 也会强制后台校验；
-- focus、visibility、online 和可见期间 30 秒周期都会 revalidate；
-- 同账号其他标签页通过 localStorage mutation signal 触发 invalidate；
-- cache 内容可丢弃、可重建，不参与权限判断。
-
-当前持久化 key 主要包括：
-
-- life-month-bundle
-- life-day
-- life-month
-- meals
-- weights
-
-持久缓存版本为 v2，按当前 actor scope 存放；兼容 key 中保留 couple-better-game 不代表当前品牌名。
-
-## 9. 读取超时与重试
-
-当前代码两层约束：
-
-- readFetch 对普通 GET 使用 12 秒 AbortSignal timeout；
-- useStaleQuery 自身 fetch guard 为 15 秒；
-- stale query 失败后最多做有限退避重试；
+当前 implementation parameters：
+- 普通 GET readFetch timeout：12 秒；
+- stale-query fetch guard：15 秒；
+- visible 周期 revalidate：约 30 秒；
+- 失败后 bounded backoff retry；
 - write 不由 readFetch 自动重放。
 
-因此网络失败时允许继续展示已有 stale data，但不能把 stale cache 当作写成功凭证。
+这些参数可调整；“旧 read 不能回滚新 write”是不变量。
 
-## 10. 月度读取
+## 10. Mutation → Cache Convergence
 
-月度回顾主要复用：
+~~~text
+mutation
+→ canonical write succeeds
+→ update / invalidate affected cache key
+→ revision blocks stale in-flight overwrite
+→ background read-back
+→ UI converges to source of truth
+~~~
 
-life-month-bundle:YYYY-MM
+失败的 stale read 不能被当作写失败或写成功凭证。
 
-该 bundle 一次读取月度心情、睡眠、活动与 Meal，用于减少各页面重复请求。
+## 11. Monthly Bundle
 
-月度 bundle 不应反向覆盖独立日详情 / Meal cache 的更新事实。
+月度回顾主要复用 life-month-bundle:YYYY-MM，一次读取月度 mood/sleep/activity/Meal 等需要的数据。
 
-## 11. 数据导入 / 恢复
+bundle 不应反向覆盖独立日详情或刚完成的 Meal mutation。
 
-Life data-management 使用独立 server API，并受 Life / Legacy Game 边界保护。
+## 12. Import / Restore Convergence
 
-导入 / 恢复后必须清理或 invalidate 受影响的生活读 cache，使 UI 重新从 API / Supabase 收敛。
+Life import/restore 完成后必须失效相关 read cache，使 UI 从 API/Supabase 重新收敛。
 
-## 12. 事实来源
+恢复范围见 Data Model，操作流程见 Operations。
 
-代码层：
+## 13. Current Implementation Anchors
 
-- app/api/**
+- app/api/auth/**
+- app/api/life/**
+- app/api/meals/**
+- app/api/favorite-foods/**
+- app/oauth/**
+- app/mcp/route.ts
+- app/api/ai/chat/**
 - lib/client/read-fetch.ts
 - lib/client/use-stale-query.ts
 - lib/server/life-api.ts
 - lib/server/fixed-life-auth.ts
 - lib/server/life-mcp-auth.ts
 
-具体业务规则不要复制到本文；进入 Product / Domains / AI 对应 MOC。
+## 14. Change Impact
+
+- route rename only → 更新本页 current route map / caller；
+- actor source change → Auth + API & Sync + tests；
+- cache strategy change → API & Sync + client regression；
+- business semantics change → 对应 Domain；
+- new transport → 必须复用 Auth + canonical service；
+- new API family → Domain Registry + Data/Auth + tests。
+
+## 15. Maintenance Rules
+
+API/transport/cache 变化更新本文。
+业务生命周期、schema 字段与 provider routing 不在本文复制。

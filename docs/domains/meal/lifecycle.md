@@ -1,205 +1,156 @@
 # Meal Lifecycle
 
-状态：2026-09-21。本文是 Meal **业务生命周期与产品写入 contract**；数据库字段以 [Data Model](../../architecture/data-model.md) 为准，AI 对话确认以 [AI Contract](ai-contract.md) 为准。
+本文是 Meal 持久化业务 lifecycle 的 canonical contract。schema 见 Data Model；AI 对话编排见 AI Contract；媒体见 Photo Storage。
 
-## 1. Canonical 类型
+## 1. Domain Invariants
 
-代码与 Production Supabase 当前统一使用：
+- Meal 是一次正式饮食事件；
+- breakfast/lunch/dinner 是唯一主餐槽；
+- snack 是可重复事件；
+- unknown != zero；
+- 常吃食物是 copy template，不是历史数据引用；
+- AI append/confirm 应更新原 Meal，而不是制造重复主餐；
+- 一条 Meal 当前只有一个正式 photo slot。
 
-```text
-mealType:
-  breakfast | lunch | dinner | snack
+## 2. Canonical Types
 
-snackPeriod:
-  morning | afternoon | night
+mealType：
+breakfast / lunch / dinner / snack
 
-status:
-  estimated | confirmed
+snackPeriod：
+morning / afternoon / night
 
-source:
-  manual | chatgpt | import
-```
+status：
+estimated / confirmed
 
-用户界面将 `snack + snackPeriod` 映射为：
+source：
+manual / chatgpt / import
 
-```text
-上午加餐 / 下午加餐 / 晚上加餐
-```
+UI 可把 snack + period 映射为上午/下午/晚上加餐。
 
-因此 UI 看起来有六个餐次，但数据库只有四种 `meal_type`。
+## 3. Meal / Item Model
 
-## 2. 一顿饭的数据结构
+Meal 包含：
+- mealDate / eatenAt；
+- mealType / snackPeriod；
+- status/source；
+- total calories / range；
+- note；
+- optional formal photo；
+- meal_items。
 
-一条 Meal 表示一次饮食事件。
+item 可包含 name、portion、estimatedWeightG、calories、protein/carbs/fat 等。
 
-```text
-Meal
-├─ 日期 / 时间
-├─ 餐次
-├─ status
-├─ 汇总热量 / 区间
-├─ 备注
-├─ 可选展示照片
-└─ meal_items[]
-```
+真正未知允许 null，不伪造成 0。
 
-每个 item 可包含名称、份量、估算重量、kcal、热量区间和三大营养素。
+## 4. Main Meal vs Snack Cardinality
 
-`null` 表示未知，不应伪造成 0。
+主餐由 active unique constraint 保证：
+同一 space + partner + meal_date + breakfast/lunch/dinner 最多一条未删除 Meal。
 
-## 3. 主餐与加餐数量
+重复创建应返回 slot conflict，调用方定位原 Meal 编辑。
 
-### 主餐
+snack：
+- 同日可多条；
+- 同一 period 可多条；
+- 每条独立保存时间/items/nutrition/photo。
 
-早餐 / 午餐 / 晚餐当前由数据库 active unique index 保证：
+## 5. Unknown / Nullable Semantics
 
-> 每个 couple space、partner、meal_date、主餐类型最多一条未删除 Meal。
+底层 schema 可以表达：
+- items=[]；
+- totalCalories=null；
+- item kcal/macros/weight=null；
+- eatenAt=null。
 
-如果重复创建，服务端返回 `MEAL_SLOT_CONFLICT`，调用方应定位并编辑原 Meal。
+这不等于所有产品入口都允许保存空 Meal。
 
-### 加餐
+当前正式 Web editor / confirmed ChatGPT 正常流程要求至少一个真实 food item。UI requirement != DB hard constraint。
 
-加餐是独立事件：
+## 6. Create / Update / Delete
 
-- 同一天可有多条；
-- 同一个 snackPeriod 也可以有多条；
-- 每条独立保存时间、items、营养和照片。
+Web 新增/编辑共用 canonical Meal payload。
+只能维护 signed actor 自己的 Meal。
 
-不能因为都是“下午加餐”就自动合并。
+DELETE 当前软删除业务记录；服务端对正式照片对象做 best-effort 清理。
+软删除后的主餐槽可重新创建。
 
-## 4. Web 编辑器 contract
+## 7. Append Existing Meal
 
-当前 `LifeMealEditorPage`：
+“早餐还吃了一个鸡蛋”等语义：
+- 按 actor + date + slot 定位；
+- 要求唯一目标；
+- append item；
+- 更新同一 Meal；
+- 保留原 eatenAt。
 
-- 新增和编辑使用同一页面；
-- 只能编辑当前登录账号自己的 Meal；
-- 保存前至少需要 1 个食物 item；
-- 支持新的食物与常吃食物；
-- 日期、时间和餐次可修改；
-- 支持备注；
-- 支持一张正式展示照片；
-- 图片保存失败不会回滚已经成功的 Meal 主记录。
+无法唯一定位必须澄清，不猜 UUID。
 
-因此，**当前正式 Web UI 不允许保存空 Meal**。
+## 8. Estimated → Confirmed
 
-## 5. 数据层允许的未知值
-
-要区分“产品流程要求”和“底层 schema 能表达什么”。
-
-当前通用 Meal payload / Production schema 允许：
-
-- `items=[]`；
-- `totalCaloriesKcal=null`；
-- item kcal / macros / estimated weight 为 `null`；
-- `eatenAt=null`。
-
-这是为了保存真实的“不知道 / 未估算”状态以及兼容服务端能力。
-
-所以：
-
-```text
-Web UI / AI 正常记录流程要求有真实 food items
-≠
-数据库对所有写入口强制至少一条 item
-```
-
-文档不得把前者写成数据库硬约束。
-
-## 6. AI 新建 Meal
-
-AI 新建 Meal 使用对话草稿流程。
-
-已确认的 ChatGPT Meal 在 `prepareConfirmedChatgptMeal` 中额外要求：
-
-- 至少一个食物 item；
-- `source=chatgpt`；
-- `status=confirmed`；
-- 合法 ChatGPT idempotency key；
-- 如果所有 item kcal 都已知，整餐 total 必须等于 item kcal 之和。
-
-明确“还没吃 / 先估 / 饭后确认”时走 estimated lifecycle，详细规则见：
-→ [Meal AI Contract](ai-contract.md)
-
-## 7. 补录已有 Meal
-
-“早餐补一个鸡蛋”等语义不是新建第二条早餐。
-
-AI Access Core 支持：
-
-```text
-append_meal_item
-```
-
-流程：
-
-1. 按授权身份 + 日期 + 餐次定位目标；
-2. 要求目标唯一；
-3. 至少提供一个新增 item；
-4. 更新同一 Meal；
-5. 保留原 `eatenAt`。
-
-无法唯一定位时必须澄清，不能猜 UUID。
-
-## 8. estimated → confirmed
-
-```text
+~~~text
 estimated
 → confirm_estimated_meal
 → confirmed
-```
+~~~
 
 确认时：
-
 - 定位同一 estimated Meal；
-- 使用实际摄入 items 替换估算内容；
-- 未显式提供的新汇总按新 items 重算，无法重算则为未知；
-- 保留原 `mealDate` / `eatenAt`。
+- 用实际摄入 items 替换估算；
+- 未显式提供的新汇总按实际 items 重算，无法重算则 null；
+- 保留原 mealDate / eatenAt。
 
-不能用“确认时间”覆盖真正吃饭时间。
+确认时间不能覆盖真正吃饭时间。
 
-## 9. 常吃食物
+## 9. Favorite Food Template
 
-`favorite_food_templates` 是当前账号自己的复用模板，不是 Meal。
+favorite_food_templates 属于当前账号自己的复用模板：
 
-```text
+~~~text
 template
 → copy fields into editor draft
 → save as ordinary meal_item
-```
+~~~
 
-当前没有 `meal_items -> favorite_food_templates` 持续引用。
+没有持续引用：
+- 当天改份量不改模板；
+- 模板变化不改历史 Meal；
+- 删除模板不删历史 item；
+- 不能管理 Ta 的模板。
 
-因此：
+## 10. Formal Photo Boundary
 
-- 当天改份量不修改模板；
-- 模板后续变化不改历史 Meal；
-- 删除模板不删除历史 item；
-- Cat / Fish 不能管理对方模板。
+一条正式 Meal 当前只有一个 photo_path。
+照片 storage/rotation/scale 见 Photo Storage。
+AI 多图分析不改变这一持久化事实。
 
-## 10. 删除
+## 11. Source / Idempotency
 
-Meal DELETE 当前是软删除业务记录，并在服务端对已有照片对象做 best-effort 清理。
+manual/chatgpt/import 是正式来源词汇。
+部分外部写入使用稳定 idempotency key；重试不得制造重复 Meal。
 
-被删除 Meal 不计入正常餐食列表，也不占 active 主餐唯一槽。
+聊天 draft 不写数据库，也不是 Meal status。
 
-## 11. 照片
+## 12. Implementation Anchors
 
-一条正式 Meal 当前只有一个 `photo_path`。
+- lib/nutrition/meal-service.ts
+- lib/nutrition/meal-v2-types.ts
+- lib/nutrition/meal-v2-mutation-adapter.ts
+- lib/server/supabase-nutrition.ts
+- lib/server/supabase-favorite-foods.ts
+- components/life/LifeMealEditorPage.tsx
+- tests/nutrition/*
 
-照片压缩、private Storage、旋转和缩放：
-→ [Meal Photo Storage](photo-storage.md)
+## 13. Change Impact
 
-多图 AI 分析与单图正式持久化的区别：
-→ [Meal AI Contract](ai-contract.md)
+- slot/cardinality → migration + AI target resolution + editor + tests；
+- status → AI + UI + schema；
+- item semantics → parser + AI draft + tests；
+- favorite template → Auth + UI；
+- source/idempotency → AI/import/retry；
+- photo cardinality → Data Model + Photo + API + AI + UI + migration。
 
-## 12. 事实来源
+## 14. Maintenance Rules
 
-当前 contract 已核对：
-
-- `lib/nutrition/meal-service.ts`
-- `lib/nutrition/meal-v2-types.ts`
-- `components/life/LifeMealEditorPage.tsx`
-- `lib/nutrition/chatgpt-meal-protocol.ts`
-- `lib/server/life-agent-registry.ts`
-- `lib/server/supabase-nutrition.ts`
-- Production Supabase `meals / meal_items / favorite_food_templates` schema 与约束
+持久化业务语义变化更新本文。
+页面排版、压缩算法、对话语气不在本文维护。

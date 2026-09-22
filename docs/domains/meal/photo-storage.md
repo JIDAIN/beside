@@ -1,161 +1,133 @@
 # Meal Photo Storage
 
-状态：2026-09-21。本文维护当前 Meal 正式照片的存储、压缩、显示和媒体恢复 contract。
+本文维护 Meal 正式照片的 server-side 存储、压缩、替换、显示 metadata 与 media recovery contract。
 
-## 1. 数据模型
+## 1. Boundary
 
-每条正式 Meal 当前只有一个展示照片槽：
+正式 persisted photo 与 AI analysis image set 是两件事。
+当前每条 Meal 只有一个正式展示 photo slot。
 
+## 2. Formal Photo Data Model
+
+当前：
 - meals.photo_path
 - meals.photo_rotation_degrees
 - meals.photo_scale
 
-rotation 允许 0 / 90 / 180 / 270。
+rotation：0 / 90 / 180 / 270。
+scale：0.60～1.00。
 
-scale 允许 0.60 ～ 1.00。
+rotation/scale 是显示 metadata，不反复改写原图片像素。
 
-rotation / scale 是显示元数据，不重复改写图片像素。
+## 3. Upload Pipeline
 
-## 2. 服务端压缩
+~~~text
+signed actor
+→ Meal ownership
+→ input validation
+→ EXIF normalize
+→ resize/compress
+→ private Storage object write
+→ DB bind
+→ cleanup replaced/orphan object
+~~~
 
-当前统一实现：lib/server/image-compression.ts。
+## 4. Current Compression Contract
 
-默认输入上限：
+当前 server 实现：lib/server/image-compression.ts。
 
-- Meal photo：10 MB；
-- 历史 Drive compatibility 有单独更高上限，但已不是当前主上传链路。
+current implementation：
+- Meal input max 10MB；
+- JPEG/PNG/WebP/HEIC/HEIF；
+- sharp rotate() 归一 EXIF；
+- fit=inside，最长边 max 600px；
+- WebP q70；
+- 若仍 >120KB，尝试 q65/q60/q55；
+- q55 后可能仍 >120KB，120KB 是降 quality 触发线，不是硬上限。
 
-支持 MIME：
+这些数值是 current implementation，可通过系统级媒体重构改变。
 
-- JPEG
-- PNG
-- WebP
-- HEIC
-- HEIF
+## 5. Private Storage
 
-处理：
+bucket：meal-photos，private。
 
-原图
-→ sharp rotate() 归一 EXIF
-→ fit=inside，最长边最大 600px，不放大小图
-→ WebP q70
-→ 如果仍 >120KB，再尝试 q65 / q60 / q55
-→ 输出 WebP
+path 由 server 生成：
+space-slug / meal-id / random.webp。
 
-120KB 是降低 quality 的触发阈值，不是绝对硬上限；q55 后仍可能大于 120KB。
+浏览器不持有 service secret，也不能通过普通 Meal payload 任意设置 photo_path。
 
-## 3. Storage
+## 6. Replace / Delete / Orphan Safety
 
-正式对象存入 private bucket：
+PUT 流程：
+ownership → compress → upload new → replace DB binding → best-effort cleanup old。
 
-meal-photos
+DB binding 失败时清理新对象，减少 orphan。
 
-path：
+DELETE 解除 binding 并恢复默认 display metadata。
 
-<space-slug>/<meal-id>/<random>.webp
+## 7. Display Metadata
 
-space slug 中继续出现 couple-better-game 属于内部兼容标识。
-
-浏览器不持有 service secret，也不能直接提交任意 photo_path。
-
-## 4. 默认显示方向
-
-压缩后：
-
-- height > width → 默认 rotation=90；
-- 否则 rotation=0；
+默认 current behavior：
+- portrait 压缩结果可能默认 rotation=90；
+- 其他 rotation=0；
 - scale=1。
 
-因此手机竖拍图默认适配横向餐卡；用户仍可手动改回其他方向。
+UI 可以调整视觉 frame，但 rotation/scale 的持久化语义属于本 contract。
 
-## 5. Photo API
+当前 4:3 / object-contain 等视觉 baseline 在 Design System 维护。
 
-当前：
+## 8. MCP Media Recovery
 
-- GET /api/meals/[id]/photo
-- PUT /api/meals/[id]/photo
-- PATCH /api/meals/[id]/photo
-- DELETE /api/meals/[id]/photo
+若 client 真正传入 bytes：
+attachment → server compress → Meal mutation → private Storage。
 
-共同前提：signed actor + Meal ownership。
+若用户明确要保存当前图片但 MCP 没传 bytes：
 
-PUT：
-
-鉴权
-→ ownership
-→ compressMealPhoto
-→ 上传新对象
-→ replace_meal_photo_state
-→ best-effort 清理旧对象
-
-数据库绑定失败时清理刚上传的新对象，避免 orphan。
-
-PATCH 只修改 rotation / scale，不重新编码图片。
-
-DELETE 解除 photo binding，并恢复默认 display metadata。
-
-## 6. UI
-
-真实照片统一使用 MealPhotoFrame：
-
-- aspect 4:3；
-- object-contain；
-- 完整内容优先；
-- 允许留白；
-- 不用 object-cover 强裁切；
-- quarter-turn 时调整内部 frame，再执行 rotate + scale。
-
-## 7. AI 多图 vs 正式单图
-
-多张图片可以参与 AI 分析，但当前数据库仍只持久化一个 photo_path。
-
-因此：
-
-- 餐前 / 餐后可同时参与分析；
-- 未指定时按当前 Meal AI contract 选择一张正式展示图；
-- 不存在 beforePhotoPath / afterPhotoPath；
-- 不能告诉用户“一餐永久保存了两张图”。
-
-多图交互：
-→ [Meal AI Contract](ai-contract.md)
-
-## 8. MCP media
-
-有真实附件：
-
-附件
-→ adapter
-→ compressMealPhoto
-→ LifeAgentAttachment
-→ Meal mutation
-→ private Storage
-
-如果用户明确要求保存当前图片，但 MCP client 没传图片 bytes：
-
+~~~text
 life_mutate attachPhoto=true
 → MEDIA_ATTACHMENT_REQUIRED
 → mutationExecuted=false
-→ recovery.uploadUrl
-→ browser 上传原图
-→ 服务端按签名 actor 和原业务参数继续执行
+→ signed recovery.uploadUrl
+→ browser uploads image
+→ server continues original business operation
+~~~
 
-收到 MEDIA_ATTACHMENT_REQUIRED 后不得重新 create/update，否则可能重复业务写入。
+收到 MEDIA_ATTACHMENT_REQUIRED 后不得重新 create/update Meal，否则可能重复业务写入。
 
-## 9. 安全边界
+## 9. AI Multi-image vs Formal Single-image
 
-- bucket private；
-- Storage 写入只走服务端；
-- path 服务端生成；
+多图可参与分析，例如餐前/餐后；正式数据库仍只持久化一个 photo_path。
+
+不得告诉用户“一餐永久保存了两张正式图片”。
+
+## 10. Security
+
+- private bucket；
+- server-only Storage write；
+- server-generated path；
 - photo API 校验 Meal owner；
-- 普通 Meal payload 不能任意覆盖 photo_path；
-- transform 值严格限制；
-- “图片识别失败”与“图片保存失败”是不同问题，视觉识别失败时照片仍可能正常持久化。
+- transform 值有范围；
+- image recognition failure != image persistence failure。
 
-## 10. 事实来源
+## 11. Implementation Anchors
 
 - lib/server/image-compression.ts
 - lib/server/supabase-nutrition.ts
 - app/api/meals/[id]/photo/route.ts
-- components/life/MealPhotoFrame.tsx
 - lib/server/life-mcp-tools.ts
 - app/ai-media-upload/route.ts
+- components/life/MealPhotoFrame.tsx
+- tests/server/image-compression.test.ts
+- relevant client/server media tests
+
+## 12. Change Impact
+
+- compression → server/media tests；
+- bucket/path → Security + Operations；
+- photo cardinality → Data + API + AI + UI + migration；
+- ownership → Auth；
+- recovery protocol → AI Architecture + MCP tests。
+
+## 13. Maintenance Rules
+
+媒体持久化 contract 改变时更新本文；纯视觉 frame 调整只更新 Design System/UI。

@@ -1,190 +1,138 @@
-# UI 与交互维护规范
+# UI & Interaction Guidelines
 
-状态：2026-09-21。
+本文维护跨页面稳定交互 contract。它不定义 schema、权限或完整业务 lifecycle。
 
-本文只维护：**即使页面以后重构、换布局或统一换视觉，也不能被无意破坏的交互 contract。**
+## 1. Interaction Principles
 
-“当前有哪些功能 / 从哪里进入”见 [Product Overview](overview.md)；视觉体系与 UI 架构见 [Design System](design-system.md)；业务生命周期与权限由 Domains / Architecture 维护。
+- 简约、温暖、低记录成本；
+- 控件名称已经说明功能时不叠加重复灰色解释；
+- 记录事实，不做无依据评价、排名或惩罚式反馈；
+- 用户操作失败应保留上下文并可恢复；
+- loading / empty / error / stale 必须可区分；
+- UI 不能成为唯一权限边界。
 
-## 1. 稳定交互原则
+## 2. Identity / 我-Ta
 
-- 优先低记录成本，常用动作尽量少跳转、少重复填写；
-- 控件本身能说明功能时不加重复解释性小字；
-- 必要的错误、权限、未保存、危险操作提示不能为了“简洁”被删除；
-- UI 隐藏按钮不是权限控制，真实权限必须由服务端强制；
-- mutation 必须走 canonical API / service；
-- 当前入口、页面布局、卡片数量可以重构，但不能因为视觉重构破坏数据语义、ownership 或错误恢复；
-- 新页面尽量复用已有 interaction pattern；视觉复用由 Design System 负责。
+用户界面统一使用“我 / Ta”，不直接暴露 cat / fish。
 
-## 2. 双人查看与编辑
+角色切换只影响查看对象；真实写权限仍由 signed actor + server 校验决定。任何 UI role switch 都不能切换授权身份。
 
-个人事实页面统一遵守：
+## 3. Today & Historical Day
 
-- 用户可见角色使用“我 / Ta”；
-- 切换查看对象不代表写权限发生变化；
-- Ta 的个人事实保持只读；
-- shared domain 按自己的 shared permission 处理；
-- 页面不得通过前端字段让用户伪造 actor。
+今日和历史日应复用相同事实语义：
+- 当前用户只能维护自己的个人记录；
+- 双方活动遵守 shared 规则；
+- 历史日不是第二套数据模型；
+- 睡眠以起床日归档。
 
-身份与权限：
-→ [Auth and Identity](../architecture/auth-and-identity.md)
+切换日期时不能遗留上一个日期的编辑态或把操作时间写成业务日期。
 
-## 3. 今日与历史日
+## 4. Meal View / Edit
 
-当前 Today 的心情 / 睡眠 / 活动属于高频、低负担记录。
+Meal 页面必须区分“查看”和“可编辑”：
+- 我：按权限可新增 / 编辑 / 删除；
+- Ta：可查看，不能通过前端绕过权限写入。
 
-稳定行为：
+编辑器：
+- 未保存离开应可感知；
+- validation 错误要能定位并继续编辑；
+- 删除需要明确确认；
+- 主记录保存成功但图片保存失败时，必须保留已成功的 Meal，并允许单独重试图片，不能创建第二条 Meal；
+- 页面字段与布局可以重构，但 Meal lifecycle 以 Domain 为准。
 
-- 心情未记录状态是展示占位，不写入 mood enum；
-- 月历无 mood 时留空，不展示“未记录”占位图；
-- 睡眠按起床日解释为“昨晚入睡 → 今天起床”；
-- 历史日详情尽量复用同一套 mood / sleep / activity 组件与 mutation 语义，不维护第二套历史专用编辑逻辑。
+## 5. Meal Photo Interaction
 
-当前页面组合见 Product Overview；以后 Today 页面重排时仍保留这些行为。
+UI 负责：
+- 完整展示；
+- 旋转 / 缩放控制；
+- 更换 / 删除；
+- 上传失败后的恢复。
 
-## 4. 饮食查看
+正式存储、压缩、private Storage 与 ownership 见 Meal Photo Storage。
 
-稳定行为：
+## 6. Monthly Review
 
-- “我 / Ta”切换只改变当前查看对象；
-- Ta 餐食只读；
-- 主餐与 snack 必须按 Meal contract 展示，不因为 UI 合并而改变数据语义；
-- 同一 snack period 存在多条时，UI 必须能区分独立事件；
-- 常吃食物是复用模板，不应在 UI 中表现成与历史 meal item 永久联动。
+心情、饮食、睡眠共用月度回顾入口。
 
-完整数据语义：
-→ [Meal Lifecycle](../domains/meal/lifecycle.md)
+稳定语义：
+- 没有记录就是“没有记录”，不伪造为 0 / 默认心情；
+- kcal / 睡眠小时是事实展示，不做评分；
+- 点击日期进入对应历史事实；
+- 页面视觉可以统一重构，不改变各领域数据语义。
 
-## 5. Meal editor
+## 7. Nest / Anniversary
 
-编辑器当前可以重构页面结构，但必须保留这些行为：
+纪念日是 shared setting。修改入口可以调整，但“双方共享”不因页面搬动变成个人配置。
 
-- 可以编辑日期、时间、餐次 / snack period、items、nutrition、备注和展示照片；
-- Web 正常保存至少需要一个真实 item；
-- 有未保存修改时离开页面需要提示；
-- 表单错误应靠近主要编辑区并可恢复；
-- 修改无关字段不能无故清掉已有 nutrition；
-- Meal 主记录保存成功但照片保存失败时，不重复创建第二条 Meal，只恢复 / 重试照片；
-- 删除必须有明确确认；
-- 新食物与常吃食物可以改变 UI 入口，但保存后都应形成 canonical meal item。
+“一起度过的第 N 天”由 setting 派生，纪念日当天为第 1 天。
 
-## 6. Meal photo 交互
+## 8. Mailbox
 
-UI 层只维护：
+稳定 UI contract：
+- 收信箱：当前用户收到的 sent；
+- 已寄出：当前用户发出的 sent；
+- 待寄出：当前用户自己的 draft；
+- 自己 draft 可编辑、删除、寄出；
+- sent 永久只读；
+- Ta 的 draft 不展示；
+- letter 支持多页阅读/编辑；
+- postcard 保持水平横向呈现。
 
-- 展示完整照片优先；
-- 用户可以调整显示方向 / 缩放；
-- 可以更换 / 删除照片；
-- 图片失败必须可恢复，不应导致整餐重复写入。
+真实 lifecycle/permission 以 Data Model + Auth 为准。
 
-具体 4:3、rotation、scale、Storage 与压缩规则：
-→ [Meal Photo Storage](../domains/meal/photo-storage.md)
+## 9. Destructive / Unsaved Actions
 
-## 7. 月度回顾
+删除、覆盖、恢复等不可逆或高风险动作必须给用户明确确认。
 
-稳定行为：
+未保存表单不应因导航或刷新静默丢失。高风险系统操作不使用含糊按钮文案。
 
-- 心情的“我 / Ta”位置固定，不因接口返回顺序交换；
-- 无记录即空白；
-- 饮食 / 睡眠按人物切换时只切数据，不改变数据含义；
-- 点击日期可以进入对应历史事实；
-- 月度回顾只表达记录事实，不增加 streak、完成率、排名或健康好坏评价。
+## 10. Loading / Empty / Error / Recovery
 
-当前视觉表现属于 Design System，可整体重构。
+- 有可用 stale data 时优先保持内容，不把页面清空成加载页；
+- 后台 revalidate 不应导致明显闪烁；
+- empty 是真实“无记录”，不能与 loading/error 混淆；
+- error 应说明可以重试或恢复的方向；
+- API/cache 的具体 timeout/revalidation 参数只在 API & Sync 维护。
 
-## 8. 小窝与纪念日
+## 11. UI Refactor Decision Matrix
 
-当前小窝结构见 Product Overview。
+| 变化 | 主要修改层 | 本文是否更新 | 是否触碰业务 contract |
+|---|---|---|---|
+| 颜色 / 圆角 / 字体 | Tokens / Design System | 通常否 | 否 |
+| shared Button / Dialog | App* / shared pattern | 交互变化才更新 | 否 |
+| 页面重新排版 | page composition | 通常否 | 否 |
+| 功能移动页面 | Product Overview | 入口变化时 | 否 |
+| editable/read-only 行为改变 | UI + Auth/Domain | 是 | 是 |
+| save/delete/recovery 行为改变 | UI + API/Domain | 是 | 是 |
+| 数据语义改变 | Domain / Architecture | 只同步表现 | 是 |
 
-稳定行为：
+## 12. Manual Acceptance Matrix
 
-- 纪念日是双方共享设置；
-- Cat / Fish 都可以修改同一纪念日；
-- 首页“一起度过的第 N 天”由同一设置推导；
-- 功能以后可以移动、合并或重排，但不要复制第二份独立纪念日事实。
-
-## 9. 小信箱
-
-稳定交互 contract：
-
-```text
-draft
-→ 仅寄件人可见
-→ 可编辑 / 删除 / 寄出
-
-sent
-→ sender / recipient 可见
-→ 永久只读
-```
-
-UI 必须与该状态一致：
-
-- sent 不显示编辑 / 删除操作；
-- 手札允许多页阅读 / 编辑体验；
-- 明信片保持横向阅读，不使用倾斜主弹窗；
-- 页面视觉可以整体重构，但不能把 sent 做成可编辑消息。
-
-数据与权限事实：
-→ [Data Model](../architecture/data-model.md)
-→ [Auth and Identity](../architecture/auth-and-identity.md)
-
-## 10. 无感加载与恢复
-
-已有 stale data 时：
-
-```text
-保留当前内容
-→ 后台 revalidate
-→ 成功后收敛
-```
-
-不得因为一次后台刷新先把页面清空。
-
-同时：
-
-- loading / empty / error 必须有稳定状态；
-- 网络失败应允许恢复 / 重试；
-- 图片失败与记录失败分开处理；
-- 页面重新进入前台时按当前 cache contract revalidate。
-
-详细机制：
-→ [API and Sync](../architecture/api-and-sync.md)
-
-## 11. 页面重构规则
-
-页面重构时按以下顺序判断：
-
-```text
-产品能力是否变化？
-→ 是：更新 Product Overview
-
-稳定交互 contract 是否变化？
-→ 是：更新本文
-
-只是布局 / 信息层级变化？
-→ 改页面与 shared pattern，不改业务 contract
-
-只是视觉变化？
-→ 进入 Design System
-```
-
-禁止为了配合新设计稿复制第二套业务逻辑、权限逻辑或数据写入逻辑。
-
-## 12. UI 人工验收
-
-所有 UI 修改至少根据受影响范围检查：
-
-- 窄屏；
+可见 UI 修改至少检查：
+- mobile / desktop；
 - safe-area；
+- loading / stale / empty / error；
 - 我 / Ta；
-- loading / empty / error；
-- 表单未保存；
-- 删除确认；
-- read-only 状态；
-- 图片方向和完整性；
-- mailbox draft / sent；
-- 页面重构后 canonical mutation 是否仍是同一条链路。
+- editable / read-only；
+- long text / real image / boundary data；
+- refresh / return foreground；
+- destructive / unsaved flow。
 
-工程命令、CI、Preview / Production 规则统一见：
-→ [Development & Testing](../engineering/development-testing.md)
-→ [Deployment & Security](../engineering/deployment-security.md)
+自动测试不能替代真实视觉验收。
+
+## 13. Current UI Anchors
+
+- components/life/TodayLifePage.tsx
+- components/life/today/*
+- components/life/LifeFoodPage.tsx
+- components/life/LifeMealEditorPage.tsx
+- components/life/LifeCalendarPage.tsx
+- components/life/LifeNestPage.tsx
+- components/life/LifeMailboxPage.tsx
+- components/life/LifeReminderCenterPage.tsx
+- components/ui/*
+
+## 14. Maintenance Rules
+
+只有稳定交互 contract 改变时更新本文。
+只换样式、CSS 或页面排版但行为不变，不应制造新的业务规则。

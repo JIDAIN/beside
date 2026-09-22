@@ -1,281 +1,194 @@
-# 开发与测试指南
+# Development & Testing
 
-状态：2026-09-21。本文维护当前开发流程、测试分层和“代码变化后该同步哪份工程文档”。
+本文回答：修改某类东西时应该先读什么、改哪些层、跑什么测试、同步哪些 docs，以及怎样区分 implementation refactor 与 contract change。
 
-## 1. 开发顺序
+## 1. Standard Change Workflow
 
-推荐固定顺序：
+~~~text
+classify change
+→ read canonical docs
+→ verify current code/runtime
+→ identify stable contract vs current implementation
+→ design change
+→ modify code
+→ regression
+→ update canonical docs
+→ ADR if long-term architecture changed
+→ History/Changelog if milestone-worthy
+→ deploy only after explicit authorization
+~~~
 
-```text
-确认领域
-→ 从 docs/README.md 进入对应 MOC
-→ 核对真实源码 / Production facts
-→ 最小改动
-→ 补或更新测试
-→ Test / Lint / Build
-→ 更新对应 canonical docs
-→ 必要时更新 ADR / CHANGELOG
-```
+旧 History、旧聊天和阶段验收不能替代 current code/runtime 核验。
 
-旧 archive、旧聊天和阶段验收不能替代当前代码核验。
+## 2. Development Locations
 
-## 2. 代码与文档位置
+完整跨层 current implementation map 以 Architecture Overview 为准。
 
-| 内容 | 当前位置 |
-|---|---|
-| Next.js 页面 / route | `app/` |
-| Island Life UI | `components/life/` |
-| Legacy Game UI | `components/home/` |
-| shared UI wrapper / pattern | `components/ui/` |
-| Life client / domain helper | `lib/life/` |
-| Meal / nutrition contract | `lib/nutrition/` |
-| AI normalization | `lib/ai/` |
-| server auth / Supabase / MCP / Reminder | `lib/server/` |
-| migration | `supabase/migrations/` |
-| tests | `tests/` |
-| 当前工程文档 | `docs/` MOC hierarchy |
-| 历史实施 / 验收 | `docs/archive/` |
-| ADR | `docs/architecture/decisions/` |
+本文只维护开发/验证特有位置：
+- supabase/migrations/**
+- tests/**
+- .github/workflows/**
+- package.json scripts
+- lint/build/tooling config
 
-## 3. 领域开发原则
+当前主要命令：
+- npm run test
+- npm run test:watch
+- npm run lint
+- npm run build
 
-### Island Life
+CI 当前 Node 24，并独立执行 Test / Lint / Build。
+test-diagnostics.yml 是精选定位矩阵，不替代完整 test suite。
 
-先区分个人事实与 couple-space shared facts，再设计写权限。
+## 3. Change Recipe Matrix
 
-新增 domain 时优先复用：
+| Task | First read | Typical code | Must check docs | Regression |
+|---|---|---|---|---|
+| 单页视觉调整 | Design System | page/domain UI | DS only if pattern changes | visual |
+| 全站 UI 重构 | Product + UI Guidelines + DS | tokens→App*→patterns→domain→pages | Product/UI/DS | ui-lab + real pages |
+| 功能移动页面 | Product Overview | routes/pages | Overview | navigation/UI |
+| 新 simple domain | Domains + Data + Auth | migration/service/API/UI | Product+Data+Auth+Domains | domain/auth |
+| simple→complex | Domains Registry | existing domain code | new Domain + affected docs | full domain |
+| schema/RPC | Data Model | migration/server | Data+Engineering | DB smoke |
+| API/cache | API & Sync | route/client/cache | API & Sync | client/server |
+| 权限 | Auth | session/service/RPC | Auth + Domain | cross-owner |
+| 新 AI action | AI Architecture | registry/executor/normalizer | AI + Domain | AI/server |
+| 新 reminder source | Reminder | DB/service/cron | Reminder+Data | reminder |
+| 新 provider | Reminder+Configuration | dispatcher/config | Reminder+Config+Security | delivery |
+| 新文件/媒体能力 | Domain+Data+Security | storage/server/API/UI | Data+API+Security+Domain | media/security |
+| backup/import scope | Data Model+Operations | data-management/RPC | Data+Operations | restore/import |
+| 新外部集成 | owning Domain+Architecture | adapter/config | Domain+API/Config/Security；长期取舍再 ADR | integration |
+| 纯目录重构 | Architecture current map | code | anchors only | full regression |
 
-```text
-fixed cat/fish identity
-→ canonical service / RPC
-→ Web API
-→ AI Access Core（需要 AI 时）
-→ Reminder Engine（需要提醒时）
-→ shared UI system
-```
+## 4. Domain Development Rules
 
-不要为单一功能重造第二套鉴权、AI transport 或通知系统。
-
-### Meal
-
-修改 Meal 时至少同步检查：
-
-- `lib/nutrition/`
-- `lib/server/supabase-nutrition.ts`
-- Meal / photo API
-- AI registry / normalizer（若影响 AI）
-- migration / Production constraints（若影响 schema）
-- `docs/domains/meal/README.md`
-- `docs/architecture/data-model.md`（若影响 DB）
-- `docs/architecture/api-and-sync.md`（若影响 transport）
-
-不要再引用旧的“docs/03 / docs/04”编号体系。
-
-### Legacy Game
-
-旧游戏规则继续在 `lib/home/` 和对应 tests 内维护。
-
-普通 Life 改动不得顺手修改：
-
-- deficit；
-- wallet；
-- exchange；
-- heatmap；
-- settlement。
-
-→ [Legacy Game MOC](../domains/legacy-game/README.md)
-
-### Supabase
-
-DDL / function / constraint 的 forward change 必须新增 migration。
-
-已经执行过的 migration 不为“看起来整齐”而回写。
-
-新增 migration 至少检查：
-
-- schema / function / view；
-- constraint / index；
-- RLS；
-- grants / revokes；
-- import / backup / restore compatibility；
-- Life / Legacy Game boundary；
-- 空库 replay 顺序。
-
-server-only RPC 若只供后端使用，通常应确认：
-
-```text
-service_role execute = yes
-anon execute = no
-authenticated execute = no
-```
-
-具体权限仍以该 RPC 的真实用途为准。
-
-## 4. Source of Truth 与 cache
-
-Supabase 是正式数据事实源。
-
-localStorage / Service Worker / stale query 只能承担：
-
-- 可重建 read cache；
-- UI 临时状态；
-- Legacy Game compatibility cache。
-
-新增持久化前先判断：
-
-1. 这是事实还是 cache？
-2. 是否应进入 Supabase？
-3. cache 丢失后能否重建？
-4. 是否会被误当成身份或权限来源？
-
-客户端 cache 细节：
-→ [API and Sync](../architecture/api-and-sync.md)
-
-## 5. 本地命令
-
-当前 `package.json`：
-
-```bash
-npm run test
-npm run test:watch
-npm run lint
-npm run build
-```
-
-完整提交前通常运行：
-
-```bash
-npm run test
-npm run lint
-npm run build
-```
-
-## 6. GitHub CI
-
-`.github/workflows/ci.yml` 当前使用 Node 24，并独立执行：
-
-- Test → `npm run test`
-- Lint → `npm run lint`
-- Build → `npm run build`
-
-`test-diagnostics.yml` 是额外的精选测试文件矩阵，用于更容易定位部分核心测试失败；它 **不是完整 test suite 的替代品**。
-
-## 7. 测试目录
-
-真实测试文件清单以 `tests/` 为准，不在文档手工枚举每个文件。
-
-主要职责：
-
-- `tests/ai/`：AI contract / normalization
-- `tests/client/`：cache / request / client reliability
-- `tests/home/`：Legacy Game
-- `tests/life/`：Life domain / auth / UI source contract
-- `tests/nutrition/`：Meal / nutrition
-- `tests/server/`：server / MCP / media / data boundary
-
-## 8. 必须补测试的变化
-
-### Business
-
+新增 capability 先决定：
+- personal/shared/system/legacy；
 - ownership；
-- mailbox draft/sent；
-- reminder dedupe / snooze；
-- Meal lifecycle；
-- Legacy Game settlement / reward。
+- canonical data；
+- canonical service；
+- 是否需要独立 Domain。
 
-### Data
+不要：
+- 为一个新页面重造业务；
+- 为 AI 重造 CRUD；
+- 为通知重造 provider pipeline；
+- 为“目录更整齐”回写已执行 migration。
 
-- 新表 / 字段 / constraint；
-- migration compatibility；
-- import / backup / restore；
-- Life / Legacy allowlist；
-- soft delete / idempotency。
+## 5. Schema / Migration Rules
 
-### Auth / AI
+forward change：
+- 新增 migration；
+- 已执行 migration 不回改；
+- schema/function/view/constraint/index/RLS/grant/revoke 都按 migration 管理；
+- server-only RPC 根据真实用途限制 execute；
+- import/backup/restore compatibility 必须评估；
+- Life/Legacy boundary 必须评估。
 
-- Web session；
-- MCP token identity；
-- cross-owner writes；
-- delete explicit intent；
-- AI action registry；
-- media recovery。
+replay-only helper、ledger 与空库恢复见 Operations。
 
-### Cache
+## 6. Source of Truth / Cache
 
-- stale first paint；
-- mutation 后旧 read 不回滚；
-- scope switch；
-- foreground / online revalidation；
-- multi-tab mutation invalidation。
+新增持久化前先问：
+1. fact 还是 cache？
+2. 是否应进入 Supabase？
+3. cache 丢失是否可重建？
+4. 是否会被误当身份或权限来源？
 
-## 9. Production DB smoke
+cache contract 见 API & Sync。
 
-涉及 Production schema / RPC 时，在获得相应执行授权并确保数据安全后，至少验证：
+## 7. Test Layers
 
-```text
-create / read / update / delete（适用时）
-permission
-idempotency
-受影响 RPC
-backup / restore compatibility（如涉及）
-cleanup test data
-```
+- tests/ai：AI contract / normalization
+- tests/client：cache / request / client reliability
+- tests/home：Legacy Game
+- tests/life：Life domain/auth/UI source contract
+- tests/nutrition：Meal
+- tests/server：server/MCP/media/data boundary
 
-不能把测试残留留在 Production。
+## 8. Change-triggered Regression Matrix
 
-## 10. UI 验证
+至少：
+- mailbox lifecycle → life + server + reminder；
+- Meal lifecycle → nutrition + AI + server；
+- Meal photo → server image + client/UI；
+- reminder provider → server + runtime smoke；
+- auth/ownership → life auth + MCP/AI；
+- cache → client + relevant page；
+- Legacy settlement → tests/home full relevant regression；
+- restore/import → data-management + permission + cache convergence。
 
-可见 UI 修改需要检查：
+## 9. UI Verification
 
-- loading / stale / empty / error；
-- mobile / desktop；
-- 我 / Ta；
-- editable / read-only；
+可见 UI 改动检查：
+- loading/stale/empty/error；
+- mobile/desktop；
+- 我/Ta；
+- editable/read-only；
 - safe-area；
-- real image / long text / boundary data；
-- refresh / return foreground。
+- real image/long text/boundary data；
+- refresh/foreground；
+- destructive/unsaved。
 
-自动测试不能替代真实视觉验收。
+自动测试不替代真实视觉验收。
 
-Preview / Production 仍需要用户对该次部署明确授权。
+## 10. Production DB Smoke
 
-## 11. 文档同步路由
+涉及 Production schema/RPC 且取得相应授权后，至少验证：
+create/read/update/delete（适用时）、permission、idempotency、受影响 RPC、backup/restore compatibility（如涉及）、cleanup test data。
 
-| 变化 | Canonical 文档 |
-|---|---|
-| 当前产品能力 | `docs/product/overview.md` |
-| UI / visual | `docs/product/` |
-| 跨域架构 | `docs/architecture/overview.md` |
-| schema | `docs/architecture/data-model.md` |
-| API / auth / cache transport | `docs/architecture/api-and-sync.md` |
-| 身份 / 权限 | `docs/architecture/auth-and-identity.md` |
-| AI | `docs/architecture/ai/` |
-| Meal | `docs/domains/meal/` |
-| Reminder | `docs/domains/reminders/` |
-| Legacy Game | `docs/domains/legacy-game/` |
-| 配置 | `docs/engineering/configuration.md` |
-| 发布 / security | `docs/engineering/deployment-security.md` |
-| 运维 / 恢复 | `docs/engineering/operations-runbook.md` |
-| 当前运行差异 | `docs/engineering/current-state.md` |
-| 长期架构取舍 | `docs/architecture/decisions/` |
+不能留测试残留。
 
-未来产品 Roadmap 不在 GitHub 工程事实库展开维护。
+## 11. Documentation Update Matrix
 
-## 12. 提交前检查
+- current capability / entry → Product Overview
+- stable interaction → UI Guidelines
+- UI architecture / shared pattern → Design System
+- cross-domain flow → Architecture Overview
+- schema / data fact → Data Model
+- API/cache/transport → API & Sync
+- identity/permission → Auth
+- AI → AI docs
+- Meal → Meal Domain
+- Reminder → Reminder Domain
+- Legacy Game → Legacy Game Domain
+- config → Configuration
+- deployment/security → Deployment & Security
+- operations/recovery → Operations
+- runtime difference → Current State
+- long-term decision → ADR
+- historical milestone → History
 
-代码改动：
+## 12. Refactor-only Rule
 
-```text
-[ ] 对应测试已覆盖
+若用户能力、data semantics、permission、external API contract、Domain lifecycle 均不变，可以判定为 implementation refactor。
+
+此时：
+- 更新 Architecture current implementation map；
+- 更新受影响 Domain anchors；
+- 跑完整 regression；
+- 不为文件夹搬迁伪造 Product / Domain / ADR 变化。
+
+## 13. Commit / Merge Checklist
+
+~~~text
+[ ] canonical owner 已确认
+[ ] regression 已覆盖
 [ ] npm run test
 [ ] npm run lint
 [ ] npm run build
 [ ] secret 未暴露
-[ ] actor / ownership 未被削弱
-[ ] Life / Legacy boundary 未跨越
+[ ] actor/ownership 未削弱
+[ ] Life/Legacy boundary 未跨越
 [ ] migration 未回写历史
 [ ] canonical docs 已同步
 [ ] 长期架构变化已有 ADR
-```
+[ ] 部署仍需当次明确授权
+~~~
 
-只改文档时，不强制为了形式跑本地 build；但必须检查真实源码、链接、路径和相关 CI。
+纯 docs 变更不为形式强制 build，但必须检查路径、引用、事实与链接。
+
+## 14. Maintenance Rules
+
+开发流程、测试结构、change recipe 改变时更新本文。
+业务事实只链接，不在本文复制。

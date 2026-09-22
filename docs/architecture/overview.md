@@ -1,196 +1,228 @@
 # Architecture Overview
 
-状态：2026-09-21。本文只维护 **当前系统的跨领域架构**；具体业务规则进入 Domains，运行/发布状态进入 Engineering。
+本文维护伴岛当前跨领域系统架构；业务 lifecycle 进入 Domains，运行/发布状态进入 Engineering。
 
-## 1. 一句话架构
+## 1. System Boundary
 
-伴岛是一个 Next.js 一体化 Web 应用：
+伴岛是 Next.js 一体化 Web 应用：
 
-```text
-Browser / AI client
+~~~text
+Browser / AI Client
 → Next.js on Vercel
-→ server-side domain services / AI Access Core
+→ trusted identity + API/AI adapters
+→ canonical domain services
+→ restricted server adapters / RPC
 → Supabase PostgreSQL + Private Storage
-```
+~~~
 
-Supabase 是正式数据事实源。浏览器缓存与 Service Worker 只用于读取体验优化，不是第二数据库。
+Supabase 是正式事实源。浏览器 cache / Service Worker 只是可重建 read model，不是第二数据库。
 
-## 2. 主要运行入口
+## 2. Architectural Layers
+
+长期职责模型：
+
+~~~text
+Entry / Transport
+→ Trusted Identity
+→ API / AI Adapter
+→ Canonical Domain Service
+→ Server Adapter / Restricted RPC
+→ Supabase Facts / Private Storage
+~~~
+
+横切机制：
+- Client Read Model / Cache
+- AI Orchestration
+- Reminder Orchestration
+- Legacy Game Compatibility
+
+## 3. Runtime Entry Points
 
 ### Web
-
-```text
-Browser
-→ Next.js page / API
-→ signed Web session
-→ domain service / server adapter
-→ service-role or actor-aware RPC
-→ Supabase
-```
+Browser → Next.js page / API → signed Web session → canonical service → Supabase。
 
 ### MCP
+MCP client → OAuth 2.0 + PKCE → /mcp → signed access identity → stable AI tools → AI Access Core → canonical service。
 
-```text
-MCP client
-→ OAuth 2.0 + PKCE
-→ /mcp
-→ signed access identity
-→ life_query / life_mutate
-→ AI Access Core
-→ canonical domain services
+### Built-in AI
+/ai → /api/ai/chat → AI Gateway → agent registry / executor → canonical service。
+
+### Legacy compatibility
+/game 与旧 compatibility API 继续使用 Legacy Game 自己的兼容路径，不等同于 Life fixed-account auth。
+
+## 4. Core Runtime Flows
+
+### 4.1 Web Read
+
+~~~text
+Page / Component
+→ client
+→ Next.js API
+→ authorize session
+→ server adapter / service
 → Supabase
-```
+→ read model
+→ stale cache
+→ UI
+~~~
 
-OAuth token 固定携带 `partnerKey` 与 scope；聊天文字不能改变授权身份。
+### 4.2 Web Write
 
-### 程序内置 AI
-
-```text
-/ai
-→ /api/ai/chat
-→ AI model gateway
-→ life-agent-registry / executor
-→ AI Access Core
-→ canonical domain services
+~~~text
+UI intent
+→ Next.js API
+→ trusted actor
+→ parse / validate
+→ canonical service / restricted RPC
 → Supabase
-```
+→ mutation success
+→ cache update / invalidate
+→ background read-back
+→ UI converges
+~~~
 
-所有 AI 入口共用同一业务事实层，不维护第二套业务数据库。
+### 4.3 MCP / Built-in AI
 
-## 3. 身份
+~~~text
+MCP OAuth or Web session
+→ trusted actor
+→ AI Access Core
+→ normalizer / registry / executor
+→ canonical service
+→ Supabase
+~~~
 
-Web 使用固定双账号登录。
+Adapter 不拥有业务规则，聊天自称不能改变 actor。
 
-```text
-username/password
-→ authenticate_fixed_life_account
-→ server-signed HttpOnly session
-→ partnerKey = cat | fish
-```
+### 4.4 Reminder
 
-MCP 使用单独的签名 OAuth code / access token / refresh token，但最终同样解析成稳定 `partnerKey`。
-
-完整身份与权限：
-→ [Auth and Identity](auth-and-identity.md)
-
-## 4. 数据域
-
-系统必须区分：
-
-```text
-Island Life
-Legacy Game
-Shared / System infrastructure
-```
-
-Island Life 与 Legacy Game 当前仍位于同一个 Supabase project，但在业务、权限、导入恢复和维护流程上保持逻辑硬隔离。
-
-完整边界：
-→ [Life / Legacy Boundary](life-legacy-boundary.md)
-
-数据库结构：
-→ [Data Model](data-model.md)
-
-## 5. API 与同步
-
-Web 页面通过 Next.js API 访问服务端能力，不直接持有 Supabase secret。
-
-读取层采用 scope-aware stale cache：
-
-```text
-可用快照先展示
-→ 后台重新读取事实源
-→ focus / visibility / online 等时机再次校验
-```
-
-mutation 成功后由对应 client/service 主动更新或失效相关 cache。
-
-完整 API / cache / OAuth transport：
-→ [API and Sync](api-and-sync.md)
-
-## 6. AI Access Core
-
-稳定工具面：
-
-```text
-life_capabilities
-life_query
-life_mutate
-```
-
-AI Access Core 负责：
-
-- 可信身份；
-- resource / action normalization；
-- 权限；
-- 幂等；
-- canonical domain dispatch；
-- 媒体恢复边界；
-- 高风险写入保护。
-
-Adapter 只负责协议与 transport，不拥有业务规则。
-
-→ [AI MOC](ai/README.md)
-
-## 7. Meal 架构
-
-```text
-Web editor / AI
-→ canonical Meal payload
-→ Next.js server
-→ nutrition service / RPC
-→ meals + meal_items
-→ optional private meal-photos Storage
-```
-
-具体 MealType、主餐唯一、estimated/confirmed、照片和 AI 草稿规则不在本文复制维护：
-→ [Meal MOC](../domains/meal/README.md)
-
-## 8. Reminder 架构
-
-```text
-domain event / custom reminder
-→ reminder rule / instance
-→ Supabase scheduler
+~~~text
+Stateful source OR runtime condition
+→ generation
 → delivery
 → provider
-```
+~~~
 
-Reminder Engine 与具体通知 provider 解耦。
+generation 的 Stateful / Condition Nudge 选择、dedupe、provider routing 见 Reminder Domain。
 
-具体 21:00 完整性提醒、微信测试号、PushPlus fallback 与 notification tone：
-→ [Reminder MOC](../domains/reminders/README.md)
+### 4.5 Legacy Compatibility
 
-## 9. Private media
+~~~text
+/game / compatibility API
+→ Legacy service/store
+→ Legacy facts
+~~~
 
-Meal 正式展示照片使用 private Supabase Storage。
+它不能被普通 Life write 顺手覆盖。
 
-Browser / AI media 最终都必须进入服务端权限、压缩和绑定流程；客户端不能直接把任意 Storage path 写进 Meal。
+## 5. Trusted Identity
 
-→ [Meal Photo Storage](../domains/meal/photo-storage.md)
+Web：
+username/password → authenticate_fixed_life_account → server-signed HttpOnly session → partnerKey。
 
-## 10. 代码分层
+MCP：
+authorization code / access token / refresh token → signed partnerKey + scope。
 
-```text
-app/                    Next.js routes / pages
-components/life/        Island Life UI
-components/home/        Legacy Game UI
-components/ui/          shared App* UI primitives / patterns
-lib/life/               Life client + domain helpers
-lib/nutrition/          Meal domain contract
-lib/ai/                 natural-language normalization helpers
-lib/server/             auth / adapters / AI / Supabase server boundary
-supabase/migrations/    database history
-```
+完整规则见 Auth & Identity。
 
-## 11. Migration 与发布
+## 6. Domain / Data Boundaries
 
-数据库结构变更只能新增 migration，不回写已执行 migration。
+当前物理上共用一个 Supabase project，但逻辑必须区分：
+- Life facts；
+- Legacy Game facts；
+- Shared / System infrastructure。
 
-Vercel 自动 Git deployment 默认关闭；Production / Preview 发布遵守逐次授权。
+Life maintenance 不默认操作 Legacy Game；Meal calories 不自动变成 game deficit；普通 activity 不自动变成 game exercise。
 
-当前 GitHub main、Production Web、Supabase runtime 的具体状态：
-→ [Engineering Current State](../engineering/current-state.md)
+详细数据边界见 Data Model 与 ADR-0005。
 
-架构为什么这样设计：
-→ [Architecture Decisions](decisions/README.md)
+## 7. Client Read Model / Cache
+
+浏览器使用 scope-aware stale cache 提升体验：
+- 可用快照先显示；
+- 后台校验；
+- mutation 后主动更新/失效；
+- 旧 in-flight read 不得覆盖新 write；
+- cache 可丢弃、可重建，不参与权限判断。
+
+具体参数与实现见 API & Sync。
+
+## 8. Private Media
+
+当前正式 private media 主要是 Meal photo。
+
+所有 Browser / AI media 最终必须进入 server-side ownership、压缩、Storage 与 DB binding 流程；客户端不能提交任意 Storage path。
+
+## 9. Current Implementation Map
+
+这是 current mapping，不是永久目录 contract。
+
+| Layer | Current code |
+|---|---|
+| routes/pages | app/** |
+| Life UI | components/life/** |
+| Legacy UI | components/home/** |
+| shared UI | components/ui/** |
+| Life contracts/helpers | lib/life/** |
+| Meal | lib/nutrition/** |
+| AI normalization | lib/ai/** |
+| server/auth/adapters/AI/reminder | lib/server/** |
+| DB history | supabase/migrations/** |
+| tests | tests/** |
+
+未来改成 features/* 等结构时，只要 contract 不变，只更新本节与 Domain anchors。
+
+## 10. New Feature Integration Map
+
+新增能力统一从这里接入：
+
+~~~text
+Product capability
+→ classify personal / shared / system / legacy
+→ canonical data contract
+→ canonical service / RPC
+→ auth / ownership
+→ Web API
+→ UI
+→ AI optional
+→ Reminder optional
+→ tests
+→ docs
+~~~
+
+不要为一个新页面重造身份、CRUD、AI transport 或通知系统。
+
+## 11. Refactor Invariants
+
+纯代码目录重构不会自动改变：
+- Product capability；
+- actor / ownership；
+- data semantics；
+- Domain lifecycle；
+- AI tool contract；
+- Reminder semantics。
+
+如果这些 contract 都不变：
+- 更新 current implementation map / Domain anchors；
+- 跑回归；
+- 不伪造 Product/Domain/ADR 变化。
+
+## 12. Related Canonical Docs
+
+- Data Model
+- API & Sync
+- Auth & Identity
+- AI MOC
+- Domains MOC
+- Engineering / Development & Testing
+
+## 13. Maintenance Rules
+
+更新本文：
+- 新 transport / cross-domain layer；
+- canonical service 边界改变；
+- system flow 改变；
+- current implementation map 大规模重构；
+- new-feature integration pattern 改变。
+
+单一业务规则变化应进入对应 Domain。

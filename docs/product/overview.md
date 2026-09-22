@@ -1,233 +1,167 @@
 # Product Overview
 
-状态：2026-09-21。
+状态：current docs。本文回答：当前伴岛向用户提供什么能力，这些能力现在从哪里进入，以及每项能力的 canonical detail 在哪里。
 
-本文只回答：**当前代码实际向用户提供什么能力，以及这些能力当前从哪里进入。**
+## 1. Product Identity
 
-交互细节见 [UI Guidelines](ui-guidelines.md)，视觉与 UI 架构见 [Design System](design-system.md)，业务与数据细节分别由 Domains / Architecture 维护。
+- 中文正式名：伴岛
+- English：Beside
+- 日常称呼：小岛
+- GitHub：JIDAIN/beside
+- Production URL：https://couple-better-game.vercel.app
 
-## 1. 产品身份与历史关系
+Production URL 的旧 slug 仅为兼容地址，不代表产品仍叫 Couple Better Game。
 
-**伴岛 / Beside** 是当前唯一正式产品，日常称呼 **小岛**。它是两个人共同使用的私人生活记录与陪伴 Web App。
+“变美变瘦大作战”是伴岛最初程序雏形，当前保留在“小窝 → 游戏机”中；工程内部称为 Legacy Game。Island Life 只作为生活数据域 / 历史工程术语使用。
 
-项目演变关系必须固定理解为：
+完整演变见 History / Product Evolution。
 
-```text
-早期程序雏形
-「变美变瘦大作战」
-        ↓
-产品范围逐步扩展并重新定位 / 更名
-        ↓
-伴岛 / Beside（当前唯一正式产品）
-        └─ 小窝
-           └─ 游戏机
-              └─ 变美变瘦大作战
-```
-
-因此：
-
-- 「变美变瘦大作战」不是伴岛的旧正式名称替代品，而是伴岛最初程序雏形演变后被保留下来的原游戏；
-- 当前它只是伴岛「小窝 → 游戏机」中的一个小游戏；
-- 工程文档内部称它为 **Legacy Game**；
-- `Island Life` 只用于表示伴岛当前生活数据域 / 架构边界，不是用户品牌，也不是与伴岛并列的正式产品。
-
-生活数据与 Legacy Game 可以关联展示，但不会因为日期或人物相同而自动互相改值。
-
-## 2. 当前信息架构
+## 2. Current Information Architecture
 
 当前底部主导航：
 
-```text
+~~~text
 今日 / 饮食 / 日历 / 小窝 / 我的
-```
+~~~
 
-当前路由：
+当前 route：
 
-```text
-/         今日
-/food     饮食
-/calendar 日历
-/nest     小窝
-/me       我的
-```
+~~~text
+/          今日
+/food      饮食
+/calendar  日历
+/nest      小窝
+/me        我的
+~~~
 
-这是**当前信息架构快照**，不是永久产品结构。未来如果功能移动、合并、升级或新增模块，应更新本节的“当前入口”，不要把今天的页面归属当成长期业务约束。
+当前实现入口：
+- app/page.tsx → TodayLifePage
+- app/food/page.tsx → LifeFoodPage
+- app/calendar/page.tsx → LifeCalendarPage
+- app/nest/page.tsx → LifeNestPage
+- app/me/page.tsx → LifeMePage
 
-## 3. 固定双人身份
+这是 current snapshot，不是永久产品结构。功能搬页面时更新这里；Domain contract 不随 route 搬迁。
 
-底层固定身份：
+## 3. Current Capability Map
 
-```text
-cat
-fish
-```
+| Capability | 当前入口 | 能力类型 | Canonical detail |
+|---|---|---|---|
+| mood | 今日 / 历史日 / 日历 | personal fact | Data Model + Auth |
+| sleep | 今日 / 历史日 / 日历 | personal fact | Data Model + Auth |
+| activity | 今日 / 历史日 | personal/shared fact | Data Model + Auth |
+| Meal | 饮食 | complex personal fact | Meal Domain |
+| monthly review | 日历 | derived read model | API & Sync + Data Model |
+| weight | 小窝 → 体重 | personal fact | Data Model + Auth |
+| mailbox | 小窝 → 小信箱 | relationship lifecycle | Data Model + Auth + UI Guidelines |
+| medicine | 小窝 → 家庭药箱 | shared fact | Data Model + Auth |
+| Legacy Game | 小窝 → 游戏机 | complex legacy domain | Legacy Game Domain |
+| settings | 小窝 / 我的 | shared + personal settings | Data Model + Auth |
+| reminders | /me/reminders + 提醒设置 | system orchestration | Reminder Domain |
+| AI | /ai + MCP | cross-domain adapter | AI Architecture |
 
-用户界面统一按当前登录账号显示“我 / Ta”，不要求用户理解或操作内部 key。
-
-权限细节：
-→ [Auth and Identity](../architecture/auth-and-identity.md)
+本表只做导航，不复制业务规则。
 
 ## 4. 今日
 
-**当前入口：** 底部「今日」 / `/`
+当前入口：/。
 
-当前承担高频、低成本记录与查看：
+提供高频、低成本的心情、睡眠、活动记录与“一起度过的第 N 天”。
 
-- 心情；
-- 睡眠；
-- 活动；
-- 当前日期与“一起度过的第 N 天”。
+稳定产品含义：
+- 心情和睡眠是个人生活事实；
+- 活动可以是个人或双方；
+- 睡眠按起床日归档，今日语义为“昨晚入睡 → 今天起床”；
+- “我 / Ta”是相对当前登录身份的展示语义，不是权限来源。
 
-当前账号只能维护自己的个人记录；双方共同活动按共享规则处理。
-
-睡眠按起床日归档：今天显示“昨晚入睡 → 今天起床”。
-
-稳定交互规则：
-→ [UI Guidelines](ui-guidelines.md)
+交互见 UI Guidelines；ownership 见 Auth & Identity。
 
 ## 5. 饮食
 
-**当前入口：** 底部「饮食」 / `/food`
+当前入口：/food。
 
 当前能力：
-
-- 按日期查看；
-- 在“我 / Ta”之间切换查看；
-- 早餐 / 午餐 / 晚餐；
-- 上午 / 下午 / 晚上加餐；
-- 食物明细与份量；
-- kcal 与三大营养素；
-- 吃饭时间与备注；
+- 按日期查看我 / Ta；
+- 早餐、午餐、晚餐与上午/下午/晚上加餐；
+- food items、份量、kcal、三大营养素、时间、备注；
 - 一张正式展示照片；
-- 自己的餐食新增 / 编辑 / 删除；
-- 常吃食物复用。
+- 自己 Meal 的新增、编辑、删除；
+- 常吃食物复用，当前入口 /food/favorites。
 
-常吃食物当前独立维护入口：`/food/favorites`。
-
-完整业务 contract：
-→ [Meal MOC](../domains/meal/README.md)
+完整 contract 见 Meal Domain。
 
 ## 6. 日历 / 月度回顾
 
-**当前入口：** 底部「日历」 / `/calendar`
+当前入口：/calendar。
 
-当前提供：
-
-```text
-心情 / 饮食 / 睡眠
-```
-
-- 心情：同一月历展示我 / Ta；
-- 饮食：按我 / Ta 切换，展示每天 kcal；
-- 睡眠：按我 / Ta 切换，展示每天睡眠时长；
+当前视图：
+- 心情：双人月历；
+- 饮食：按我 / Ta 查看每日 kcal；
+- 睡眠：按我 / Ta 查看每日睡眠时长；
 - 点击日期进入历史日详情。
 
-这里记录事实，不提供 streak、排名、健康好坏评分。
+这里用于回顾事实，不提供 streak、排名或健康好坏评分。
 
 ## 7. 小窝
 
-**当前入口：** 底部「小窝」 / `/nest`
+当前入口：/nest。
 
-小窝当前由两层组成：
-
-```text
-顶部共享纪念日卡片
-+
-四个功能入口
-├─ 体重
-├─ 小信箱
-├─ 家庭药箱
-└─ 游戏机
-```
-
-纪念日是双方共享设置，可在小窝直接修改，并用于首页“一起度过的第 N 天”。
+当前包含共享纪念日与：
+- 体重；
+- 小信箱；
+- 家庭药箱；
+- 游戏机。
 
 ### 体重
-
-当前提供个人体重记录、趋势与目标体重；具体权限和数据模型由 Architecture 维护。
+个人体重记录、趋势与目标体重。measurement 与 targetWeight 是不同事实。
 
 ### 小信箱
-
-当前包含：
-
-```text
-收信箱 / 已寄出 / 待寄出
-```
-
-draft / sent 的生命周期与权限属于业务 contract，见 Data Model / Auth；用户可见交互见 [UI Guidelines](ui-guidelines.md)。
+收信箱 / 已寄出 / 待寄出。draft / sent 生命周期和权限以 Data Model + Auth 为准，用户可见行为见 UI Guidelines。
 
 ### 家庭药箱
-
-当前用于共同维护药品、数量与有效期信息。
+双方共同维护药品、数量、有效期相关事实；提醒偏好是每个 actor 自己的 Reminder 配置。
 
 ### 游戏机
-
-游戏机是伴岛内部的小游戏入口。
-
-当前唯一可用小游戏：
-
-> **变美变瘦大作战**
-
-它来自伴岛最初的程序雏形，现作为 Legacy Game 独立保留自己的旧游戏数据、结算和玩法。未来游戏机可以新增其他小游戏，但这不会改变「变美变瘦大作战」只是其中一个游戏的层级关系。
-
-详细规则：
-→ [Legacy Game MOC](../domains/legacy-game/README.md)
+当前唯一小游戏是“变美变瘦大作战”。它保留自己的旧游戏数据、结算和玩法；未来游戏机可以容纳其他小游戏，但不能把新游戏规则塞进 Legacy Game Domain。
 
 ## 8. 我的
 
-**当前入口：** 底部「我的」 / `/me`
+当前入口：/me。
 
 当前提供：
-
 - 当前登录身份；
 - 云端连接状态；
-- 当前账号自己的 PushPlus / 微信提醒绑定、测试和解绑；
-- 数据管理（备份、导出、导入、恢复）；
+- 当前账号自己的 PushPlus 绑定、测试、解绑；
+- 数据管理：备份、导出、导入、恢复；
 - 退出登录。
 
-Reminder Center 当前存在独立页面 `/me/reminders`，但不是底部主导航项，也不是当前“我的”页面的独立列表入口。
-
-提醒业务：
-→ [Reminder MOC](../domains/reminders/README.md)
+Reminder Center 当前 route 为 /me/reminders。
 
 ## 9. AI
 
-伴岛当前有 MCP / ChatGPT Project 与程序内置 AI 等入口。
+伴岛当前有 MCP / ChatGPT Project 与程序内置 AI 入口。
 
-从用户角度，AI 可以在授权身份范围内查询和维护已接入的生活数据；身份不能通过聊天中的自称切换。
+AI 只能在可信授权身份范围内调用已注册能力；聊天中的自称不能切换 actor。AI 不拥有任意 SQL 权限。
 
-AI 架构：
-→ [AI MOC](../architecture/ai/README.md)
+完整架构见 Architecture / AI。
 
-## 10. Legacy Game 数据边界
+## 10. Cross-product Boundaries
 
-「变美变瘦大作战」继续保留自己的：
+长期必须保持：
 
-- deficit；
-- 运动奖励；
-- 金币 / 宝石；
-- 钱包；
-- 兑换；
-- 热力图与成长记录。
+~~~text
+Life facts != Legacy Game settlement facts
+Meal calories != Legacy Game deficit
+Life activity != Legacy Game exercise
+UI viewability != write permission
+AI capability != arbitrary database access
+~~~
 
-必须保持：
+生活事实与游戏结算可以关联展示，但不会因为日期或人物相同自动互相改值。
 
-```text
-meal intake
-!= Legacy Game deficit
-!= weight
-!= Life activity / Legacy Game exercise
-```
-
-这里的 `Life` 是数据域术语，不是产品名称。
-
-详细边界：
-→ [Life / Legacy Boundary](../architecture/life-legacy-boundary.md)
-
-## 11. 当前产品边界
+## 11. Current Product Limits
 
 当前程序不声称提供：
-
 - 医疗诊断；
 - 实验室级营养测量；
 - AI 任意数据库权限；
@@ -235,7 +169,15 @@ meal intake
 - 一条 Meal 的多图正式持久化；
 - Meal 自动驱动 Legacy Game deficit / 奖励。
 
-未来产品模块、信息架构和页面方案由 Obsidian「伴岛」项目先设计；只有完成开发后才进入本文。
+## 12. Maintenance Rules
 
-当前 Production / GitHub main / Supabase 的发布差异：
-→ [Engineering Current State](../engineering/current-state.md)
+以下变化触发本文更新：
+- 用户可见能力新增 / 删除；
+- 当前入口或信息架构改变；
+- 用户能力边界改变；
+- 正式产品命名改变。
+
+只改视觉 → Design System。
+稳定交互改变 → UI Guidelines。
+业务 lifecycle / data / auth 改变 → Domain / Architecture。
+纯代码目录重构 → 只更新 implementation anchors，不重写产品能力。

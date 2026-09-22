@@ -1,48 +1,75 @@
 # Meal MOC
 
-伴岛饮食系统的工程文档入口。
+伴岛 Meal 复杂 Domain 的统一入口。
 
-## 文档
+## 1. Domain Boundary
 
-- [Lifecycle](lifecycle.md)：MealType、SnackPeriod、estimated / confirmed、主餐唯一、常吃食物。
-- [Photo Storage](photo-storage.md)：单图持久化、压缩、旋转缩放、Storage 和 Photo API 边界。
-- [AI Contract](ai-contract.md)：聊天草稿、单图直接记录、餐前估算与餐后确认。
+Meal 维护正式饮食事实、food items、营养、餐次、状态、常吃食物复制语义与正式照片边界。
 
-## 相关事实
+Meal 不自动写：
+- Legacy Game deficit/reward；
+- Life activity；
+- weight。
 
-- 表 / RPC → [Data Model](../../architecture/data-model.md)
-- API / cache → [API and Sync](../../architecture/api-and-sync.md)
-- AI Access Core → [AI MOC](../../architecture/ai/README.md)
-- UI → [Product UI Guidelines](../../product/ui-guidelines.md)
-- 故障排查 → [Operations Runbook](../../engineering/operations-runbook.md)
+## 2. Contract Map
 
-修改 Meal 时不要把 intake 与 Legacy Game deficit、weight 或 activity 自动混写。
+- Lifecycle：持久化业务 lifecycle、类型、主餐唯一、snack、多事件、favorite template。
+- Photo Storage：一张正式 photo 的 server-side media persistence。
+- AI Contract：聊天草稿、单图/前后图、estimated/confirmed orchestration。
 
-## AI 最小阅读路径
+## 3. Current Product / Data Position
 
-```text
-Lifecycle
-→ 按任务追加 Photo Storage / AI Contract
-→ Data Model（涉及 schema 时）
-→ 对应源码
-```
+Product 入口：/food。
+正式事实：meals + meal_items；favorite_food_templates 是复用模板，不是历史 item 的 live reference。
 
-核心代码入口：
+## 4. Change Routing
 
-- `lib/nutrition/meal-service.ts`
-- `lib/nutrition/meal-v2-types.ts`
-- `lib/server/supabase-nutrition.ts`
-- `components/life/LifeMealEditorPage.tsx`
-- `lib/server/life-agent-registry.ts`
-
-## 修改时同步检查
-
-| 变化 | 必查 |
+| Change | Canonical docs |
 |---|---|
-| meal type / status / unique slot | Lifecycle + Data Model + migration |
-| 食物 item / nutrition | Lifecycle + parser + tests |
-| 图片压缩 / Storage / transform | Photo Storage + photo API + media tests |
-| AI 草稿 / estimated / append / confirm | AI Contract + registry / normalizer + tests |
-| UI 编辑流程 | UI Guidelines + Meal editor |
+| meal type/status/main slot | Lifecycle + Data Model |
+| item/nutrition semantics | Lifecycle |
+| favorite template | Lifecycle + Data Model/Auth |
+| photo compression/storage | Photo Storage |
+| photo visual frame | Design System/UI |
+| AI new-meal draft | AI Contract |
+| append/confirm AI behavior | AI Contract + Lifecycle |
+| schema/RPC | Data Model + migration |
+| ownership | Auth |
+| cache/API | API & Sync |
+| editor interaction | UI Guidelines |
 
-不要从 Product Overview 复制一份 Meal 规则作为第二事实源。
+## 5. Implementation Anchors
+
+- lib/nutrition/*
+- lib/server/supabase-nutrition.ts
+- lib/server/supabase-favorite-foods.ts
+- app/api/meals/**
+- app/api/favorite-foods/**
+- components/life/LifeFoodPage.tsx
+- components/life/LifeMealEditorPage.tsx
+- components/life/MealPhotoFrame.tsx
+- lib/ai/meal-draft-contract.ts
+- life-agent registry/executor
+
+## 6. Regression Routing
+
+- tests/nutrition/*
+- tests/ai/*
+- relevant tests/server/*
+- relevant tests/client/*
+- UI visual/manual acceptance
+
+完整变更测试路由见 Engineering / Development & Testing。
+
+## 7. Cross-domain Boundaries
+
+~~~text
+Meal calories != Legacy Game deficit
+Meal photo != arbitrary public storage
+Meal owner != UI selected role
+chat draft != database draft
+~~~
+
+## 8. Maintenance Rules
+
+只在对应 contract 改变时修改子文档；不要从 Product Overview 复制第二份 Meal 规则。
