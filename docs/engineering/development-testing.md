@@ -141,6 +141,8 @@ create/read/update/delete（适用时）、permission、idempotency、受影响 
 
 ## 11. Documentation Update Matrix
 
+本节只保留 change routing；完整文档维护 SOP、Obsidian/GitHub 边界、新建文档判断与 closeout checklist 见 [Documentation Maintenance Guide](documentation-maintenance.md)。
+
 - current capability / entry → Product Overview
 - stable interaction → UI Guidelines
 - UI architecture / shared pattern → Design System
@@ -186,7 +188,7 @@ create/read/update/delete（适用时）、permission、idempotency、受影响 
 [ ] 部署仍需当次明确授权
 ~~~
 
-纯 docs 变更不为形式强制 build，但必须检查路径、引用、事实与链接。
+纯 docs 变更不为形式强制 build，但必须检查路径、引用、事实与链接；按 [Documentation Maintenance Guide](documentation-maintenance.md) 做文档 closeout。
 
 ## 14. Maintenance Rules
 
