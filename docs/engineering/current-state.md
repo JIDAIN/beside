@@ -21,9 +21,10 @@ GitHub main 已领先于 Production Web。
 
 领先内容主要包括：
 - Supabase migration 历史/顺序收口；
-- current docs 的 MOC/canonical 架构重构与迁移后精度修正；
+- current docs 的 MOC/canonical 架构重构、维护手册与迁移后精度修正；
 - 少量测试/维护配置调整；
-- AI exposed tool description 的品牌文案收口（不改变业务写入语义）。
+- AI exposed tool description 的品牌文案收口（不改变业务写入语义）；
+- Starlit Nook Domain foundation：`lib/starlit-nook/*` + domain-contract tests + ADR/current Domain docs。当前没有 Starlit Nook Production table/migration、Supabase adapter、Web API/UI 或 MCP tools。
 
 这些尚未部署的 main 变化不代表 Production Web 已运行相同 commit。
 
@@ -45,7 +46,7 @@ GitHub main 已领先于 Production Web。
 当前主要差异：
 - GitHub main 包含 2026-09-21～22 的 migration/docs 收口；
 - Production Web 仍是 2026-09-15 source commit；
-- 最近 compare 显示差异主要集中在 docs、migration 历史/命名收口、少量 tests、`vercel.json` deployment protection，以及 AI tool description 的品牌文案；
+- 最近 compare 显示差异主要集中在 docs、migration 历史/命名收口、少量 tests、`vercel.json` deployment protection、AI tool description 品牌文案，以及尚未部署的 Starlit Nook Domain foundation；
 - 本轮精度修正没有引入新的业务逻辑、schema 或 Production runtime 变化；
 - 当前 docs 描述 current main contract + 已核验 runtime，并明确区分 main/Production。
 
