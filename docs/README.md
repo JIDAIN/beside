@@ -66,6 +66,7 @@ README.md
 - AI/MCP → [AI MOC](architecture/ai/README.md)
 - Meal/Reminder/Legacy/业务域 → [Domains MOC](domains/README.md)
 - 开发/测试/config/deploy/operations → [Engineering MOC](engineering/README.md)
+- 开发完成后的文档收口 → [Documentation Maintenance Guide](engineering/documentation-maintenance.md)
 - 历史原因/旧验收 → [History MOC](history/README.md)
 
 ## 3. Canonical Fact Rules
@@ -132,3 +133,5 @@ History 解释过去，不定义现在。历史文件内部写“current/canonic
 - milestone → [History](history/README.md)
 
 未来产品 Roadmap 不在 GitHub current docs 展开维护。
+
+完整的文档维护 SOP、何时不更新、何时允许新建文档与 closeout checklist 见 [Documentation Maintenance Guide](engineering/documentation-maintenance.md)。
