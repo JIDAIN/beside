@@ -4,7 +4,7 @@
 
 ## 1. System Boundary
 
-伴岛是 Next.js 一体化 Web 应用：
+当前仓库以 Next.js 作为统一运行基础：伴岛是已运行产品，Starlit Nook 正在以独立 Domain 方式进入同一工程基础设施。
 
 ~~~text
 Browser / AI Client
@@ -130,7 +130,8 @@ authorization code / access token / refresh token → signed partnerKey + scope�
 当前物理上共用一个 Supabase project，但逻辑必须区分：
 - Life facts；
 - Legacy Game facts；
-- Shared / System infrastructure。
+- Shared / System infrastructure；
+- Starlit Nook facts（当前仅 Domain foundation，尚未创建 Production tables）。
 
 Life maintenance 不默认操作 Legacy Game；Meal calories 不自动变成 game deficit；普通 activity 不自动变成 game exercise。
 
@@ -165,6 +166,7 @@ Life maintenance 不默认操作 Legacy Game；Meal calories 不自动变成 gam
 | shared UI | components/ui/** |
 | Life contracts/helpers | lib/life/** |
 | Meal | lib/nutrition/** |
+| Starlit Nook foundation | lib/starlit-nook/** |
 | AI normalization | lib/ai/** |
 | server/auth/adapters/AI/reminder | lib/server/** |
 | DB history | supabase/migrations/** |
