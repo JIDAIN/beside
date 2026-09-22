@@ -30,6 +30,7 @@ AGENTS.md
 - AI/MCP → docs/architecture/ai/README.md
 - Domain → docs/domains/README.md
 - Development/Test/Config/Deploy/Operations/Migration → docs/engineering/README.md
+- Documentation closeout → docs/engineering/documentation-maintenance.md
 
 不要从 History 反推 current behavior。
 
@@ -133,6 +134,8 @@ AI：
 ## 8. Documentation Sync
 
 代码改变事实时按 docs/engineering/development-testing.md 的 Change Recipe 只更新受影响 canonical home。
+
+开发结束后的文档收口按 docs/engineering/documentation-maintenance.md 执行，包括 canonical owner、MOC/link、Current State、ADR/History、新文档必要性与 Obsidian/GitHub 边界检查。
 
 尚未实现设计不写入 GitHub current docs。
 
