@@ -36,6 +36,7 @@ README.md
 - AI/MCP → docs/architecture/ai/README.md
 - Domain → docs/domains/README.md
 - Engineering/migration/deploy/operations → docs/engineering/README.md
+- Documentation closeout → docs/engineering/documentation-maintenance.md
 
 不要从 docs/history、旧聊天、旧 migration 注释或 Git 历史直接推断 current behavior。
 
@@ -125,7 +126,7 @@ UI 重构不得顺手改变 Domain contract、Auth 或 Legacy settlement。
 
 ## 8. Development / Verification
 
-代码改动按受影响范围运行 test/lint/build，并按 docs/engineering/development-testing.md 补 targeted regression。
+代码改动按受影响范围运行 test/lint/build，并按 docs/engineering/development-testing.md 补 targeted regression；开发结束后的文档收口按 docs/engineering/documentation-maintenance.md 执行。
 
 纯文档改动不为形式跑完整 build，但必须检查：
 - current source/runtime；
