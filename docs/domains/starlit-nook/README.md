@@ -193,11 +193,12 @@ AI 不获得任意 SQL / table CRUD。
 
 下一步：
 
-1. 审查 foundation contract；
-2. 生成 migration 草案；
-3. 建 Supabase Repository；
-4. 建 CRUD regression；
-5. 再接 Web API / MCP。
+1. 先在 Obsidian 完成 Starlit Nook 第一版 Web UI / UX 设计；
+2. 用静态假数据验证首页、四类列表、详情、旅行与媒体展示；
+3. 用 UI contract 反向复审当前 types / validation / repository / service；
+4. 只有 UI 验证通过后，再生成 migration 草案；
+5. migration 之后再建 Supabase Repository、CRUD regression、Web API；
+6. 核心 Web UI 接真实数据后，再接 MCP / ChatGPT。
 
 ## 10. Documentation Sync
 
