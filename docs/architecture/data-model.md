@@ -296,6 +296,7 @@ update_meal_photo_display
 `append_meal_item` / `confirm_estimated_meal` 是 AI Access Core 在 canonical Meal read/update 之上提供的业务动作，不是第二套 Meal 表或任意 SQL path。
 
 完整 lifecycle 见 [Meal Lifecycle](../domains/meal/lifecycle.md)，AI 会话规则见 [Meal AI Contract](../domains/meal/ai-contract.md)。
+
 ## 8. Reminder / Notification Model
 
 Reminder 属于 Shared/System orchestration。业务 generation / snooze / provider routing 见 [Reminder Domain](../domains/reminders.md)；本文维护 current table / field / constraint fact。
@@ -414,6 +415,7 @@ provider accepted != 用户已读
 ~~~
 
 Stateful / Condition Nudge、snooze、dedupe 与 provider routing 见 [Reminder Domain](../domains/reminders.md)。
+
 ## 9. Legacy Game Data Boundary
 
 Legacy Game 的 daily record、wallet、exchange 等事实由 Legacy Game Domain 解释。
