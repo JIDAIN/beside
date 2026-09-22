@@ -40,4 +40,4 @@ localStorage、Service Worker 和 stale cache 只能作为可重建读模型或 
 - `docs/architecture/overview.md`
 - `docs/architecture/data-model.md`
 - `docs/architecture/api-and-sync.md`
-- `docs/architecture/life-legacy-boundary.md`
+- `docs/architecture/data-model.md` + `docs/architecture/decisions/0005-life-legacy-data-boundary.md`

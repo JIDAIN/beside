@@ -52,5 +52,5 @@ life_mutate
 - `docs/architecture/overview.md`
 - `docs/architecture/api-and-sync.md`
 - `docs/architecture/ai/architecture.md`
-- `docs/architecture/ai/access-core.md`
+- `docs/architecture/ai/architecture.md`
 - `docs/architecture/ai/natural-language.md`
