@@ -32,6 +32,7 @@ JIDAIN/beside docs
 - 开发一个 Obsidian 方案时，先读取 GitHub current 基线，再把 Obsidian 作为“目标变化”，不能把旧方案当成当前程序现状；
 - GitHub History 记录与仓库实现直接相关的产品/工程演变；Obsidian 可以保留更广的讨论、设计和项目过程；
 - GitHub canonical docs 中已经有稳定事实后，Obsidian 原则上只链接/引用，不复制长期维护同一份 schema、lifecycle、permission 或 runtime 参数。
+- 同一 repo 中的独立 Domain 也遵守同样规则：例如 Starlit Nook 的未实现目标设计维护在 Obsidian `13_Projects/隅星`，GitHub 只记录已经进入 main 的 foundation / contract 与已实现事实。
 
 ## 1. Document Map
 
