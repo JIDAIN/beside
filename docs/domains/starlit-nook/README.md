@@ -179,7 +179,7 @@ AI 不获得任意 SQL / table CRUD。
 
 ## 9. Development Phases
 
-当前：Phase 1 — Domain foundation。
+当前：**Phase 2B — Web UI / UX design validation**。
 
 已完成：
 
@@ -191,10 +191,16 @@ AI 不获得任意 SQL / table CRUD。
 - validation tests；
 - Domain 文档。
 
+当前进度：
+
+- Phase 1 Domain foundation：已完成；
+- Phase 2A GitHub reference implementation review：已完成并收口；
+- Phase 2B Web UI / UX design validation：进行中。
+
 下一步：
 
-1. 先在 Obsidian 完成 Starlit Nook 第一版 Web UI / UX 设计；
-2. 用静态假数据验证首页、四类列表、详情、旅行与媒体展示；
+1. 在 Obsidian 完成 Starlit Nook 页面树与静态原型；
+2. 验证首页、时间线、四类列表、回忆详情、旅行、足迹地图与 Viewer；
 3. 用 UI contract 反向复审当前 types / validation / repository / service；
 4. 只有 UI 验证通过后，再生成 migration 草案；
 5. migration 之后再建 Supabase Repository、CRUD regression、Web API；
