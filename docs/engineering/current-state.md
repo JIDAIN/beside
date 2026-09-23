@@ -1,6 +1,6 @@
 # Current Engineering State
 
-Snapshot date: 2026-09-22.
+Snapshot date: 2026-09-23.
 
 本文只记录 Production Web、GitHub main、Production Supabase 当前差异与未完成验证；产品能力与业务规则不在这里复制。
 
@@ -24,6 +24,7 @@ GitHub main 已领先于 Production Web。
 - current docs 的 MOC/canonical 架构重构、维护手册与迁移后精度修正；
 - 少量测试/维护配置调整；
 - AI exposed tool description 的品牌文案收口（不改变业务写入语义）；
+- current Life UI 的身份 / 品牌文案收口：用户可见人物关系统一按“我 / Ta / 我们”表达，相关页面移除固定“小鱼 / 小猫”映射文案，并清理仍作为产品名展示的“岛屿生活”；
 - Starlit Nook Domain foundation：`lib/starlit-nook/*` + domain-contract tests + ADR/current Domain docs。当前没有 Starlit Nook Production table/migration、Supabase adapter、Web API/UI 或 MCP tools。
 
 这些尚未部署的 main 变化不代表 Production Web 已运行相同 commit。
@@ -46,7 +47,7 @@ GitHub main 已领先于 Production Web。
 当前主要差异：
 - GitHub main 包含 2026-09-21～22 的 migration/docs 收口；
 - Production Web 仍是 2026-09-15 source commit；
-- 最近 compare 显示差异主要集中在 docs、migration 历史/命名收口、少量 tests、`vercel.json` deployment protection、AI tool description 品牌文案，以及尚未部署的 Starlit Nook Domain foundation；
+- 最近 main 相对已核验 Production 的差异主要集中在 docs、migration 历史/命名收口、少量 tests、`vercel.json` deployment protection、AI tool description 品牌文案、current Life UI 身份/品牌文案收口，以及尚未部署的 Starlit Nook Domain foundation；
 - 本轮精度修正没有引入新的业务逻辑、schema 或 Production runtime 变化；
 - 当前 docs 描述 current main contract + 已核验 runtime，并明确区分 main/Production。
 
