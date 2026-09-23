@@ -29,7 +29,6 @@ export function LifeWechatReminderCard({ actor }: { actor: LifePartnerKey }) {
   const [busy, setBusy] = useState<"save" | "test" | "clear" | null>(null);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
-  const accountName = actor === "cat" ? "小猫" : "小鱼";
   const aiName = "团子";
 
   async function save() {
@@ -51,7 +50,7 @@ export function LifeWechatReminderCard({ actor }: { actor: LifePartnerKey }) {
       query.update(true);
       invalidateStaleQuery("life-reminder-settings");
       setToken("");
-      setNotice(`${accountName}的微信提醒已保存，可以发送测试消息了。`);
+      setNotice("微信提醒已保存，可以发送测试消息了。");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "保存失败");
     } finally {
@@ -66,7 +65,7 @@ export function LifeWechatReminderCard({ actor }: { actor: LifePartnerKey }) {
     try {
       const response = await fetch("/api/life/notifications/pushplus", { method: "POST" });
       if (!response.ok) throw new Error(await readError(response));
-      setNotice(`测试消息已交给 PushPlus，请查看${accountName}绑定的微信。`);
+      setNotice("测试消息已交给 PushPlus，请查看当前绑定的微信。");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "测试发送失败");
     } finally {
@@ -84,7 +83,7 @@ export function LifeWechatReminderCard({ actor }: { actor: LifePartnerKey }) {
       query.update(false);
       invalidateStaleQuery("life-reminder-settings");
       setToken("");
-      setNotice(`${accountName}的微信提醒已解绑。`);
+      setNotice("微信提醒已解绑。");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "解绑失败");
     } finally {
@@ -100,7 +99,7 @@ export function LifeWechatReminderCard({ actor }: { actor: LifePartnerKey }) {
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-sm font-extrabold text-[var(--life-text)]">微信提醒</p>
-              <p className="mt-1 text-[10px] leading-4 text-[var(--life-text-muted)]">{aiName}只会提醒当前账号，不会发到 Ta 的微信。</p>
+              <p className="mt-1 text-[10px] leading-4 text-[var(--life-text-muted)]">{aiName}会把提醒发到我绑定的微信，不会打扰 Ta。</p>
             </div>
             <span className="shrink-0 text-[10px] font-bold text-[var(--life-text-muted)]">
               {configured === undefined ? (query.error ? "读取失败" : "读取中") : configured ? "已绑定" : "未绑定"}
