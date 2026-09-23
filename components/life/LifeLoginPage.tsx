@@ -42,8 +42,8 @@ export function LifeLoginPage({ nextPath = "/" }: LifeLoginPageProps) {
       <div className="mx-auto w-full max-w-md">
         <div className="mb-8 text-center">
           <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[var(--life-surface-soft)] text-3xl">🌿</div>
-          <h1 className="mt-4 text-2xl font-black">岛屿生活</h1>
-          <p className="mt-2 text-sm text-[var(--life-text-muted)]">使用原来的账号和密码登录。</p>
+          <h1 className="mt-4 text-2xl font-black">伴岛</h1>
+          <p className="mt-2 text-sm text-[var(--life-text-muted)]">欢迎回到小岛。</p>
         </div>
 
         <section className="life-surface rounded-[var(--life-radius-card)] p-5">
