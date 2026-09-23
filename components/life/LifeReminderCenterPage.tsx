@@ -284,7 +284,7 @@ export function LifeReminderCenterPage() {
                       : "bg-white/70 text-[var(--life-text-body)]"
                   }`}
                 >
-                  {value === "cat" ? "小猫" : value === "fish" ? "小鱼" : "两个人"}
+                  {value === "both" ? "我们" : value === currentPartnerKey ? "我" : "Ta"}
                 </button>
               ))}
             </div>
@@ -358,7 +358,7 @@ export function LifeReminderCenterPage() {
                 <div>
                   <p className="text-xs font-extrabold text-[var(--life-text)]">PushPlus 微信</p>
                   <p className="mt-1 text-[10px] text-[var(--life-text-muted)]">
-                    {settings.pushPlusConfigured ? "当前账号已绑定" : "当前账号还未绑定"}
+                    {settings.pushPlusConfigured ? "我已绑定" : "我还没有绑定"}
                   </p>
                 </div>
                 <Link href="/me" className="text-xs font-extrabold text-[var(--life-teal-strong)]">
@@ -370,7 +370,7 @@ export function LifeReminderCenterPage() {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-xs font-extrabold text-[var(--life-text)]">药箱到期提醒</p>
-                    <p className="mt-1 text-[10px] text-[var(--life-text-muted)]">只影响当前账号；最多提前 90 天。</p>
+                    <p className="mt-1 text-[10px] text-[var(--life-text-muted)]">只影响我的提醒；最多提前 90 天。</p>
                   </div>
                   <button
                     type="button"
@@ -434,7 +434,7 @@ export function LifeReminderCenterPage() {
 
         <p className="px-1 text-center text-[10px] leading-4 text-[var(--life-text-muted)]">
           微信提醒由云端每 5 分钟检查一次，不需要保持网页打开。
-          {currentPartnerKey ? " 当前页面只展示当前账号自己的提醒实例。" : ""}
+          {currentPartnerKey ? " 这里显示的是我的提醒。" : ""}
         </p>
       </div>
     </AppPageShell>
