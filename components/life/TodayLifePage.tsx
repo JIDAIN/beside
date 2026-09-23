@@ -72,7 +72,7 @@ export function TodayLifePage({ initialDate }: { initialDate: string }) {
 
   if (queryNeedsLogin) {
     return (
-      <AppPageShell title="岛屿生活" subtitle="正在前往登录…">
+      <AppPageShell title="伴岛" subtitle="正在前往登录…">
         <div />
       </AppPageShell>
     );
