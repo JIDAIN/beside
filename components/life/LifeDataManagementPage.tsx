@@ -5,6 +5,8 @@ import { useCallback, useRef, useState } from "react";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
 import { AppPageShell } from "@/components/ui/AppPageShell";
+import { useLifeIdentity } from "@/components/life/LifeIdentityContext";
+import type { LifePartnerKey } from "@/lib/life/life-service";
 import { useStaleQuery } from "@/lib/client/use-stale-query";
 import {
   createLifeBackup,
@@ -36,10 +38,9 @@ function scopeLabel(scope: LifeBackupSnapshot["scope"]) {
   if (scope === "config") return "设置";
   return "生活记录";
 }
-function actorLabel(actor: LifeBackupSnapshot["createdBy"]) {
-  if (actor === "cat") return "小猫";
-  if (actor === "fish") return "小鱼";
-  return null;
+function actorLabel(actor: LifeBackupSnapshot["createdBy"], currentPartnerKey: LifePartnerKey | null) {
+  if (!currentPartnerKey || (actor !== "cat" && actor !== "fish")) return null;
+  return actor === currentPartnerKey ? "我" : "Ta";
 }
 function rowSummary(snapshot: LifeBackupSnapshot) {
   const counts = snapshot.rowCounts ?? {};
@@ -62,6 +63,7 @@ function downloadJson(data: Record<string, unknown>) {
 }
 
 export function LifeDataManagementPage() {
+  const { currentPartnerKey } = useLifeIdentity();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -142,7 +144,7 @@ export function LifeDataManagementPage() {
             <div className="mb-2 flex items-end justify-between gap-3"><h2 className="text-sm font-black text-[var(--life-text)]">恢复点</h2>{backupsQuery.loading ? <span className="text-[10px] text-[var(--life-text-muted)]">读取中…</span> : null}</div>
             <div className="life-backup-list">
               {snapshots.length ? snapshots.slice(0, 20).map((snapshot) => {
-                const creator = actorLabel(snapshot.createdBy);
+                const creator = actorLabel(snapshot.createdBy, currentPartnerKey);
                 return <div key={snapshot.id} className="life-backup-row"><div className="min-w-0"><strong>{formatDateTime(snapshot.createdAt)} · {reasonLabel(snapshot.reason)}</strong><p>{scopeLabel(snapshot.scope)} · {rowSummary(snapshot)}{creator ? ` · ${creator}` : ""}</p></div><button type="button" className="life-backup-restore" disabled={Boolean(busy)} onClick={() => { setConfirmation(""); setPending({ kind: "restore", snapshot }); }}>恢复</button></div>;
               }) : <div className="px-3 py-5 text-center text-xs text-[var(--life-text-muted)]">还没有恢复点</div>}
             </div>
