@@ -11,11 +11,26 @@
 - loading / empty / error / stale 必须可区分；
 - UI 不能成为唯一权限边界。
 
-## 2. Identity / 我-Ta
+## 2. Identity / 我-Ta-我们 / User-facing Language
 
-用户界面统一使用“我 / Ta”，不直接暴露 cat / fish。
+内部身份与用户可见称呼必须分开。
 
-角色切换只影响查看对象；真实写权限仍由 signed actor + server 校验决定。任何 UI role switch 都不能切换授权身份。
+- cat / fish / actor / owner / partnerKey 等属于内部 identity / authorization 语言，不作为普通用户界面文案；
+- 当前登录者在需要区分人物时显示为“我”；
+- 另一位显示为“Ta”；
+- 双方共同的内容优先使用“我们”；
+- 如果场景本身不需要强调身份，就直接省略身份词，不为了展示内部角色而写“小鱼 / 小猫”等固定映射昵称；
+- “我 / Ta / 我们”只负责展示语义，真实写权限仍由 signed actor + server 校验；任何 UI role switch 都不能切换授权身份。
+
+用户可见文案使用生活语言，而不是数据库 / 工程语言。不要把内部 key、resource ownership、actor scope 等实现细节直接翻译成界面标签。
+
+伴岛文案保持简约、温暖、亲近，但不过度卖萌：
+- 共同生活场景优先使用自然的“我 / Ta / 我们”表达；
+- 可以有适度生活感和情绪温度，但不能牺牲信息准确性；
+- 错误、删除、权限、安全、数据恢复等严肃场景以清晰准确为第一优先；
+- 控件或标题已经说明含义时，不叠加重复灰色解释。
+
+正式产品 UI 使用“伴岛 / Beside / 小岛”；Island Life / 岛屿生活只作为内部数据域或历史工程术语，不再作为当前产品名展示。
 
 ## 3. Today & Historical Day
 
