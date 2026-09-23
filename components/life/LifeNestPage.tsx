@@ -97,7 +97,7 @@ export function LifeNestPage() {
             <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-[var(--life-border)]" />
             <div className="text-center">
               <p id="anniversary-title" className="text-lg font-black text-[var(--life-text)]">我们的纪念日</p>
-              <p className="mt-1 text-xs leading-5 text-[var(--life-text-muted)]">这是两个人共享的设置，小猫和小鱼都可以修改；首页会据此计算“一起度过的第 N 天”。</p>
+              <p className="mt-1 text-xs leading-5 text-[var(--life-text-muted)]">我们从这一天开始，一起走到现在 ♡</p>
             </div>
             <label className="mt-5 grid gap-1.5 text-xs font-bold text-[var(--life-text-body)]">纪念日<AppInput type="date" value={draftDate} onChange={(event) => setDraftDate(event.target.value)} /></label>
             {error ? <p className="mt-3 rounded-2xl bg-[color:color-mix(in_srgb,var(--life-coral)_14%,white)] px-3 py-2 text-xs text-[var(--life-danger)]">{error}</p> : null}
