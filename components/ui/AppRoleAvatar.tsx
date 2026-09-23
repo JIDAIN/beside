@@ -4,12 +4,9 @@ export type AppRoleAvatarProps = {
   role: RoleKind;
   size?: number;
   className?: string;
+  label?: string;
 };
 
-const ROLE_LABEL: Record<RoleKind, string> = {
-  fish: "鱼鱼",
-  cat: "猫猫",
-};
 
 /**
  * Priority-1: Public user-provided avatar images.
@@ -49,6 +46,7 @@ export function AppRoleAvatar({
   role,
   size = 24,
   className,
+  label = "角色头像",
 }: AppRoleAvatarProps) {
   // TODO Phase 7: when user avatar image exists, uncomment PUBLIC_AVATAR_PATH
   // entry and add an <img> branch here (first in priority chain).
@@ -58,7 +56,7 @@ export function AppRoleAvatar({
       className={className}
       style={{ fontSize: size, lineHeight: 1 }}
       role="img"
-      aria-label={ROLE_LABEL[role]}
+      aria-label={label}
     >
       {ROLE_EMOJI[role]}
     </span>
