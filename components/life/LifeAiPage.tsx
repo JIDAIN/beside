@@ -30,7 +30,7 @@ export function LifeAiPage() {
     {
       id: "welcome",
       role: "assistant",
-      content: "我可以直接查询和维护岛屿生活里的真实记录。你可以问“药箱还有什么”“我今天吃了什么”，也可以说“把今天体重记成 52.4”“这张照片是午饭，帮我记上”。",
+      content: "我可以直接查询和维护伴岛里的真实记录。你可以问“药箱还有什么”“我今天吃了什么”，也可以说“把今天体重记成 52.4”“这张照片是午饭，帮我记上”。",
     },
   ]);
   const [text, setText] = useState("");
@@ -110,10 +110,10 @@ export function LifeAiPage() {
 
   if (!authenticated || !currentPartnerKey) {
     return (
-      <AppPageShell title="AI 助手" subtitle="AI 会沿用你的生活账号权限。">
+      <AppPageShell title="AI 助手" subtitle="团子会沿用你的伴岛账号权限。">
         <section className="life-surface life-section-card">
           <p className="text-sm font-extrabold">请先登录</p>
-          <p className="mt-2 text-xs leading-5 text-[var(--life-text-muted)]">登录后 AI 才能知道当前是 cat 还是 fish，并按同样的权限查询和修改数据。</p>
+          <p className="mt-2 text-xs leading-5 text-[var(--life-text-muted)]">登录后，团子会按你的账号权限查询和修改伴岛里的真实记录。</p>
           <Link href="/login" className="mt-4 inline-flex rounded-full bg-[var(--life-teal)] px-5 py-2.5 text-sm font-black text-white">去登录</Link>
         </section>
       </AppPageShell>
@@ -123,7 +123,7 @@ export function LifeAiPage() {
   return (
     <AppPageShell
       title="AI 助手"
-      subtitle={`当前身份：${currentPartnerKey === "cat" ? "猫猫" : "鱼鱼"}。查询读真实数据，修改直接写回云端。`}
+      subtitle="团子只会在我的权限范围内查询和修改伴岛里的真实记录。"
       actions={<Link href="/me" className="rounded-full bg-white/75 px-3 py-2 text-xs font-extrabold text-[var(--life-teal-strong)]">返回</Link>}
     >
       <section className="grid gap-3 pb-32">
