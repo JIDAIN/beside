@@ -4,7 +4,7 @@
 
 ## 1. System Boundary
 
-当前仓库以 Next.js 作为统一运行基础：伴岛是已运行产品，Starlit Nook 正在以独立 Domain 方式进入同一工程基础设施。
+当前仓库以 Next.js 作为 Beside 的运行基础。Starlit Nook 已决定拆为独立 GitHub / Vercel 应用，仅共享 Supabase / Fish-Cat identity / couple_space 等基础设施；本仓库当前仅暂时保留其迁移源代码，等待新仓库建立后移除。
 
 ~~~text
 Browser / AI Client
@@ -131,7 +131,7 @@ authorization code / access token / refresh token → signed partnerKey + scope�
 - Life facts；
 - Legacy Game facts；
 - Shared / System infrastructure；
-- Starlit Nook facts（当前仅 Domain foundation，尚未创建 Production tables）。
+- Starlit Nook facts（未来由独立 Starlit Nook 应用维护；仍共用当前 Supabase Project，尚未创建 Production tables）。
 
 Life maintenance 不默认操作 Legacy Game；Meal calories 不自动变成 game deficit；普通 activity 不自动变成 game exercise。
 
@@ -166,7 +166,7 @@ Life maintenance 不默认操作 Legacy Game；Meal calories 不自动变成 gam
 | shared UI | components/ui/** |
 | Life contracts/helpers | lib/life/** |
 | Meal | lib/nutrition/** |
-| Starlit Nook foundation | lib/starlit-nook/** |
+| Starlit Nook migration source (temporary) | lib/starlit-nook/**；待独立仓库建立后移除 |
 | AI normalization | lib/ai/** |
 | server/auth/adapters/AI/reminder | lib/server/** |
 | DB history | supabase/migrations/** |
