@@ -20,7 +20,7 @@ Domain 不是代码文件夹的同义词。简单功能可以由 Product + Data 
 | Meal | complex | personal | Food | [Meal MOC](meal/README.md) | lib/nutrition/* | rich | no direct |
 | Reminder | complex/system | actor/system | Me | [Reminder Domain](reminders.md) | reminder client/server + DB funcs | limited | self |
 | Legacy Game | complex/legacy | game-specific | Game Machine | [Legacy Game Domain](legacy-game.md) | lib/home/* | legacy_home | separate |
-| Starlit Nook | complex/foundation | shared contract | not user-facing | [Starlit Nook Domain](starlit-nook/README.md) | lib/starlit-nook/* | none current | no |
+| Starlit Nook (migration source) | external app / temporary source | shared contract | external product | [Starlit Nook migration source](starlit-nook/README.md) | lib/starlit-nook/* (temporary) | none current | no |
 
 详细权限始终以 [Auth & Identity](../architecture/auth-and-identity.md) 为准，当前入口以 [Product Overview](../product/overview.md) 为准。
 
@@ -29,7 +29,7 @@ Domain 不是代码文件夹的同义词。简单功能可以由 Product + Data 
 - [Meal](meal/README.md)：多 contract，保留子目录。
 - [Reminder](reminders.md)：单文件复杂 Domain，覆盖 generation/state/delivery/provider。
 - [Legacy Game](legacy-game.md)：单文件复杂 Domain，覆盖 settlement/currency/wallet/heatmap 等。
-- [Starlit Nook](starlit-nook/README.md)：开发中复杂 Domain；当前只有 types/validation/query/repository interface/service/tests foundation，尚无 Production persistence、Web API/UI 或 AI tool。
+- [Starlit Nook](starlit-nook/README.md)：已决定迁移为独立 GitHub / Vercel 应用；当前目录只保留迁移源，待新仓库建立并校验后删除。
 
 ## 3. Simple Domains
 
