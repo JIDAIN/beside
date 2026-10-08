@@ -1,7 +1,8 @@
-# ADR-0008 Starlit Nook 与 Beside 共享基础设施但保持独立 Domain
+# ADR-0008 Starlit Nook 独立应用，共享 Supabase / identity 基础
 
-- Status: Accepted
-- Date: 2026-09-22
+- Status: Superseded / Updated
+- Original Date: 2026-09-22
+- Updated: 2026-10-08
 
 ## Context
 
@@ -15,90 +16,95 @@ Starlit Nook
 → 展示已经留下来的共同回忆
 ~~~
 
-但两者当前都服务于同一个 Fish / Cat couple space，并且 Beside 已经拥有稳定的：
+早期为了快速建立 Domain foundation，Starlit Nook 曾暂时放在 `JIDAIN/beside` 同一仓库中。
 
-- fixed Cat / Fish identity；
-- signed Web session；
-- OAuth 2.0 + PKCE；
-- MCP transport；
-- trusted actor boundary；
-- canonical service pattern；
-- Supabase project；
-- Vercel runtime；
-- migration / RLS 规则。
-
-如果为了产品独立而立即新建 repo、账号体系、OAuth、数据库和 MCP，会复制大量基础设施。
-
-反过来，如果把 Starlit Nook 直接塞进 Life Domain，又会造成产品边界和业务 contract 混淆。
+随着 UI / UX、Timeline、Map、Viewer、Trip 等边界逐渐明确，Starlit Nook 已经具备独立产品、独立部署与独立迭代周期，不应继续与 Beside 共用同一个 Next.js 应用仓库。
 
 ## Decision
 
-第一版采用：
+正式目标架构调整为：
 
 ~~~text
-同一个 JIDAIN/beside repo
-同一个 Next.js / Vercel 基础
-同一个 Cat/Fish identity
-同一个 couple_space
-同一个 Supabase project
-同一个 OAuth / MCP transport foundation
-
-但：
-
-Life / Beside Domain
-≠
-Starlit Nook Domain
+JIDAIN/beside
+→ Beside 独立应用
+→ Beside 独立 Vercel Project
+        │
+        └──── shared Supabase / Fish-Cat identity / couple_space
+        │
+JIDAIN/starlit-nook
+→ Starlit Nook 独立应用
+→ Starlit Nook 独立 Vercel Project
 ~~~
 
-Starlit Nook 保持独立 Domain 边界。
+共享：
 
-当前已经独立：
-- lib/starlit-nook/*
-- canonical service / Repository interface
-- Domain docs / tests
+- 同一个 Supabase Project；
+- Fish / Cat identity 语义；
+- `couple_space`；
+- RLS / auth / OAuth / MCP 的安全原则与可复用基础 contract。
 
-后续真正实现 persistence / transport / UI 时，也应保持独立：
-- starlit_nook_* 数据表；
-- Web API family；
-- MCP tool surface；
-- UI route。
+不共享：
 
-Starlit Nook 不进入 life_query / life_mutate，也不把业务字段塞进 Life 表。
+- Git repository；
+- Next.js runtime；
+- Vercel Project；
+- UI component tree；
+- Domain source tree；
+- Starlit Nook API / MCP Adapter 实现。
+
+原则：
+
+> **共享身份与数据基础设施，不共享应用仓库和部署生命周期。**
+
+## Migration State
+
+当前 `JIDAIN/beside` 仍暂时保留以下迁移源文件，直到 `JIDAIN/starlit-nook` 新仓库成功建立并校验完成：
+
+~~~text
+lib/starlit-nook/*
+tests/starlit-nook/*
+docs/domains/starlit-nook/*
+~~~
+
+迁移完成前不得删除这些文件。
+
+迁移完成后：
+
+1. 将 Domain foundation 移入 `JIDAIN/starlit-nook`；
+2. 在新仓库建立自己的 docs / tests / app / components；
+3. 从 Beside 删除 Starlit Nook source / tests / domain docs；
+4. Beside 只保留跨产品边界说明，不保留 Starlit Nook 业务实现。
 
 ## Consequences
 
 优点：
 
-- 不复制身份、OAuth、MCP、安全和部署基础设施；
-- Fish / Cat identity 与 couple_space 保持一致；
-- Starlit Nook 可以快速进入开发；
-- 产品边界、数据模型和 AI surface 仍独立；
-- 以后若独立部署，可以从清楚的 Domain boundary 拆出。
+- 两个产品可独立部署 / 回滚；
+- 隅星 UI / Map / Viewer / Trip 可独立快速迭代；
+- Beside UI 重构不会影响隅星；
+- 隅星故障不会直接拖垮伴岛 Web runtime；
+- 仍保持共享身份和同一 couple space；
+- 跨产品引用无需跨数据库复制身份体系。
 
 约束：
 
-- 共享 repo 不代表两个产品可以互相直接改表；
-- Starlit Nook 不得依赖 Life UI state 作为事实源；
-- Beside 数据若进入 Starlit Nook 展示，必须经过明确引用 / promotion contract；
-- Starlit Nook 的 schema / API / MCP 变化必须维护自己的 Domain 文档和 tests；
-- 物理拆分只有真实运维 / 规模需求出现后再做。
+- 两个应用不能互相直接改对方业务表；
+- 跨产品读写必须走明确 contract；
+- Starlit Nook schema 仍使用 `starlit_nook_*` 命名；
+- Supabase 权限必须识别同一 Fish / Cat identity；
+- Vercel 环境变量分别管理；
+- Production migration / deploy 仍需明确授权。
 
 ## Out of Scope
 
 本 ADR 不决定：
 
-- Starlit Nook 具体 UI；
-- 10 张表的最终 SQL；
+- Starlit Nook 最终 UI 视觉；
+- 10 张表最终 SQL；
 - R2 provider 细节；
-- 回忆整理程序；
-- 独立域名 / 独立 Vercel Project 的未来时机。
+- 回忆整理程序。
 
 ## Related
 
-- docs/domains/starlit-nook/README.md
-- docs/architecture/overview.md
-- docs/architecture/auth-and-identity.md
-- docs/architecture/ai/architecture.md
-- ADR-0001
-- ADR-0002
-- ADR-0003
+- Obsidian `13_Projects/隅星/01_系统架构.md`
+- Obsidian `13_Projects/隅星/05_开发实施方案.md`
