@@ -4,7 +4,7 @@
 
 ## 1. System Boundary
 
-当前仓库以 Next.js 作为 Beside 的运行基础。Starlit Nook 已决定拆为独立 GitHub / Vercel 应用，仅共享 Supabase / Fish-Cat identity / couple_space 等基础设施；本仓库当前仅暂时保留其迁移源代码，等待新仓库建立后移除。
+当前仓库以 Next.js 作为 Beside 的运行基础。Starlit Nook 已迁为独立 GitHub / Vercel 应用，仅共享 Supabase / Fish-Cat identity / couple_space 等基础设施；本仓库不再承载 Starlit Nook 业务实现。
 
 ~~~text
 Browser / AI Client
@@ -166,7 +166,6 @@ Life maintenance 不默认操作 Legacy Game；Meal calories 不自动变成 gam
 | shared UI | components/ui/** |
 | Life contracts/helpers | lib/life/** |
 | Meal | lib/nutrition/** |
-| Starlit Nook migration source (temporary) | lib/starlit-nook/**；待独立仓库建立后移除 |
 | AI normalization | lib/ai/** |
 | server/auth/adapters/AI/reminder | lib/server/** |
 | DB history | supabase/migrations/** |
