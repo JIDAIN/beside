@@ -1,10 +1,10 @@
 # Starlit Nook Domain
 
-> Status: Current code foundation / not user-facing
+> Status: **Migration source only — moving to independent JIDAIN/starlit-nook repository**
 >
 > Product: 隅星 / Starlit Nook；小名：星星角。
 
-本文只记录 **已经进入 GitHub main 的 Starlit Nook Domain contract**。尚未实现的 UI、数据库、MCP、媒体 provider 与阶段计划继续维护在 Obsidian `13_Projects/隅星`，不提前写成 GitHub current fact。
+本文记录当前暂存在 JIDAIN/beside 的 Starlit Nook Domain foundation。架构已决定迁移为独立 JIDAIN/starlit-nook GitHub / Vercel 应用；在新仓库建立并校验完成前，本目录只作为安全迁移源保留，不再继续承载新的 Starlit Nook Web UI / API / MCP 开发。
 
 ## 1. Current Domain Boundary
 
@@ -212,9 +212,9 @@ sourceRef optional
 
 ## 9. Architecture Boundary
 
-ADR-0008 已决定：Starlit Nook 与 Beside 可以共享当前 repo / identity / transport foundation，但保持独立 Domain。
+ADR-0008 已更新：Starlit Nook 与 Beside 不再共享 repo / Vercel runtime；两者仅共享 Supabase、Fish / Cat identity、couple_space 与相关安全基础。
 
-这个 ADR 是长期架构取舍，不等于上述未实现层已经存在。
+当前 lib/starlit-nook/*、tests 与本目录将在独立仓库建立后迁出并从 Beside 删除。
 
 Life / Starlit Nook 不应互相直接改表；若未来 Beside fact promotion 到 Starlit Nook，需要单独定义明确 contract。
 
