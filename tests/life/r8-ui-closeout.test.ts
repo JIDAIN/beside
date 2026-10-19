@@ -159,8 +159,8 @@ describe("R8.3 visual polish and interaction closeout", () => {
 
   it("simplifies My to nickname sync and data management while hiding the R9 /ai entry", () => {
     const me = source("components/life/LifeMePage.tsx");
-    expect(me).toContain('currentPartnerKey === "cat" ? "小猫"');
-    expect(me).toContain('currentPartnerKey === "fish" ? "小鱼"');
+    expect(me).toContain('currentPartnerKey === "cat" ? "🐱" : "🐟"');
+    expect(me).not.toContain('currentPartnerKey === "fish" ? "小鱼"');
     expect(me).toContain("云端同步");
     expect(me).toContain('href="/me/data"');
     expect(me).not.toContain("身份映射");
