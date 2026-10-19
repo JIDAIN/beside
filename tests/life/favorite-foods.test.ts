@@ -24,6 +24,16 @@ describe("frequent food templates", () => {
     expect(parseFavoriteFoodWritePayload({ partnerKey: "fish", name: "酸奶", caloriesKcal: -1 }).ok).toBe(false);
   });
 
+  it("registers personal favorite food AI capabilities", () => {
+    const registry = source("lib/server/life-agent-registry.ts");
+    const normalizer = source("lib/ai/life-input-normalizer.ts");
+    expect(registry).toContain('case "favorite_food":');
+    expect(registry).toContain("getFavoriteFoodOwner(id)");
+    expect(registry).toContain("parseFavoriteFoodWritePayload");
+    expect(registry).toContain("fromMealItemId");
+    expect(normalizer).toContain('常吃食物: "favorite_food"');
+  });
+
   it("keeps favorite templates personal at API and storage boundaries", () => {
     const collection = source("app/api/favorite-foods/route.ts");
     const item = source("app/api/favorite-foods/[id]/route.ts");
