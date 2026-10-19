@@ -93,6 +93,12 @@ text/name/title/description/content/activity → text。
 
 主餐唯一、snack 多事件、append、estimated→confirmed、chat draft 与正式 photo 全部以 Meal Domain 为准。
 
+### Favorite Food
+
+常吃食物 / 常见食物 / 常用食物 → favorite_food；name/foodName/title → name。
+仅查询和修改本人模板。历史 Meal 复制要求 fromMealId、mealDate；多 item 时另需 fromMealItemId。
+不要猜 UUID，不把仅保存模板的请求误写成当天饮食记录。
+
 ### Weight
 weightKg/weight/kg/value → weightKg。
 缺数值必须问。
