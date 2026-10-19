@@ -118,6 +118,7 @@ function normalizeResource(value: unknown, mode: "query" | "mutate") {
     药箱: "medicine", 药品: "medicine", 药物: "medicine",
     信箱: "mailbox", 小信箱: "mailbox", 信件: "mailbox",
     设置: "settings",
+    常吃食物: "favorite_food", 常见食物: "favorite_food", 常用食物: "favorite_food",
     今日: "day", 日汇总: "day", 生活记录: "day",
   };
   const normalized = common[raw] || raw;
@@ -242,6 +243,11 @@ export function normalizeLifeQueryArgs(args: unknown, context: NormalizeContext)
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateFrom)) out.dateFrom = dateFrom;
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateTo)) out.dateTo = dateTo;
   }
+  if (resource === "favorite_food") {
+    out.person = normalizePerson(first(row, ["person", "owner", "who"]), false);
+    const name = text(first(row, ["name", "query", "keyword", "foodName"]));
+    if (name) out.name = name;
+  }
   if (resource === "medicine") {
     const name = text(first(row, ["name", "query", "keyword", "medicineName", "drugName"]));
     if (name) out.name = name;
@@ -346,6 +352,15 @@ export function normalizeLifeMutationArgs(args: unknown, context: NormalizeConte
     data.weightKg = weight;
   }
 
+  if (resource === "favorite_food") {
+    if (action === "create" && !text(sourceData.fromMealId)) {
+      data.name = text(first(sourceData, ["name", "foodName", "title"]));
+      if (!data.name) throw new LifeClarificationError("想保存哪一种常吃食物？", ["name"]);
+    }
+    if (action === "update" && first(sourceData, ["name", "foodName", "title"]) != null) {
+      data.name = text(first(sourceData, ["name", "foodName", "title"]));
+    }
+  }
   if (resource === "medicine") {
     data.name = text(first(sourceData, ["name", "medicineName", "drugName", "title", "medicine"]));
     if (!data.name) throw new LifeClarificationError("要记录哪种药？", ["name"]);
