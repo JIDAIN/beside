@@ -63,6 +63,8 @@ import {
   updateMailboxDraft,
 } from "./supabase-mailbox";
 import { getLifeExport, getLifeSettings, updateLifeSettings } from "./life-data-management";
+import { parseFavoriteFoodWritePayload } from "../nutrition/favorite-food-service";
+import { createFavoriteFood, deleteFavoriteFood, getFavoriteFoodOwner, listFavoriteFoods, updateFavoriteFood } from "./supabase-favorite-foods";
 import { loadHomeSyncSnapshot, saveHomeSyncSnapshot } from "./supabase-home-sync";
 
 export type LifeAgentAttachment = {
@@ -294,7 +296,7 @@ export const LIFE_AGENT_TOOLS = [
         properties: {
           resource: {
             type: "string",
-            description: "day/mood/sleep/activity/month/meal/weight/medicine/mailbox/settings/life_export/legacy_home；也接受对应中文别名。mailbox 返回当前账号可见的收信、已寄出和自己的待寄出草稿。",
+            description: "day/mood/sleep/activity/month/meal/favorite_food/weight/medicine/mailbox/settings/life_export/legacy_home；也接受对应中文别名。mailbox 返回当前账号可见的收信、已寄出和自己的待寄出草稿。",
           },
           date: { type: "string", description: "可选 YYYY-MM-DD；day/mood/sleep/activity/meal 默认今天；weight 有 date 时只返回该日" },
           dateFrom: { type: "string", description: "weight 可选起始日期 YYYY-MM-DD" },
@@ -319,7 +321,7 @@ export const LIFE_AGENT_TOOLS = [
         properties: {
           resource: {
             type: "string",
-            description: "mood/sleep/activity/meal/weight/medicine/mailbox/settings/legacy_home；也接受对应中文别名。",
+            description: "mood/sleep/activity/meal/favorite_food/weight/medicine/mailbox/settings/legacy_home；也接受对应中文别名。",
           },
           action: { type: "string", description: "可选。记录/新增=create，修改=update，删除=delete；meal 补录食物=append_meal_item，饭后确认估算餐=confirm_estimated_meal；mood/sleep 默认 upsert，settings 默认 update。mailbox 寄出已有草稿使用 update + data.status=sent。" },
           id: { type: "string", description: "update/delete 的记录 UUID；禁止猜测，不知道时先查询" },
@@ -362,6 +364,7 @@ function capabilities(identity: FixedLifeIdentity) {
       activity: "按日期与 me/ta/all 查询活动；both 活动对双方均可见",
       month: "某月双人心情；默认本月",
       meal: "按日期与 me/ta/all 查询餐食；日期默认今天",
+      favorite_food: "当前 OAuth 账号自己的常吃食物模板，可按 name 查询",
       weight: "按 me/ta 查询体重；支持 date/dateFrom/dateTo/limit",
       medicine: "家庭药箱，可按药名/关键词过滤",
       mailbox: "当前账号可见的小信箱：自己的 draft + 双方相关的 sent；可用 limit 取最近 N 条",
@@ -373,6 +376,7 @@ function capabilities(identity: FixedLifeIdentity) {
       mood: "upsert/delete；只操作当前 OAuth 账号",
       sleep: "upsert；只写当前 OAuth 账号；支持 bedtime/sleepTime 与 wakeTime 等别名",
       activity: "create/update/delete；participantScope=me/both；both 创建一条双方共享活动",
+      favorite_food: "create/update/delete；只修改当前 OAuth 账号的个人模板，不创建当天 Meal；可从自己的 Meal 条目复制",
       meal: "create/update/append_meal_item/confirm_estimated_meal/delete；早餐/午餐/晚餐每天各最多一条，补录更新原记录；上午/下午/晚上加餐可各记录多次且每次独立保留照片；补录和饭后确认保留 eatenAt；只写当前 OAuth 账号；可 attachPhoto",
       weight: "create/update/delete；只写当前 OAuth 账号；缺体重数值时向用户确认",
       medicine: "create/update/delete；medicineName/drugName/name 均可；数量缺省为 1",
@@ -417,6 +421,13 @@ async function queryLife(args: JsonRecord, context: LifeAgentExecutionContext) {
       const date = stringValue(args.date);
       if (!date) throw new Error("meal 查询需要 date");
       return listMeals({ mealDate: date, partnerKey: resolvePerson(args.person, context.identity, true) });
+    }
+    case "favorite_food": {
+      const person = resolvePerson(args.person, context.identity, false);
+      if (person !== context.identity.partnerKey) throw new Error("只能查询自己的常吃食物");
+      const foods = await listFavoriteFoods(context.identity.partnerKey);
+      const name = stringValue(args.name).toLowerCase();
+      return name ? foods.filter((food) => food.name.toLowerCase().includes(name)) : foods;
     }
     case "weight": {
       const partnerKey = resolvePerson(args.person, context.identity, false);
@@ -585,6 +596,46 @@ async function mutateLife(args: JsonRecord, context: LifeAgentExecutionContext) 
         meal = await bindAttachmentToMeal(meal.id, context.attachment);
       }
       return meal;
+    }
+    case "favorite_food": {
+      requireOwnMutationTarget(args, data, context);
+      if (!["create", "update", "delete"].includes(action)) throw new Error("常吃食物仅支持 create/update/delete");
+      const id = action === "create" ? "" : requireId(args);
+      if (action !== "create") {
+        const owner = await getFavoriteFoodOwner(id);
+        if (owner !== actor) throw new Error("只能修改自己的常吃食物");
+        if (action === "delete") {
+          await deleteFavoriteFood(id, actor);
+          return { deletedId: id };
+        }
+      }
+      const ownFoods = await listFavoriteFoods(actor);
+      const existing = action === "update" ? ownFoods.find((food) => food.id === id) : null;
+      if (action === "update" && !existing) throw new Error("常吃食物不存在");
+      let copy: JsonRecord = {};
+      if (action === "create" && stringValue(data.fromMealId)) {
+        const mealId = stringValue(data.fromMealId);
+        if (!isUuid(mealId)) throw new Error("来源餐食 ID 无效");
+        const date = stringValue(data.mealDate);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error("复制已有餐食需提供 mealDate");
+        const source = (await listMeals({ mealDate: date, partnerKey: actor })).find((meal) => meal.id === mealId);
+        if (!source) throw new Error("找不到自己的来源餐食");
+        const itemId = stringValue(data.fromMealItemId);
+        const item = itemId ? source.items.find((entry) => entry.id === itemId)
+          : source.items.length === 1 ? source.items[0] : null;
+        if (!item) throw new Error("请提供唯一的 fromMealItemId");
+        copy = { name: item.displayName || item.rawName, portionDescription: item.portionDescription,
+          caloriesKcal: item.caloriesKcal, proteinG: item.proteinG, carbsG: item.carbsG, fatG: item.fatG };
+      }
+      const parsed = parseFavoriteFoodWritePayload({ ...copy, ...(existing || {}), ...data, partnerKey: actor });
+      if (!parsed.ok) throw new Error(parsed.reason);
+      if (action === "create") {
+        if (ownFoods.some((food) => food.name.trim().toLowerCase() === parsed.value.name.toLowerCase())) {
+          throw new Error("已有同名常吃食物，请查询后修改原模板");
+        }
+        return createFavoriteFood(parsed.value);
+      }
+      return updateFavoriteFood(id, parsed.value);
     }
     case "weight": {
       requireOwnMutationTarget(args, data, context);
