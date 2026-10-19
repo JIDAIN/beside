@@ -1,33 +1,25 @@
 # Current Engineering State
 
-Snapshot date: 2026-09-23.
+Snapshot date: 2026-10-19.
 
 本文只记录 Production Web、GitHub main、Production Supabase 当前差异与未完成验证；产品能力与业务规则不在这里复制。
 
 ## 1. Production Web
 
 最近一次已核验 Production：
-- deployment: dpl_9VcNvuPrXogywWixknPS7z97qN1P
+- deployment: dpl_8bqUpgPD7mD5GCoUq19rg78c2Cov
 - state: READY
 - target: production
-- source commit: 0bd6f5fa6a7f96a4dac6311feb73322249fe4245
-- deployment date: 2026-09-15
+- source commit: 0db5b1b6924d3a5f413299e8176cb4c82780a13a
+- deployment date: 2026-10-19
 
-本轮文档重构没有获得新的 Vercel 部署授权，因此没有触发新的 Production deployment。
+本轮获明确授权完成 Production deployment；本次部署新增 AI 常吃食物模板的查询、新建、修改、删除及从自己历史餐食复制能力，无 Supabase DDL 变更。
 
 ## 2. GitHub Main
 
-GitHub main 已领先于 Production Web。
+GitHub main 的功能代码与本次 Production source commit 一致；其后只有测试断言与部署状态文档收口未包含在 Production source commit 中。
 
-领先内容主要包括：
-- Supabase migration 历史/顺序收口；
-- current docs 的 MOC/canonical 架构重构、维护手册与迁移后精度修正；
-- 少量测试/维护配置调整；
-- AI exposed tool description 的品牌文案收口（不改变业务写入语义）；
-- current Life UI 的身份 / 品牌文案收口：用户可见人物关系统一按“我 / Ta / 我们”表达，相关页面移除固定“小鱼 / 小猫”映射文案，并清理仍作为产品名展示的“岛屿生活”；
-- Starlit Nook Domain foundation：`lib/starlit-nook/*` + domain-contract tests + ADR/current Domain docs。当前没有 Starlit Nook Production table/migration、Supabase adapter、Web API/UI 或 MCP tools。
-
-这些尚未部署的 main 变化不代表 Production Web 已运行相同 commit。
+最近功能变更：Life MCP 的 favorite_food AI 资源通过现有服务实现个人模板管理；无新增 MCP 工具名、数据库 schema 或部署环境变量。
 
 ## 3. Production Supabase
 
@@ -44,14 +36,10 @@ GitHub main 已领先于 Production Web。
 
 ## 4. Main vs Production Differences
 
-当前主要差异：
-- GitHub main 包含 2026-09-21～22 的 migration/docs 收口；
-- Production Web 仍是 2026-09-15 source commit；
-- 最近 main 相对已核验 Production 的差异主要集中在 docs、migration 历史/命名收口、少量 tests、`vercel.json` deployment protection、AI tool description 品牌文案、current Life UI 身份/品牌文案收口，以及尚未部署的 Starlit Nook Domain foundation；
-- 本轮精度修正没有引入新的业务逻辑、schema 或 Production runtime 变化；
-- 当前 docs 描述 current main contract + 已核验 runtime，并明确区分 main/Production。
-
-因此“main ahead of Production”不能简单解释为“线上缺少所有 main 功能”；判断某项是否已上线仍需按文件/行为核 deployment source 与 runtime。
+- Production Web 已运行 2026-10-19 source commit 0db5b1b。
+- 后续 GitHub main 仅包含过时 UI 测试断言修正与 current-state 文档收口，不改变实际 Web / MCP 业务逻辑。
+- Supabase runtime 本轮未写入、未执行 migration；沿用既有 favorite_food_templates 数据结构。
+- 旧的 2026-09-23 记录中的“main ahead of Production”描述不再适用于当前功能代码。
 
 ## 5. Outstanding Verification
 
