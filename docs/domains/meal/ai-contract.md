@@ -143,7 +143,16 @@ Supabase：
 - tests/ai/*
 - relevant tests/server/*
 
-## 13. Regression Entry
+## 13. Favorite Food AI Access
+
+favorite_food 为个人常吃食物模板，不是 Meal 事件。
+- life_query(resource=favorite_food) 只读当前 OAuth 身份的模板，可按 name 过滤。
+- life_mutate(resource=favorite_food, action=create/update/delete) 只维护当前身份模板。更新与删除以真实 UUID 定位，服务端重新核验 owner。
+- create 支持 name、portionDescription、caloriesKcal、proteinG、carbsG、fatG；可用 fromMealId + mealDate，从自己已有的单食物 Meal 复制；多食物 Meal 还需 fromMealItemId。
+- 同名模板拒绝重复创建，需先查询后更新。营养不确定时保留 null。
+- 模板新建不会新建今天的 Meal；模板与历史 Meal 不持续关联。删除需用户当轮明确授权。
+
+## 14. Regression Entry
 
 修改本流程必须覆盖：
 - first turn 不直接落库；
@@ -158,7 +167,7 @@ Supabase：
 
 完整测试路由见 Engineering / Development & Testing。
 
-## 14. Change Impact
+## 15. Change Impact
 
 - draft confirmation policy → Project Instructions + AI tests；
 - target resolution → Natural Language + Lifecycle + tests；
@@ -166,7 +175,7 @@ Supabase：
 - vision output contract → AI/vision tests；
 - nutrition precision policy → Lifecycle + AI tests。
 
-## 15. Maintenance Rules
+## 16. Maintenance Rules
 
 对话/AI orchestration 改变时更新本文。
 持久化 lifecycle 只在 Lifecycle；媒体保存只在 Photo Storage。
