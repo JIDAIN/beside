@@ -1,6 +1,6 @@
 # Current Engineering State
 
-Snapshot date: 2026-10-19.
+Snapshot date: 2026-11-02.
 
 本文只记录 Production Web、GitHub main、Production Supabase 当前差异与未完成验证；产品能力与业务规则不在这里复制。
 
@@ -17,7 +17,7 @@ Snapshot date: 2026-10-19.
 
 ## 2. GitHub Main
 
-GitHub main 的功能代码与本次 Production source commit 一致；其后只有测试断言与部署状态文档收口未包含在 Production source commit 中。
+GitHub main 已领先已核验 Production：新增心愿清单的页面、共享 API、数据模型、测试与尚未执行的 Supabase migration 草案。该功能尚未完成 build/runtime 验证，当前不能作为已发布能力使用。
 
 最近功能变更：Life MCP 的 favorite_food AI 资源通过现有服务实现个人模板管理；无新增 MCP 工具名、数据库 schema 或部署环境变量。
 
@@ -36,14 +36,14 @@ GitHub main 的功能代码与本次 Production source commit 一致；其后只
 
 ## 4. Main vs Production Differences
 
-- Production Web 已运行 2026-10-19 source commit 0db5b1b。
-- 后续 GitHub main 仅包含过时 UI 测试断言修正与 current-state 文档收口，不改变实际 Web / MCP 业务逻辑。
-- Supabase runtime 本轮未写入、未执行 migration；沿用既有 favorite_food_templates 数据结构。
+- 最近一次有记录的 Production Web 核验仍为 2026-10-19 source commit 0db5b1b；本轮未重新核对 Vercel runtime。
+- GitHub main 本轮新增 /nest/wishes、/api/life/wishes 和 migration 20261102000000_life_wishes.sql，尚未完成可发布验证。
+- 本轮没有对 Production Supabase 写入或执行 migration。心愿功能依赖新表及 RPC，未迁移前不能正常使用。
 - 旧的 2026-09-23 记录中的“main ahead of Production”描述不再适用于当前功能代码。
 
 ## 5. Outstanding Verification
 
-Blank-database full replay 尚未在一次性全空数据库中完成从零重建验证。
+心愿清单的 test/lint/build、共享读写 runtime、移动端视觉验收及 Production migration 均尚未完成；不得因此宣布功能上线。\n\nBlank-database full replay 尚未在一次性全空数据库中完成从零重建验证。
 
 这属于长期灾备/新环境验证，不阻塞当前日常使用；不要为了完成文档清单单独创建可能收费的 Supabase branch/project。
 
