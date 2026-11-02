@@ -11,13 +11,14 @@ import { fetchLifeSettings, patchLifeSettings } from "@/lib/life/settings-client
 import { daysTogether, type LifeSettings } from "@/lib/life/settings-service";
 import { localIsoDate } from "./today/today-life-model";
 
-type NestIconName = "weight" | "mailbox" | "medicine" | "game";
+type NestIconName = "weight" | "mailbox" | "medicine" | "game" | "wishes";
 
 const tiles: ReadonlyArray<{ href: string; icon: NestIconName; title: string; note: string; tone: string }> = [
   { href: "/nest/weight", icon: "weight", title: "体重", note: "看见变化，也保留每一次记录", tone: "is-blue" },
   { href: "/nest/mailbox", icon: "mailbox", title: "小信箱", note: "手札和明信片都收在这里", tone: "is-pink" },
   { href: "/nest/medicine", icon: "medicine", title: "家庭药箱", note: "一起维护数量和有效期", tone: "is-mint" },
   { href: "/nest/game-machine", icon: "game", title: "游戏机", note: "小游戏和旧玩法都从这里进入", tone: "is-yellow" },
+  { href: "/nest/wishes", icon: "wishes", title: "心愿清单", note: "收藏想做的事与值得再去的地方", tone: "is-pink" },
 ];
 
 function anniversaryText(value: string | null) {
@@ -141,6 +142,7 @@ function NestFeatureIcon({ name }: { name: NestIconName }) {
       </svg>
     );
   }
+  if (name === "wishes") return <svg viewBox="0 0 64 64" fill="none" aria-hidden="true"><path d="M32 52S11 39 11 24a11 11 0 0 1 21-4 11 11 0 0 1 21 4c0 15-21 28-21 28Z" stroke="currentColor" strokeWidth="3" strokeLinejoin="round"/><path d="m24 32 5 5 11-12" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>;
   return (
     <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
       <path d="M20 24h24c7.5 0 12.5 6.4 11 13.7l-2 9.1c-1.4 6.6-9.9 8.4-13.8 2.9L36 45h-8l-3.2 4.7C21 55.2 12.5 53.4 11 46.8l-2-9.1C7.5 30.4 12.5 24 20 24Z" stroke="currentColor" strokeWidth="3" strokeLinejoin="round" />
