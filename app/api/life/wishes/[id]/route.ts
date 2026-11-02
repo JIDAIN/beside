@@ -1,0 +1,18 @@
+import { NextResponse } from "next/server";
+import { authorizeLifeRequest, lifeJsonError, readJsonBody, LIFE_NO_STORE_HEADERS } from "@/lib/server/life-api";
+import { resolveFixedLifeIdentity } from "@/lib/server/fixed-life-auth";
+import { parseWishWrite, writeWish } from "@/lib/server/life-wishes";
+export const runtime="nodejs";
+export async function PATCH(request:Request,context:{params:Promise<{id:string}>}) {
+ const denied=await authorizeLifeRequest(request);if(denied)return denied;
+ const {id}=await context.params;if(!/^[0-9a-f-]{36}$/i.test(id))return lifeJsonError("心愿 ID 无效",400,"BAD_ID");
+ const body=await readJsonBody(request);if(!body.ok)return body.response;
+ try {const data=parseWishWrite(body.value);const item=await writeWish(resolveFixedLifeIdentity(request)!.partnerKey,id,data);return NextResponse.json({ok:true,item},{headers:LIFE_NO_STORE_HEADERS});}
+ catch(e){return lifeJsonError(e instanceof Error?e.message:"保存失败",400,"WISH_WRITE_FAILED");}
+}
+export async function DELETE(request:Request,context:{params:Promise<{id:string}>}) {
+ const denied=await authorizeLifeRequest(request);if(denied)return denied;
+ const {id}=await context.params;if(!/^[0-9a-f-]{36}$/i.test(id))return lifeJsonError("心愿 ID 无效",400,"BAD_ID");
+ try {await writeWish(resolveFixedLifeIdentity(request)!.partnerKey,id,null,true);return NextResponse.json({ok:true},{headers:LIFE_NO_STORE_HEADERS});}
+ catch {return lifeJsonError("删除失败，请稍后重试",503,"WISH_DELETE_FAILED");}
+}
