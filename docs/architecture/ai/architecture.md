@@ -56,7 +56,7 @@ signed Web user
 
 ## 4. Current Query Registry
 
-当前 life_query（GitHub main 已注册 wish；Production 以部署版本为准）：
+当前 life_query（Production 已注册 wish）：
 - day
 - mood
 - sleep
@@ -88,7 +88,7 @@ signed Web user
 | meal | create / update / append_meal_item / confirm_estimated_meal / delete + optional photo |
 | weight | create / update / delete |
 | medicine | create / update / delete |
-| mailbox | create draft/sent；update/delete own draft；send draft |\n| wish | create / update / add_visit / delete（共享心愿；待部署） |
+| mailbox | create draft/sent；update/delete own draft；send draft |\n| wish | create / update / add_visit / delete（共享心愿） |
 | settings | update |
 | legacy_home | replace（high risk） |
 
