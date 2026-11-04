@@ -7,4 +7,13 @@ describe("wish-list input boundary",()=>{
  it("rejects unsafe URLs",()=>expect(()=>parseWishWrite({...valid(),referenceUrls:["javascript:alert(1)"]})).toThrow());
  it("rejects invalid categories",()=>expect(()=>parseWishWrite({...valid(),category:"unknown"})).toThrow());
  it("rejects invalid checklists",()=>expect(()=>parseWishWrite({...valid(),checklist:[{id:"x",title:"",sortOrder:0}]})).toThrow());
+ it("does not accept arbitrary photo paths from the browser",()=>{
+  expect(parseWishWrite({...valid(),imagePath:"other-user/private.webp"}).imagePath).toBeNull();
+ });
+ it("rejects visit references to missing checklist points",()=>{
+  expect(()=>parseWishWrite({...valid(),visits:[{id:"visit-1",visitedOn:"2026-11-02",note:null,completedItemIds:["unknown"]}]})).toThrow();
+ });
+ it("rejects invalid visit dates",()=>{
+  expect(()=>parseWishWrite({...valid(),visits:[{id:"visit-1",visitedOn:"not-a-date",note:null,completedItemIds:[]}]})).toThrow();
+ });
 });
