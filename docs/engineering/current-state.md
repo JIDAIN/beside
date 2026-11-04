@@ -2,71 +2,42 @@
 
 Snapshot date: 2026-11-04.
 
-本文只记录 Production Web、GitHub main、Production Supabase 当前差异与未完成验证；产品能力与业务规则不在这里复制。
+本文记录 Production Web、GitHub main、Production Supabase 的已核验状态与差异；稳定业务语义由 owning canonical docs 维护。
 
 ## 1. Production Web
 
-最近一次已核验 Production：
-- deployment: dpl_8bqUpgPD7mD5GCoUq19rg78c2Cov
+2026-11-04 心愿清单正式部署：
+- deployment: `dpl_2tqZk8CgApfbd7pzNcuoEUi4TC3H`
 - state: READY
 - target: production
-- source commit: 0db5b1b6924d3a5f413299e8176cb4c82780a13a
-- deployment date: 2026-10-19
+- source commit: `d226c2578f95c3d233b9915bf12090ad5d6698fd`
+- URL: https://couple-better-game.vercel.app
+- framework: Next.js 16.2.6
 
-本轮获明确授权完成 Production deployment；本次部署新增 AI 常吃食物模板的查询、新建、修改、删除及从自己历史餐食复制能力，无 Supabase DDL 变更。
+Vercel production build 成功，`/nest/wishes` 和 `/api/life/wishes/**` 均出现在构建输出中。公网访问新页面可读取标题和筛选文案；未登录 GET `/api/life/wishes` 返回 HTTP 401。新 deployment 最近 30 分钟筛查未发现相关 runtime error，但这一结果不能代替真实使用验收。
 
 ## 2. GitHub Main
 
-GitHub main 已领先已核验 Production：心愿清单的页面、共享 API、数据模型、私有封面上传与存储服务、回归测试及尚未执行的 Supabase migration 均已提交。未获得成功的 test/lint/build、runtime 和真实 UI 验收证据，当前不能作为已发布能力使用。
+main 包含心愿清单页面、共享 API、私有封面对象服务、数据模型、测试源码、canonical docs，以及与 runtime ledger 对齐的 migration `20261104005447_life_wishes.sql`。
 
-最近功能变更：Life MCP 的 favorite_food AI 资源通过现有服务实现个人模板管理；无新增 MCP 工具名、数据库 schema 或部署环境变量。
+部署源 commit 为 `d226c257`；其后仓库包含迁移文件版本对齐和文档更新。不要把后续 docs-only commit 当作新的 Production 部署。
 
 ## 3. Production Supabase
 
-最近一次已知基础设施核验（2026-10-19）：
-- project name: couple-better-game（历史兼容项目名）
-- ref: bfhntnzngozdqsmgfvjk
-- region: ap-northeast-1
-- status: ACTIVE_HEALTHY
-- PostgreSQL: 17
+- project ref: `bfhntnzngozdqsmgfvjk`（共享 Supabase project）
+- 2026-11-04 用户授权后成功执行 migration，ledger version: `20261104005447`，name: `life_wishes`。
+- read-only runtime verification 已确认 `public.life_wishes`、`list_life_wishes` / `write_life_wish` / `bind_life_wish_image` RPC，以及私有 `wish-photos` bucket 存在。
+- 迁移后只读 `list_life_wishes('couple-better-game')` 返回空数组，数据库查询成功且没有心愿记录。
+- 没有自动把新域纳入既有 Life backup/import/restore allowlist。
 
-最近核验时 Production ledger 为 63 条公共 migration；仓库保留额外 replay-only helper 以记录 runtime 历史步骤。
+## 4. Outstanding Verification
 
-2026-11-04 迁移前只读查询确认三项缺失；迁移后再次只读查询确认 `life_wishes`、相关 RPC 和私有 `wish-photos` bucket 已建立，表内记录为 0。Production 真实 CRUD 测试未完成。\n\n判断数据库行为以 runtime schema/functions 优先，不因为 repo 有 migration 文件就假定 Production 已执行。
+- `npm run build` 已由 Vercel 构建成功验证；`npm run test` / `npm run lint` 尚无实测通过证据。
+- 真实 Cat/Fish 登录 CRUD、跨账号共享、封面上传/读取/替换/删除、重复体验及移动端截图验收尚未完成。
+- 尝试事务内 Production SQL smoke 时遭执行环境安全检查拦截，未绕过；不能宣称 DB 写入 smoke 已通过。
+- 数据恢复范围尚未覆盖心愿记录与封面；使用备份/恢复前应明确该限制。
+- Blank-database full replay 尚未在独立空库执行。
 
-## 4. Main vs Production Differences
+## 5. Deployment Protection
 
-- 2026-11-04 通过 Vercel deployment list 只读核对：最新 Production 仍为 2026-10-19 的 dpl_8bqUpgPD7mD5GCoUq19rg78c2Cov，source commit 0db5b1b。没有新部署。
-- GitHub main 新增 /nest/wishes、/api/life/wishes、/api/life/wishes/[id]/photo、私有 wish-photos Storage bucket 的 migration 20261104005447_life_wishes.sql，尚未完成可发布验证。
-- 2026-11-04 已获得用户针对本次的授权并执行 Production Supabase migration：ledger 20261104005447 (life_wishes)，创建独立共享心愿表、受限 RPC 与 private wish-photos bucket。网页代码仍未发布。
-- 现有普通 Life backup/import/restore 尚未纳入 wishes 与 wish-photos，不能视为已获得完整恢复保障。
-
-## 5. Outstanding Verification
-
-心愿清单 Production migration 已应用；test/lint/build、共享读写 runtime 与移动端视觉验收尚未完成；不得因此宣布功能上线。\n\nBlank-database full replay 尚未在一次性全空数据库中完成从零重建验证。
-
-这属于长期灾备/新环境验证，不阻塞当前日常使用；不要为了完成文档清单单独创建可能收费的 Supabase branch/project。
-
-## 6. Deployment Protection
-
-仓库要求：
-vercel.json → git.deploymentEnabled=false。
-
-~~~text
-commit / CI success
-!= Preview authorization
-!= Production authorization
-~~~
-
-任何 Preview / Production 仍需本次明确授权。
-
-## 7. Maintenance Rules
-
-只有以下情况更新本文：
-- Production deployment；
-- main/Production 差异变化；
-- Supabase runtime/ledger 重要变化；
-- outstanding verification 完成/新增；
-- deployment protection 状态变化。
-
-普通 Domain 规则不要复制到这里。
+`vercel.json` 仍要求 `git.deploymentEnabled=false`。Git commit、CI 成功或迁移成功都不等于新的 Preview / Production 授权；后续每一次部署与 Production Supabase 写操作都必须单独授权。
