@@ -23,7 +23,7 @@ GitHub main 已领先已核验 Production：心愿清单的页面、共享 API�
 
 ## 3. Production Supabase
 
-最近一次只读核验：
+最近一次已知基础设施核验（2026-10-19）：
 - project name: couple-better-game（历史兼容项目名）
 - ref: bfhntnzngozdqsmgfvjk
 - region: ap-northeast-1
@@ -32,7 +32,7 @@ GitHub main 已领先已核验 Production：心愿清单的页面、共享 API�
 
 最近核验时 Production ledger 为 63 条公共 migration；仓库保留额外 replay-only helper 以记录 runtime 历史步骤。
 
-判断数据库行为以 runtime schema/functions 优先，不因为 repo 有 migration 文件就假定 Production 已执行。
+2026-11-04 只读查询实测：Production 尚无 `public.life_wishes`、`public.list_life_wishes(text)` 和 `wish-photos` bucket；Storage 的 `buckets` 表已核实具备迁移引用的字段。未执行任何 schema/data 写入。\n\n判断数据库行为以 runtime schema/functions 优先，不因为 repo 有 migration 文件就假定 Production 已执行。
 
 ## 4. Main vs Production Differences
 
