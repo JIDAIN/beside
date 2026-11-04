@@ -1,6 +1,6 @@
 # Current Engineering State
 
-Snapshot date: 2026-11-02.
+Snapshot date: 2026-11-04.
 
 本文只记录 Production Web、GitHub main、Production Supabase 当前差异与未完成验证；产品能力与业务规则不在这里复制。
 
@@ -17,7 +17,7 @@ Snapshot date: 2026-11-02.
 
 ## 2. GitHub Main
 
-GitHub main 已领先已核验 Production：新增心愿清单的页面、共享 API、数据模型、测试与尚未执行的 Supabase migration 草案。该功能尚未完成 build/runtime 验证，当前不能作为已发布能力使用。
+GitHub main 已领先已核验 Production：心愿清单的页面、共享 API、数据模型、私有封面上传与存储服务、回归测试及尚未执行的 Supabase migration 均已提交。未获得成功的 test/lint/build、runtime 和真实 UI 验收证据，当前不能作为已发布能力使用。
 
 最近功能变更：Life MCP 的 favorite_food AI 资源通过现有服务实现个人模板管理；无新增 MCP 工具名、数据库 schema 或部署环境变量。
 
@@ -37,9 +37,9 @@ GitHub main 已领先已核验 Production：新增心愿清单的页面、共享
 ## 4. Main vs Production Differences
 
 - 最近一次有记录的 Production Web 核验仍为 2026-10-19 source commit 0db5b1b；本轮未重新核对 Vercel runtime。
-- GitHub main 本轮新增 /nest/wishes、/api/life/wishes 和 migration 20261102000000_life_wishes.sql，尚未完成可发布验证。
+- GitHub main 新增 /nest/wishes、/api/life/wishes、/api/life/wishes/[id]/photo、私有 wish-photos Storage bucket 的 migration 20261102000000_life_wishes.sql，尚未完成可发布验证。
 - 本轮没有对 Production Supabase 写入或执行 migration。心愿功能依赖新表及 RPC，未迁移前不能正常使用。
-- 旧的 2026-09-23 记录中的“main ahead of Production”描述不再适用于当前功能代码。
+- 现有普通 Life backup/import/restore 尚未纳入 wishes 与 wish-photos，不能视为已获得完整恢复保障。
 
 ## 5. Outstanding Verification
 
