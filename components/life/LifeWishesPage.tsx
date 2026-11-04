@@ -3,8 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppPageShell } from "@/components/ui/AppPageShell";
-import { wishIntent, type WishEntry, type WishCategory, type WishChecklistItem, type WishVisit } from "@/lib/life/wish-list-model";
-import type { WishWrite } from "@/lib/server/life-wishes";
+import { wishIntent, type WishEntry, type WishCategory, type WishChecklistItem, type WishVisit, type WishWrite } from "@/lib/life/wish-list-model";
 
 const categories:Record<WishCategory,string>={go:"想去",play:"想玩",eat:"想吃",do:"想做"};
 type View="active"|"want"|"again"|"done"|"all";
