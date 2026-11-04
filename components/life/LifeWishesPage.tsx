@@ -32,13 +32,13 @@ export function LifeWishesPage(){
  const [dirty,setDirty]=useState(false);
  const reload=useCallback(async()=>{try{const data=await endpoint<{items:WishEntry[]}>("/api/life/wishes");setEntries(data.items);setError("");}catch(e){setError(e instanceof Error?e.message:"读取失败");}finally{setLoading(false);}},[]);
  useEffect(()=>{void reload();},[reload]);
- useEffect(()=>{if(!photoFile){setPreview(null);return;}const uri=URL.createObjectURL(photoFile);setPreview(uri);return ()=>URL.revokeObjectURL(uri);},[photoFile]);
+ useEffect(()=>()=>{if(preview)URL.revokeObjectURL(preview);},[preview]);
  useEffect(()=>{if(!dirty)return;const warn=(event:BeforeUnloadEvent)=>{event.preventDefault();event.returnValue="";};window.addEventListener("beforeunload",warn);return ()=>window.removeEventListener("beforeunload",warn);},[dirty]);
  const visible=useMemo(()=>entries.filter(x=>{
  const intent=wishIntent(x);const match=filter==="all"||filter==="active"&&intent!=="done"||filter===intent;
  return match&&(category==="all"||x.category===category)&&(x.title+" "+(x.location??"")+" "+(x.practicalNotes??"")).toLowerCase().includes(search.trim().toLowerCase());
  }),[entries,filter,category,search]);
- function openEditor(item?:WishEntry){setError("");setPhotoFile(null);setDirty(false);setEditing(item??null);setForm(item?{title:item.title,category:item.category,description:item.description,location:item.location,openingHours:item.openingHours,priceNote:item.priceNote,durationNote:item.durationNote,bestTimeNote:item.bestTimeNote,practicalNotes:item.practicalNotes,imagePath:item.imagePath,referenceUrls:[...item.referenceUrls],checklist:item.checklist.map(x=>({...x})),visits:item.visits.map(x=>({...x,completedItemIds:[...x.completedItemIds]})),wantToRepeat:item.wantToRepeat,archivedAt:item.archivedAt}:empty());}
+ function openEditor(item?:WishEntry){setError("");setPhotoFile(null);setPreview(null);setDirty(false);setEditing(item??null);setForm(item?{title:item.title,category:item.category,description:item.description,location:item.location,openingHours:item.openingHours,priceNote:item.priceNote,durationNote:item.durationNote,bestTimeNote:item.bestTimeNote,practicalNotes:item.practicalNotes,imagePath:item.imagePath,referenceUrls:[...item.referenceUrls],checklist:item.checklist.map(x=>({...x})),visits:item.visits.map(x=>({...x,completedItemIds:[...x.completedItemIds]})),wantToRepeat:item.wantToRepeat,archivedAt:item.archivedAt}:empty());}
  async function save(){
  setSaving(true);try{
  const path=editing?"/api/life/wishes/"+editing.id:"/api/life/wishes";
@@ -54,7 +54,7 @@ export function LifeWishesPage(){
    saved=payload.item as WishEntry;
    setEntries(cur=>[saved,...cur.filter(x=>x.id!==saved.id)]);
  }
- setDetail(saved);setEditing(undefined);setPhotoFile(null);setDirty(false);setError("");
+ setDetail(saved);setEditing(undefined);setPhotoFile(null);setPreview(null);setDirty(false);setError("");
  }catch(e){setError(e instanceof Error?e.message:"保存失败");}finally{setSaving(false);}
  }
  async function remove(item:WishEntry){
@@ -63,7 +63,7 @@ export function LifeWishesPage(){
  }
  function addVisit(){setDirty(true);const visit:WishVisit={id:crypto.randomUUID(),visitedOn:new Date().toLocaleDateString("sv-SE"),note:null,completedItemIds:[]};setForm(x=>({...x,visits:[...x.visits,visit]}));}
  const input=(label:string,key:keyof WishWrite,multiline=false)=> <label className="block text-xs font-bold text-[var(--life-text-body)]">{label}{multiline?<textarea className={fieldClass} rows={3} value={String(form[key]??"")} onChange={e=>{setDirty(true);setForm(x=>({...x,[key]:e.target.value||null}));}}/>:<input className={fieldClass} value={String(form[key]??"")} onChange={e=>{setDirty(true);setForm(x=>({...x,[key]:e.target.value||null}));}}/>}</label>;
- function closeEditor(){if(saving)return;if(dirty&&!window.confirm("有尚未保存的修改，确定离开吗？"))return;setEditing(undefined);setPhotoFile(null);setDirty(false);setError("");}
+ function closeEditor(){if(saving)return;if(dirty&&!window.confirm("有尚未保存的修改，确定离开吗？"))return;setEditing(undefined);setPhotoFile(null);setPreview(null);setDirty(false);setError("");}
  async function removeCover(item:WishEntry){
   if(!window.confirm("移除这条心愿的封面图片？"))return;
   try{const result=await endpoint<{item:WishEntry}>("/api/life/wishes/"+item.id+"/photo","DELETE");setDetail(result.item);setEntries(xs=>xs.map(x=>x.id===item.id?result.item:x));setError("");}
@@ -94,7 +94,7 @@ export function LifeWishesPage(){
  <div className="mt-4 grid gap-3">
  {input("名称","title")}
  <label className="text-xs font-bold">分类<select value={form.category} onChange={e=>{setDirty(true);setForm(x=>({...x,category:e.target.value as WishCategory}));}} className={fieldClass}>{Object.entries(categories).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label>
- <label className="block text-xs font-bold">封面图片<input className={fieldClass} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" onChange={e=>{setPhotoFile(e.target.files?.[0]??null);setDirty(true);}}/>{preview?<Image unoptimized src={preview} width={480} height={270} alt="待上传封面" className="mt-2 max-h-52 w-full rounded-xl object-cover"/>:editing?.imagePath?<Image unoptimized src={cover(editing)} width={480} height={270} alt="当前封面" className="mt-2 max-h-52 w-full rounded-xl object-cover"/>:null}</label>
+ <label className="block text-xs font-bold">封面图片<input className={fieldClass} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" onChange={e=>{const file=e.target.files?.[0]??null;setPhotoFile(file);setPreview(file?URL.createObjectURL(file):null);setDirty(true);}}/>{preview?<Image unoptimized src={preview} width={480} height={270} alt="待上传封面" className="mt-2 max-h-52 w-full rounded-xl object-cover"/>:editing?.imagePath?<Image unoptimized src={cover(editing)} width={480} height={270} alt="当前封面" className="mt-2 max-h-52 w-full rounded-xl object-cover"/>:null}</label>
  {input("地点","location")}{input("开放时间","openingHours")}{input("费用","priceNote")}{input("预计时长","durationNote")}{input("推荐时间","bestTimeNote")}{input("介绍","description",true)}
  <section className="grid gap-2"><div className="flex justify-between"><strong className="text-sm">必打卡 / 必体验</strong><button className="text-xs text-[var(--life-teal)]" onClick={()=>{setDirty(true);setForm(x=>({...x,checklist:[...x.checklist,{id:crypto.randomUUID(),title:"",sortOrder:x.checklist.length}]}));}}>＋ 添加</button></div>{form.checklist.map((v,i)=><div key={v.id} className="flex gap-2"><input aria-label={"项目 "+(i+1)} className={fieldClass+" !mt-0 flex-1"} value={v.title} onChange={e=>{setDirty(true);setForm(x=>({...x,checklist:x.checklist.map(z=>z.id===v.id?{...z,title:e.target.value}:z)}));}}/><button aria-label="移除项目" onClick={()=>setForm(x=>({...x,checklist:x.checklist.filter(z=>z.id!==v.id)}))}>✕</button></div>)}</section>
  {input("攻略备注","practicalNotes",true)}
