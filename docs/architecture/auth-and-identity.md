@@ -46,7 +46,7 @@ authorize
 → /mcp
 ~~~
 
-scopes 当前为 life:read / life:write / offline_access。
+scopes 当前为 life:read / life:write / offline_access。\n\n心愿清单的 AI 资源复用这两个已有 read/write scope：Cat 与 Fish 共享同一清单，写操作的 createdBy 来自 OAuth actor。无需为 wish 引入新的 OAuth scope，聊天自称不能提升权限。
 
 ## 3. Untrusted Identity Inputs
 
