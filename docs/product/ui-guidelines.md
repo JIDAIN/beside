@@ -81,7 +81,7 @@ UI 负责：
 
 “一起度过的第 N 天”由 setting 派生，纪念日当天为第 1 天。
 
-## 8. Mailbox
+### Wishlist (main implementation, not yet deployed)\n\n心愿清单只需要一级分类；每条可存实用攻略、多个必打卡项目及多次体验。已有体验不会永久取消再次使用资格。每次体验的勾选状态与模板条目分离；保存主记录成功而封面失败时需保留主记录并允许重试；编辑未保存离开应提醒。详见 Wish List Domain。\n\n## 8. Mailbox
 
 稳定 UI contract：
 - 收信箱：当前用户收到的 sent；
