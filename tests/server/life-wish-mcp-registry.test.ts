@@ -12,7 +12,7 @@ const ID="00000000-0000-4000-8000-000000000001";
 beforeEach(()=>{vi.clearAllMocks();fake.query.mockResolvedValue([]);fake.mutate.mockResolvedValue({item:{id:ID,title:"潭柘寺",category:"go"}});});
 describe("wish resource in canonical AI Access Core",()=>{
  it("exposes shared query and mutation capabilities without another MCP tool",async()=>{
-  const caps=await executeLifeAgentTool("life_capabilities",{}, {identity:CAT,latestUserText:""});
+  const caps=await executeLifeAgentTool("life_capabilities",{}, {identity:CAT,latestUserText:""}) as {query:Record<string,string>;mutate:Record<string,string>};
   expect(caps.query.wish).toContain("共享心愿");
   expect(caps.mutate.wish).toContain("create/update");
  });
