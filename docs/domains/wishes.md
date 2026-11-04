@@ -39,7 +39,7 @@
 - `PATCH/DELETE /api/life/wishes/[id]`
 - `GET/PUT/DELETE /api/life/wishes/[id]/photo`
 - `/nest/wishes`：搜索、分类/意愿筛选、详情、编辑、打卡模板、体验记录与封面。
-- AI/MCP 暂不暴露新的任意写操作；后续如接入必须复用 canonical service 和可信 actor。
+- GitHub main 新增 AI/MCP wish resource（尚未部署）：通过现有 life_query / life_mutate 查询、新增、增量修改、添加体验、删除；仅通过可信 Cat/Fish OAuth actor 调用同一共享心愿服务，不新增独立 MCP CRUD/SQL 或 OAuth scope。\n- 创建同名同分类优先返回已存在项而不重复新增；更新保留已有历史与封面；delete 需要当前用户消息明确删除意图。MCP 暂不提供心愿封面写入，需通过 Web 私有图片 API。
 
 ## Limits and verification
 - 目前的备份/导入/恢复 allowlist 尚未纳入 wishes 和 wish-photos；不要宣称该模块已获得完整备份恢复保障，也不要顺手扩展普通 Life restore 到 Legacy Game。
