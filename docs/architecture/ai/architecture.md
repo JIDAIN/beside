@@ -56,7 +56,7 @@ signed Web user
 
 ## 4. Current Query Registry
 
-当前 life_query：
+当前 life_query（GitHub main 已注册 wish；Production 以部署版本为准）：
 - day
 - mood
 - sleep
@@ -66,6 +66,7 @@ signed Web user
 - weight
 - medicine
 - mailbox
+- wish
 - settings
 - life_export
 - legacy_home
@@ -75,7 +76,7 @@ signed Web user
 - month：当前 AI registry 的月度查询能力，不等同于 Web 完整 Calendar UI；
 - mailbox：只返回当前 actor 有权看到的内容；
 - life_export：Life data export；
-- legacy_home：Legacy compatibility snapshot，不属于普通 Life。
+- legacy_home：Legacy compatibility snapshot，不属于普通 Life。\n- wish：共享心愿、打卡模板和多次体验；名称/分类/状态/ID 可查询；权限仍使用原 MCP OAuth life:read / life:write，不新增 tool 或 scope。
 
 ## 5. Current Mutation Registry
 
@@ -87,7 +88,7 @@ signed Web user
 | meal | create / update / append_meal_item / confirm_estimated_meal / delete + optional photo |
 | weight | create / update / delete |
 | medicine | create / update / delete |
-| mailbox | create draft/sent；update/delete own draft；send draft |
+| mailbox | create draft/sent；update/delete own draft；send draft |\n| wish | create / update / add_visit / delete（共享心愿；待部署） |
 | settings | update |
 | legacy_home | replace（high risk） |
 
@@ -146,7 +147,7 @@ tool call
 - personal fact 不替 Ta 写；
 - mailbox sent 永久只读；
 - legacy_home replace 需要精确高风险确认；
-- tool result 成功后才可告诉用户“已保存/已删除”。
+- tool result 成功后才可告诉用户“已保存/已删除”。\n- wish：创建相同名称及分类优先返回已存在项，不再写入第二条；修改只做增量字段合并，不覆盖历史体验或私有封面；AI 不支持心愿封面上传，继续使用 Web 受控媒体接口。
 
 LIFE_CLARIFICATION_REQUIRED 是正常交互 contract，不是系统故障。
 
