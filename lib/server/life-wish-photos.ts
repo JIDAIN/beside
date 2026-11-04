@@ -24,7 +24,7 @@ export function wishPhotoPath(id:string){
 export async function uploadWishPhoto(path:string,bytes:Uint8Array) {
  const result=await fetch(url+"/storage/v1/object/"+bucket+"/"+encode(path),{
   method:"POST",headers:headers({"Content-Type":"image/webp","x-upsert":"false"}),
-  body:Buffer.from(bytes),cache:"no-store"
+  body:bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength) as ArrayBuffer,cache:"no-store"
  });
  await expectOk(result,"上传封面");
 }
