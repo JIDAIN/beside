@@ -68,3 +68,6 @@ export function validateWishInput(input: {
   }
   return errors;
 }
+
+/** Browser-safe editable fields; trusted identity and timestamps are server assigned. */
+export type WishWrite = Pick<WishEntry,"title"|"category"|"description"|"location"|"openingHours"|"priceNote"|"durationNote"|"bestTimeNote"|"practicalNotes"|"imagePath"|"referenceUrls"|"checklist"|"visits"|"wantToRepeat"|"archivedAt">;
