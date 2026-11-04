@@ -36,7 +36,7 @@ GitHub main 已领先已核验 Production：心愿清单的页面、共享 API�
 
 ## 4. Main vs Production Differences
 
-- 最近一次有记录的 Production Web 核验仍为 2026-10-19 source commit 0db5b1b；本轮未重新核对 Vercel runtime。
+- 2026-11-04 通过 Vercel deployment list 只读核对：最新 Production 仍为 2026-10-19 的 dpl_8bqUpgPD7mD5GCoUq19rg78c2Cov，source commit 0db5b1b。没有新部署。
 - GitHub main 新增 /nest/wishes、/api/life/wishes、/api/life/wishes/[id]/photo、私有 wish-photos Storage bucket 的 migration 20261102000000_life_wishes.sql，尚未完成可发布验证。
 - 本轮没有对 Production Supabase 写入或执行 migration。心愿功能依赖新表及 RPC，未迁移前不能正常使用。
 - 现有普通 Life backup/import/restore 尚未纳入 wishes 与 wish-photos，不能视为已获得完整恢复保障。
