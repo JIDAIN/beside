@@ -310,6 +310,10 @@ export async function callLifeMcpTool(
 
     const args = record(rawArguments);
     const latestUserText = text(args.userText);
+    const wishResource = ["wish","wishlist","wishes","心愿","心愿清单","愿望清单","收藏清单","想去清单"].includes(text(args.resource).toLowerCase());
+    if (name === "life_mutate" && wishResource && (args.attachPhoto === true || args.file != null || args.media != null)) {
+      return errorResult("心愿清单的 MCP 暂不支持直接上传封面；请使用伴岛网页编辑封面。文本心愿仍可通过 life_mutate 保存。", "WISH_MEDIA_NOT_SUPPORTED");
+    }
     if (name === "life_mutate" && !latestUserText) {
       return errorResult("life_mutate 必须提供当前用户原始消息 userText", "USER_TEXT_REQUIRED");
     }
