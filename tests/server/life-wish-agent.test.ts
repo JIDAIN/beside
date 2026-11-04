@@ -45,6 +45,13 @@ describe("wish agent service",()=>{
   expect(mocks.write).toHaveBeenCalledWith("fish",ID,null,true);
   expect(mocks.deletePhoto).toHaveBeenCalledWith(existing.imagePath);
  });
+ it("does not repeat an identical same-day visit on a tool retry",async()=>{
+  const result=await mutateAgentWish("add_visit",ID,{
+    visitedOn:"2026-10-02",note:"很漂亮",completedSpots:["帝王树"],
+  },"cat");
+  expect(result).toMatchObject({visitAdded:false,alreadyExists:true});
+  expect(mocks.write).not.toHaveBeenCalled();
+ });
  it("filters shared wishes by text/category/status",async()=>{
   const rows=await queryAgentWishes({name:"潭柘",category:"想去",status:"again"});
   expect(rows).toHaveLength(1);
