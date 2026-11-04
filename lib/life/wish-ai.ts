@@ -123,7 +123,10 @@ export function buildWishVisit(existing: WishEntry, data: unknown): WishWrite {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date+"T00:00:00Z"))) {
     throw new Error("体验日期必须为有效的 YYYY-MM-DD");
   }
-  const note = textOrNull(supplied(row,"note","notes","feeling"));
+  const rawNote = supplied(row,"note","notes","feeling");
+  if(rawNote!==undefined && rawNote!==null && typeof rawNote!=="string")throw new Error("体验备注必须为文字");
+  if(row.wantToRepeat!==undefined && typeof row.wantToRepeat!=="boolean")throw new Error("再次体验意愿应为布尔值");
+  const note = textOrNull(rawNote);
   const done = supplied(row,"completedItemIds","completedSpots");
   if (done !== undefined && (!Array.isArray(done) || done.some(x=>typeof x!=="string"))) {
     throw new Error("已完成点位应为字符串列表");
