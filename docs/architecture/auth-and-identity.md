@@ -78,7 +78,7 @@ shared / sender-recipient / system resource 必须明确自己的授权模型。
 | weight | 双方可查看 | 只能维护自己的 |
 | activity cat/fish | 页面按语义查看 | 只有对应本人维护 |
 | activity both | 双方可查看 | 双方可维护；不能静默降成单方 |
-| wishes（GitHub main，待上线） | 双人共享 | 双方可新增、编辑、删除；图片只允许通过受控上传接口绑定 |\n| medicine | 家庭共享 | 双方可维护 |
+| wishes | 双人共享 | 双方可新增、编辑、删除；图片只允许通过受控上传接口绑定 |\n| medicine | 家庭共享 | 双方可维护 |
 | mailbox draft | 仅 sender | 仅 sender 可 edit/delete/send |
 | mailbox sent | sender + recipient | 永久只读 |
 | targetWeightKg | 双方可查看 | 只改自己 |
