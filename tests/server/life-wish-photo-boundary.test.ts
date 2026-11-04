@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 const root = process.cwd();
 const read = (path: string) => readFileSync(root + "/" + path, "utf8");
-const migration = read("supabase/migrations/20261102000000_life_wishes.sql");
+const migration = read("supabase/migrations/20261104005447_life_wishes.sql");
 const media = read("app/api/life/wishes/[id]/photo/route.ts");
 const server = read("lib/server/life-wishes.ts");
 const ui = read("components/life/LifeWishesPage.tsx");
