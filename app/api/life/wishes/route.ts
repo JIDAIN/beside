@@ -13,9 +13,11 @@ export async function POST(request:Request) {
  const denied=await authorizeLifeRequest(request);if(denied)return denied;
  const actor=resolveFixedLifeIdentity(request)!.partnerKey;
  const body=await readJsonBody(request);if(!body.ok)return body.response;
+ let data;
+ try {data=parseWishWrite(body.value);}
+ catch(e){return lifeJsonError(e instanceof Error?e.message:"填写内容不正确",400,"BAD_REQUEST");}
  try {
- const data=parseWishWrite(body.value);
  const item=await writeWish(actor,null,data);
  return NextResponse.json({ok:true,item},{headers:LIFE_NO_STORE_HEADERS,status:201});
- } catch(e) {return lifeJsonError(e instanceof Error?e.message:"保存失败",400,"WISH_WRITE_FAILED");}
+ } catch {return lifeJsonError("心愿暂时无法保存，请稍后重试",503,"WISH_WRITE_FAILED");}
 }
