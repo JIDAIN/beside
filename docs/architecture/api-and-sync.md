@@ -37,7 +37,7 @@ Browser session → /api/ai/chat → AI Gateway → registry/executor → canoni
 |---|---|---|---|---|---|
 | day/mood/sleep/activity | Life UI | Web session | life-api + supabase-life | day/month/bundle | simple Life |
 | weight | Weight UI | Web session | weight-service + supabase-weight | weights | weight |
-| medicine | Medicine UI | Web session | medicine-service + supabase-medicine | domain client | medicine |
+| wishes（main，待上线） | Wish List UI | Web session | life-wishes + life-wish-photos | shared wishes | Wish List |\n| medicine | Medicine UI | Web session | medicine-service + supabase-medicine | domain client | medicine |
 | mailbox | Mailbox UI | Web session | mailbox-service + supabase-mailbox | domain client | mailbox |
 | settings | Nest/Me | Web session | settings-service / data-management | settings | settings |
 | reminders | Reminder Center | Web session | reminder-center | reminder client | Reminder |
@@ -58,7 +58,7 @@ Browser session → /api/ai/chat → AI Gateway → registry/executor → canoni
 | mood/sleep | `/api/life/mood` `/api/life/sleep` | Web session；personal write = signed actor | life-api / supabase-life |
 | activity | `/api/life/activities` `/api/life/activities/[id]` | Web session；actor/both contract | life-api / supabase-life |
 | weight | `/api/life/weights` `/api/life/weights/[id]` | Web session；personal owner | weight-service / supabase-weight |
-| medicine | `/api/life/medicines` `/api/life/medicines/[id]` | Web session；shared | medicine-service / supabase-medicine |
+| wishes（main，待上线） | `/api/life/wishes` `/api/life/wishes/[id]` `/api/life/wishes/[id]/photo` | Web session；couple-space shared | life-wishes / life-wish-photos |\n| medicine | `/api/life/medicines` `/api/life/medicines/[id]` | Web session；shared | medicine-service / supabase-medicine |
 | mailbox | `/api/life/mailbox` `/api/life/mailbox/[id]` | Web session；sender/recipient lifecycle | mailbox-service / supabase-mailbox |
 | settings | `/api/life/settings` | Web session；shared/personal field-specific | settings-service / data-management |
 | reminders | `/api/life/reminders` `/api/life/reminders/settings` `/api/life/notifications/pushplus` | Web session；actor-bound | life-reminder-center / provider helpers |
