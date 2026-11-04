@@ -14,6 +14,7 @@ create index if not exists life_wishes_space_active_idx
   on public.life_wishes(couple_space_id,updated_at desc) where deleted_at is null;
 alter table public.life_wishes enable row level security;
 revoke all on public.life_wishes from public, anon, authenticated;
+grant select, insert, update on public.life_wishes to service_role;
 -- Only the service role is allowed to call these RPCs; Web identity is resolved by Next.js.
 create or replace function public.list_life_wishes(p_space_slug text)
 returns jsonb language sql stable security invoker set search_path=public as $$
