@@ -95,11 +95,12 @@ function normalizeAction(resource: string, value: unknown, id: unknown) {
     确认用餐: "confirm_estimated_meal", 饭后确认: "confirm_estimated_meal",
     删除: "delete", 删掉: "delete", 移除: "delete",
     覆盖: "replace",
+    打卡: "add_visit", 体验: "add_visit", 记录体验: "add_visit", 再去一次: "add_visit",
   };
   if (aliases[raw]) return aliases[raw];
   if (raw === "append_item") return "append_meal_item";
   if (raw === "confirm") return "confirm_estimated_meal";
-  if (["create", "update", "delete", "upsert", "replace", "append_meal_item", "confirm_estimated_meal"].includes(raw)) return raw;
+  if (["create", "update", "delete", "upsert", "replace", "append_meal_item", "confirm_estimated_meal", "add_visit"].includes(raw)) return raw;
   if (resource === "mood" || resource === "sleep") return "upsert";
   if (resource === "settings") return "update";
   if (resource === "legacy_home") return "replace";
@@ -119,6 +120,7 @@ function normalizeResource(value: unknown, mode: "query" | "mutate") {
     信箱: "mailbox", 小信箱: "mailbox", 信件: "mailbox",
     设置: "settings",
     常吃食物: "favorite_food", 常见食物: "favorite_food", 常用食物: "favorite_food",
+    心愿清单: "wish", 心愿: "wish", 愿望清单: "wish", 收藏清单: "wish", 想去清单: "wish", wishlist: "wish", wishes: "wish",
     今日: "day", 日汇总: "day", 生活记录: "day",
   };
   const normalized = common[raw] || raw;
@@ -248,6 +250,12 @@ export function normalizeLifeQueryArgs(args: unknown, context: NormalizeContext)
     const name = text(first(row, ["name", "query", "keyword", "foodName"]));
     if (name) out.name = name;
   }
+  if (resource === "wish") {
+    const name = text(first(row, ["name", "query", "keyword", "title"]));
+    if (name) out.name = name;
+    const category = text(first(row, ["category", "type"]));
+    if (category) out.category = category;
+  }
   if (resource === "medicine") {
     const name = text(first(row, ["name", "query", "keyword", "medicineName", "drugName"]));
     if (name) out.name = name;
@@ -350,6 +358,19 @@ export function normalizeLifeMutationArgs(args: unknown, context: NormalizeConte
     const weight = parseNumber(first(sourceData, ["weightKg", "weight", "kg", "value"]));
     if (weight == null) throw new LifeClarificationError("要记录多少公斤？", ["weightKg"]);
     data.weightKg = weight;
+  }
+
+  if (resource === "wish" && action === "create") {
+    data.title = text(first(sourceData, ["title","name"]));
+    if (!data.title) throw new LifeClarificationError("想收藏什么地方或活动？", ["title"]);
+    const category = text(first(sourceData, ["category","type"])).toLowerCase();
+    const known: Record<string,string> = {
+      "go":"go","想去":"go","play":"play","想玩":"play",
+      "eat":"eat","想吃":"eat","do":"do","想做":"do",
+    };
+    // A named place is safely classified as a place; other entries should specify a category.
+    data.category = known[category] ?? (text(sourceData.location) || /寺|公园|景区|博物馆|商场|古镇|景点/.test(String(data.title)) ? "go" : category);
+    if (!data.category) throw new LifeClarificationError("这条心愿属于想去、想玩、想吃还是想做？", ["category"]);
   }
 
   if (resource === "favorite_food") {
