@@ -120,7 +120,7 @@ export function buildWishUpdate(base: WishWrite, data: unknown): WishWrite {
 export function buildWishVisit(existing: WishEntry, data: unknown): WishWrite {
   const row = record(data);
   const date = str(supplied(row,"visitedOn","date"));
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date+"T00:00:00Z"))) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || (Number.isNaN(Date.parse(date+"T00:00:00Z")) || new Date(date+"T00:00:00Z").toISOString().slice(0,10)!==date)) {
     throw new Error("体验日期必须为有效的 YYYY-MM-DD");
   }
   const rawNote = supplied(row,"note","notes","feeling");
@@ -131,7 +131,7 @@ export function buildWishVisit(existing: WishEntry, data: unknown): WishWrite {
   if (done !== undefined && (!Array.isArray(done) || done.some(x=>typeof x!=="string"))) {
     throw new Error("已完成点位应为字符串列表");
   }
-  const ids = (done as string[] | undefined ?? []).map(value=>{
+  const ids = ((done as string[] | undefined) ?? []).map(value=>{
     const item=existing.checklist.find(x=>x.id===value || x.title===value);
     if(!item) throw new Error(`找不到打卡点位：${value}`);
     return item.id;
