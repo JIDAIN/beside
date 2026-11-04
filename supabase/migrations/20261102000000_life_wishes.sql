@@ -82,7 +82,7 @@ begin
     raise exception 'invalid image path';
   end if;
   update public.life_wishes w set
-    data=jsonb_set(w.data,'{imagePath}',to_jsonb(p_new_path),true),
+    data=jsonb_set(w.data,'{imagePath}',coalesce(to_jsonb(p_new_path),'null'::jsonb),true),
     updated_at=now()
   from public.couple_spaces c
   where c.id=w.couple_space_id and c.slug=p_space_slug
