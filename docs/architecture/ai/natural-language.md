@@ -38,7 +38,7 @@ user language / image-visible facts
 - mood UI label → canonical mood key；
 - Meal name/foodName/rawName/displayName → canonical food name fields；
 - medicineName/drugName → name；
-- mailbox content/text/message → body。
+- mailbox content/text/message → body。\n- 心愿清单/愿望清单/收藏清单 → wish，name/title → title，中文想去/想玩/想吃/想做 → go/play/eat/do。
 
 ## 4. Clarification-required Inputs
 
@@ -99,8 +99,7 @@ text/name/title/description/content/activity → text。
 仅查询和修改本人模板。历史 Meal 复制要求 fromMealId、mealDate；多 item 时另需 fromMealItemId。
 不要猜 UUID，不把仅保存模板的请求误写成当天饮食记录。
 
-### Weight
-weightKg/weight/kg/value → weightKg。
+### Wish List\n心愿清单、心愿、愿望清单、收藏清单 → wish。新增支持标题、一级分类和选填的地点、开放时间、费用、攻略备注、必打卡点位等；有明确地点信息或典型地点名称时可归入想去，否则缺分类应澄清。更新只传增量字段，服务端保留未修改的打卡清单和历史体验；一次体验使用 add_visit 和日期、选填的已完成点位。修改/删除/打卡必须先查询可靠 UUID。\n\n### Weight\nweightKg/weight/kg/value → weightKg。
 缺数值必须问。
 
 ### Medicine
