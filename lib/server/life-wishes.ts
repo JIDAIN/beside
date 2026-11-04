@@ -1,5 +1,4 @@
-import type { WishEntry } from "@/lib/life/wish-list-model";
-import { validateWishInput } from "@/lib/life/wish-list-model";
+import { validateWishInput, type WishEntry, type WishWrite } from "@/lib/life/wish-list-model";
 
 const base = process.env.SUPABASE_URL || "https://bfhntnzngozdqsmgfvjk.supabase.co";
 const slug = process.env.COUPLE_SPACE_SLUG || "couple-better-game";
@@ -10,7 +9,6 @@ async function rpc<T>(name:string,payload:Record<string,unknown>):Promise<T> {
  if(!response.ok) throw new Error("心愿云端操作失败："+response.status);
  return response.json() as Promise<T>;
 }
-export type WishWrite = Pick<WishEntry,"title"|"category"|"description"|"location"|"openingHours"|"priceNote"|"durationNote"|"bestTimeNote"|"practicalNotes"|"imagePath"|"referenceUrls"|"checklist"|"visits"|"wantToRepeat"|"archivedAt">;
 export function parseWishWrite(value:unknown):WishWrite {
  if(!value||typeof value!=="object"||Array.isArray(value)) throw new Error("心愿格式不正确");
  const v=value as Record<string,unknown>;
