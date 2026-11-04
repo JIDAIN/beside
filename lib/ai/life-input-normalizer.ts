@@ -360,6 +360,14 @@ export function normalizeLifeMutationArgs(args: unknown, context: NormalizeConte
     data.weightKg = weight;
   }
 
+  if (resource === "wish" && action === "add_visit") {
+    data.visitedOn = inferDate(first(sourceData,["visitedOn","date"]),context.latestUserText,now);
+  }
+  if (resource === "wish" && action === "update") {
+    // The canonical service merges only explicitly supplied fields with the existing entry.
+    const title = first(sourceData,["title","name"]);
+    if(title!==undefined)data.title=title;
+  }
   if (resource === "wish" && action === "create") {
     data.title = text(first(sourceData, ["title","name"]));
     if (!data.title) throw new LifeClarificationError("想收藏什么地方或活动？", ["title"]);
