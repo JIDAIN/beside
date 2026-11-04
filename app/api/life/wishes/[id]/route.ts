@@ -6,7 +6,7 @@ import { deleteWishPhoto, getWish } from "@/lib/server/life-wish-photos";
 export const runtime="nodejs";
 export async function PATCH(request:Request,context:{params:Promise<{id:string}>}) {
  const denied=await authorizeLifeRequest(request);if(denied)return denied;
- const {id}=await context.params;if(!/^[0-9a-f-]{36}$/i.test(id))return lifeJsonError("心愿 ID 无效",400,"BAD_ID");
+ const {id}=await context.params;if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))return lifeJsonError("心愿 ID 无效",400,"BAD_ID");
  const body=await readJsonBody(request);if(!body.ok)return body.response;
  let data;
  try {data=parseWishWrite(body.value);}
@@ -16,7 +16,7 @@ export async function PATCH(request:Request,context:{params:Promise<{id:string}>
 }
 export async function DELETE(request:Request,context:{params:Promise<{id:string}>}) {
  const denied=await authorizeLifeRequest(request);if(denied)return denied;
- const {id}=await context.params;if(!/^[0-9a-f-]{36}$/i.test(id))return lifeJsonError("心愿 ID 无效",400,"BAD_ID");
+ const {id}=await context.params;if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))return lifeJsonError("心愿 ID 无效",400,"BAD_ID");
  try {
  const current=await getWish(id);
  if(!current)return lifeJsonError("心愿不存在",404,"NOT_FOUND");
