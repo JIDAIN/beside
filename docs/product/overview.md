@@ -106,7 +106,7 @@ Production URL 的旧 slug 仅为兼容地址，不代表产品仍叫 Couple Bet
 
 当前入口：/nest。
 
-当前包含共享纪念日与：
+当前 Production 包含共享纪念日与：
 - 体重；
 - 小信箱；
 - 家庭药箱；
