@@ -1,6 +1,6 @@
 # Wish List / 心愿清单 Domain
 
-> Scope: GitHub main implementation (unreleased until the pending Production migration and deployment are verified). Current deployment status belongs to [Current State](../engineering/current-state.md).
+> Scope: Production capability deployed 2026-11-04. Authenticated CRUD / photo / two-account UI acceptance is still pending; release evidence and limits are tracked in [Current State](../engineering/current-state.md).
 
 ## Purpose
 「小窝 → 心愿清单」是双人共享的轻量生活收藏库，记录未来想去、想玩、想吃、想做的事情，也保留体验过、值得重复体验的内容。它不是工作待办、旅行行程引擎或已发生回忆的第二份档案。
@@ -43,6 +43,6 @@
 
 ## Limits and verification
 - 目前的备份/导入/恢复 allowlist 尚未纳入 wishes 和 wish-photos；不要宣称该模块已获得完整备份恢复保障，也不要顺手扩展普通 Life restore 到 Legacy Game。
-- Production migration 不随 GitHub commit 自动执行。
-- 运行时 CRUD、private Storage、跨账号共享和手机端视觉验收须在相应部署及数据库授权后执行；未验收前不能声称 Production 可用。
+- Production migration `20261104005447_life_wishes.sql` was applied on 2026-11-04; future migrations remain separately authorized.
+- Production build READY, unauthenticated API returned HTTP 401, and public page rendered. Authenticated CRUD, private Storage write/read, two-account shared behavior, and mobile visual acceptance are not yet independently verified.
 - Implementation: `lib/life/wish-list-model.ts`, `lib/server/life-wishes.ts`, `lib/server/life-wish-photos.ts`, `components/life/LifeWishesPage.tsx`, `app/api/life/wishes/**`, `supabase/migrations/20261104005447_life_wishes.sql`.
