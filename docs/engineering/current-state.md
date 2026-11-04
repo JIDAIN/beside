@@ -32,18 +32,18 @@ GitHub main 已领先已核验 Production：心愿清单的页面、共享 API�
 
 最近核验时 Production ledger 为 63 条公共 migration；仓库保留额外 replay-only helper 以记录 runtime 历史步骤。
 
-2026-11-04 只读查询实测：Production 尚无 `public.life_wishes`、`public.list_life_wishes(text)` 和 `wish-photos` bucket；Storage 的 `buckets` 表已核实具备迁移引用的字段。未执行任何 schema/data 写入。\n\n判断数据库行为以 runtime schema/functions 优先，不因为 repo 有 migration 文件就假定 Production 已执行。
+2026-11-04 迁移前只读查询确认三项缺失；迁移后再次只读查询确认 `life_wishes`、相关 RPC 和私有 `wish-photos` bucket 已建立，表内记录为 0。Production 真实 CRUD 测试未完成。\n\n判断数据库行为以 runtime schema/functions 优先，不因为 repo 有 migration 文件就假定 Production 已执行。
 
 ## 4. Main vs Production Differences
 
 - 2026-11-04 通过 Vercel deployment list 只读核对：最新 Production 仍为 2026-10-19 的 dpl_8bqUpgPD7mD5GCoUq19rg78c2Cov，source commit 0db5b1b。没有新部署。
-- GitHub main 新增 /nest/wishes、/api/life/wishes、/api/life/wishes/[id]/photo、私有 wish-photos Storage bucket 的 migration 20261102000000_life_wishes.sql，尚未完成可发布验证。
-- 本轮没有对 Production Supabase 写入或执行 migration。心愿功能依赖新表及 RPC，未迁移前不能正常使用。
+- GitHub main 新增 /nest/wishes、/api/life/wishes、/api/life/wishes/[id]/photo、私有 wish-photos Storage bucket 的 migration 20261104005447_life_wishes.sql，尚未完成可发布验证。
+- 2026-11-04 已获得用户针对本次的授权并执行 Production Supabase migration：ledger 20261104005447 (life_wishes)，创建独立共享心愿表、受限 RPC 与 private wish-photos bucket。网页代码仍未发布。
 - 现有普通 Life backup/import/restore 尚未纳入 wishes 与 wish-photos，不能视为已获得完整恢复保障。
 
 ## 5. Outstanding Verification
 
-心愿清单的 test/lint/build、共享读写 runtime、移动端视觉验收及 Production migration 均尚未完成；不得因此宣布功能上线。\n\nBlank-database full replay 尚未在一次性全空数据库中完成从零重建验证。
+心愿清单 Production migration 已应用；test/lint/build、共享读写 runtime 与移动端视觉验收尚未完成；不得因此宣布功能上线。\n\nBlank-database full replay 尚未在一次性全空数据库中完成从零重建验证。
 
 这属于长期灾备/新环境验证，不阻塞当前日常使用；不要为了完成文档清单单独创建可能收费的 Supabase branch/project。
 
