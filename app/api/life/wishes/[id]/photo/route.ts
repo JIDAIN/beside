@@ -33,6 +33,7 @@ export async function PUT(request:Request,context:Context){
   const data=await request.formData();
   const file=data.get("file");
   if(!(file instanceof File))return lifeJsonError("请选择图片",400,"PHOTO_REQUIRED");
+  if(file.size>10*1024*1024)return lifeJsonError("封面图片不能超过 10MB",413,"PHOTO_TOO_LARGE");
   const compressed=await compressMealPhoto(await file.arrayBuffer(),file.type);
   const path=wishPhotoPath(wish.id);
   await uploadWishPhoto(path,compressed.bytes);
