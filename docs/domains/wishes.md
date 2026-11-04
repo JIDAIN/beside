@@ -45,4 +45,4 @@
 - 目前的备份/导入/恢复 allowlist 尚未纳入 wishes 和 wish-photos；不要宣称该模块已获得完整备份恢复保障，也不要顺手扩展普通 Life restore 到 Legacy Game。
 - Production migration 不随 GitHub commit 自动执行。
 - 运行时 CRUD、private Storage、跨账号共享和手机端视觉验收须在相应部署及数据库授权后执行；未验收前不能声称 Production 可用。
-- Implementation: `lib/life/wish-list-model.ts`, `lib/server/life-wishes.ts`, `lib/server/life-wish-photos.ts`, `components/life/LifeWishesPage.tsx`, `app/api/life/wishes/**`, `supabase/migrations/20261102000000_life_wishes.sql`.
+- Implementation: `lib/life/wish-list-model.ts`, `lib/server/life-wishes.ts`, `lib/server/life-wish-photos.ts`, `components/life/LifeWishesPage.tsx`, `app/api/life/wishes/**`, `supabase/migrations/20261104005447_life_wishes.sql`.
