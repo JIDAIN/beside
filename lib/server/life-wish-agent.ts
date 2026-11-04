@@ -1,6 +1,7 @@
 import { buildWishCreate, buildWishUpdate, buildWishVisit, normalizeWishCategory, wishFields } from "@/lib/life/wish-ai";
 import { wishIntent, type WishEntry } from "@/lib/life/wish-list-model";
 import { listWishes, parseWishWrite, writeWish } from "./life-wishes";
+import { deleteWishPhoto } from "./life-wish-photos";
 
 type Actor = "cat" | "fish";
 type Query = { id?:unknown; name?:unknown; category?:unknown; status?:unknown; limit?:unknown };
@@ -40,6 +41,7 @@ export async function mutateAgentWish(action:string,idRaw:unknown,input:unknown,
  if(!existing)throw new Error("该心愿不存在，请先查询最新清单");
  if(action==="delete") {
    const deleted=await writeWish(actor,id,null,true);
+   if(existing.imagePath)await deleteWishPhoto(existing.imagePath).catch(()=>undefined);
    return {deletedId:id,deleted:true,item:deleted};
  }
  if(action==="update") {
