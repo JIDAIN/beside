@@ -50,6 +50,13 @@ export async function mutateAgentWish(action:string,idRaw:unknown,input:unknown,
  }
  if(action==="add_visit") {
    const payload=parseWishWrite(buildWishVisit(existing,input));
+   const next=payload.visits[payload.visits.length-1];
+   const matches=existing.visits.find(visit=>
+     visit.visitedOn===next.visitedOn &&
+     visit.note===next.note &&
+     [...visit.completedItemIds].sort().join("|")===[...next.completedItemIds].sort().join("|")
+   );
+   if(matches)return {item:existing,visitAdded:false,alreadyExists:true,message:"相同日期、备注及打卡点位的体验已经记录，未重复新增"};
    return {item:await writeWish(actor,id,payload),visitAdded:true};
  }
  throw new Error("心愿仅支持 create/update/add_visit/delete");
