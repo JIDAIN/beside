@@ -69,7 +69,7 @@ begin
     if v.status not in ('pending','counter') or v.waiting_for<>p_actor then raise exception 'not your turn'; end if;
     v.status:='counter';
    else
-    if v.status<>'agreed' or v_now>=v.scheduled_at or v.reschedule_count>=2 then raise exception 'reschedule unavailable'; end if;
+    if v.status<>'agreed' or v_now>=v.scheduled_at or v.reschedule_count>=2 or v.results<>'{}'::jsonb then raise exception 'reschedule unavailable'; end if;
     v.status:='reschedule';
    end if;
    v.waiting_for:=v_other;v.candidate_at:=v_at;v.candidate_duration:=v_dur;v.version:=v.version+1;
@@ -94,7 +94,7 @@ begin
    perform private.life_proposal_clear_reminders(v);
    perform private.life_proposal_notify(v,v_other,'withdrawn',v_now,v.version);
   elsif p_action='cancel' then
-   if v.status not in ('agreed','reschedule') or v_now>=v.scheduled_at+make_interval(mins=>v.duration_minutes) then raise exception 'cannot cancel'; end if;
+   if v.status not in ('agreed','reschedule') or v_now>=v.scheduled_at+make_interval(mins=>v.duration_minutes) or v.results<>'{}'::jsonb then raise exception 'cannot cancel'; end if;
    v.status:='closed';v.outcome:='cancelled';v.closed_at:=v_now;v.waiting_for:=null;v.version:=v.version+1;
    perform private.life_proposal_clear_reminders(v);
    perform private.life_proposal_notify(v,v_other,'cancelled',v_now,v.version);
