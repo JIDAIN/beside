@@ -45,7 +45,7 @@ begin
       when 1 then '🌙 团子 · 伴岛晚间提醒'
       when 2 then '💌 团子 · Beside 晚安小提醒'
       when 3 then '🌷 团子 · 伴岛今日记录'
-      when 4 then '✨ 团子 · 今晚的小提醒'
+      when 4 then '✨ 团子 · 伴岛今晚的小提醒'
       else '💗 Beside · 团子的晚间问候' end;
     v_intro := case v_variant
       when 1 then '两位主人晚上好呀～团子来看看今天还有哪些记录没写完～ 🌙'
