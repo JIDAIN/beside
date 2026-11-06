@@ -58,7 +58,7 @@ export function LifeWishesPage(){
  const result=await endpoint<{item:WishEntry}>(path,editing?"PATCH":"POST",form);
  let saved=result.item;
  setEditing(saved);
- setEntries(cur=>[saved,...cur.filter(x=>x.id!==saved.id)]);
+ setEntries(cur=>[saved,...(cur ?? []).filter(x=>x.id!==saved.id)]);
  if(photoFile){
    const photoForm=new FormData();photoForm.set("file",photoFile);
    const response=await fetch("/api/life/wishes/"+saved.id+"/photo",{method:"PUT",body:photoForm});
@@ -72,14 +72,14 @@ export function LifeWishesPage(){
  }
  async function remove(item:WishEntry){
  if (!(await confirm({ title: "删除这条心愿？", description: "「" + item.title + "」及其体验记录将被删除。", confirmLabel: "删除", tone: "danger" }))) return;
- try{await endpoint("/api/life/wishes/"+item.id,"DELETE");setEntries(xs=>xs.filter(x=>x.id!==item.id));setDetail(null);setEditing(undefined);setError("");}catch(e){setError(e instanceof Error?e.message:"删除失败");}
+ try{await endpoint("/api/life/wishes/"+item.id,"DELETE");setEntries(xs=>(xs ?? []).filter(x=>x.id!==item.id));setDetail(null);setEditing(undefined);setError("");}catch(e){setError(e instanceof Error?e.message:"删除失败");}
  }
  function addVisit(){setDirty(true);const visit:WishVisit={id:crypto.randomUUID(),visitedOn:new Date().toLocaleDateString("sv-SE"),note:null,completedItemIds:[]};setForm(x=>({...x,visits:[...x.visits,visit]}));}
  const input=(label:string,key:keyof WishWrite,multiline=false)=> <label className="block text-xs font-bold text-[var(--life-text-body)]">{label}{multiline?<textarea className={fieldClass} rows={3} value={String(form[key]??"")} onChange={e=>{setDirty(true);setForm(x=>({...x,[key]:e.target.value||null}));}}/>:<input className={fieldClass} value={String(form[key]??"")} onChange={e=>{setDirty(true);setForm(x=>({...x,[key]:e.target.value||null}));}}/>}</label>;
  async function closeEditor(){if(saving)return;if(dirty&&!(await confirm({ title: "放弃未保存的修改？", description: "这次编辑的内容还没有保存。", confirmLabel: "离开" })))return;setEditing(undefined);setPhotoFile(null);setPreview(null);setDirty(false);setError("");}
  async function removeCover(item:WishEntry){
   if (!(await confirm({ title: "移除封面图片？", description: "心愿内容和体验记录将保留。", confirmLabel: "移除", tone: "danger" }))) return;
-  try{const result=await endpoint<{item:WishEntry}>("/api/life/wishes/"+item.id+"/photo","DELETE");setDetail(result.item);setEntries(xs=>xs.map(x=>x.id===item.id?result.item:x));setError("");}
+  try{const result=await endpoint<{item:WishEntry}>("/api/life/wishes/"+item.id+"/photo","DELETE");setDetail(result.item);setEntries(xs=>(xs ?? []).map(x=>x.id===item.id?result.item:x));setError("");}
   catch(e){setError(e instanceof Error?e.message:"移除封面失败");}
  }
  const cover=(item:WishEntry)=>"/api/life/wishes/"+item.id+"/photo?v="+encodeURIComponent(item.updatedAt);
