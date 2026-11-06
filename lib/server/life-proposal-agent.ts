@@ -123,7 +123,9 @@ export async function mutateAgentProposal(
   const version = expectedVersion(versionRaw);
   const current = (await listTogetherProposals()).find((p) => p.id === id);
   if (!current) throw new Error("没有找到这条邀请，请先查询最新列表");
-  if (current.version !== version) throw new Error("邀请已经发生变化，请先查询最新状态，再决定是否操作");
+  // The RPC checks expectedVersion after idempotency replay lookup, so retrying
+  // a successful tool call with its original version returns the previous result.
+  // A genuinely stale new action is still rejected by the database.
   const canonicalData: Row = action === "counter" || action === "reschedule"
     ? {
         scheduledAt: data.scheduledAt,
