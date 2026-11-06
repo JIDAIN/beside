@@ -157,3 +157,11 @@ Read-only Vercel deployment history shows latest READY production deployment `dp
 - Read-only Production SQL counts at investigation: 4 non-deleted wishes and 1 proposal. `EXPLAIN ANALYZE` for the two list RPCs showed ~2.35ms and ~2.63ms respectively; this is database execution time, **not** authenticated end-to-end page-load latency. Recent Vercel runtime logs did not provide a network waterfall or precise mobile TTFB evidence; real mobile performance acceptance remains pending.
 - PR CI **450/450 tests**, Build and Lint all passed.
 - No Vercel Preview/Production deploy and no Production Supabase write was authorized/performed. Production currently remains deployment `dpl_E3QyoBuMWB6aHRRHix3GN1ecFxAA` from `f4639c7f56e81699303221676f108fb0f68ed3d7`; the merged loading improvement is not live.
+
+## 2026-11-06 Wishes/Together fast-reopen Production release (authorized)
+
+- User authorized Vercel Production deployment; deployment `dpl_HgR3uh9cMfNnWcALvdhzb3vuM7Yj` is READY, source GitHub SHA `62929e93b793c07d059305274da2461ca4879eb9`, correct production-compatible alias `couple-better-game.vercel.app`, `aliasError=null`.
+- Deployed main includes PR #107 (Wishes/Together scoped persistent cache, lower background request contention, and all 450 tests passing), plus earlier pending PR #104 custom confirmation dialogs and the Web-only Together notification deep-link/login/targeting route. Deploying this source does **not** imply its separately pending Supabase notification-copy migration was applied.
+- Initial 15-minute Vercel Production error/fatal runtime-log check returned no entries; no authenticated mobile end-to-end first-paint timing or real WeChat deep-link device validation was performed.
+- No Supabase Production migration or data write was authorized or performed in this release. `20261106150000_together_notification_deep_links.sql` remains unapplied until separately approved. Existing generic notification behavior remains until that migration.
+- This follow-up documentation commit is later than the production deployment SHA and is not itself a new deployment.
