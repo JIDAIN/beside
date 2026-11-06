@@ -62,6 +62,16 @@ begin
   if v_message is distinct from private.life_pushplus_message('cat',v_reminder)
     then raise exception 'unstable summary copy';end if;
 
+  -- The cron claim must now emit a daily digest even with all five checks complete.
+  delete from public.life_notification_deliveries where kind='daily_record';
+  v_reminder:=public.claim_life_notification_reminders(
+    'cat',(v_day+time '21:05') at time zone 'Asia/Shanghai');
+  if jsonb_array_length(v_reminder->'reminders')<>1 then
+    raise exception 'full day is still incorrectly silent';end if;
+  if (v_reminder->'reminders'->0->'selfSummary'->>'mood')<>'心动'
+    or (v_reminder->'reminders'->0->'partnerSummary'->>'mood')<>'开心'
+    then raise exception 'claim did not snapshot both people';end if;
+
   -- Insert a harmless disposable proposal to exercise escaped title and schedule.
   insert into public.life_proposals(couple_space_id,title,scheduled_at)
   values(v_space,'一起散步 <3 & 休息',now()+interval '2 days')
