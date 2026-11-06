@@ -47,6 +47,10 @@
 
 保留 life_capabilities / life_query / life_mutate 三个稳定工具，新增 proposal 业务资源，使用原 OAuth life:read / life:write。共享只读；写入经服务端可信 actor → AI normalizer → canonical list/mutate service → 受限 RPC，继承配额、版本、防重试及团子提醒。必须先可靠查询 ID/version，不替 Ta 回应/确认；时间必须明确，不自动写入 Life activity 或 Legacy Game。
 
+## 待发布提醒文案优化
+
+代码迁移 `20261106110000_daily_recap_proposal_notifications.sql` 为现有 proposal Stateful Reminder Source 补充团子亲昵称呼、经 HTML 转义的约定标题以及北京时间。保留 invite/counter/accept/decline/取消/开始前/结束结果等原有事件触发、时间与投递去重契约，不额外曝光自由备注。正式上线状态以 Production Supabase runtime 与 migration ledger 为准；未经授权应用 migration 前，线上仍使用原先文本。
+
 ## V1 限制与验收
 
 V1 不接入积分或复杂循环任务；MCP 文本查询和操作由独立 AI registry 增量接入。未来 B 版可以基于事件历史推导成长统计，不重写事实。

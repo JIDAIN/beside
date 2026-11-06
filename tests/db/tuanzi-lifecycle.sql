@@ -35,7 +35,7 @@ begin
  v_claim := public.claim_life_notification_reminders('cat',v_now);
  if jsonb_array_length(v_claim->'reminders')<>1 then raise exception 'no Cat digest';end if;
  v_msg := private.life_pushplus_message('cat',v_claim->'reminders'->0);
- if (v_msg->>'content') not like '%主人：%' or (v_msg->>'content') not like '%老婆：%'
+ if (v_msg->>'content') not like '%主人的今日记录%' or (v_msg->>'content') not like '%老婆的今日记录%'
  then raise exception 'no two-person relative digest';end if;
  if not(v_msg->>'content' like '%晚餐%' and v_msg->>'content' like '%早餐%') then
    raise exception 'missing items omitted';end if;

@@ -27,8 +27,8 @@ begin
       if v_msg->>'title' not like '%伴岛%' and v_msg->>'title' not like '%Beside%' then
         raise exception 'unapproved product name in title: %',v_msg;
       end if;
-      if (v_msg->>'content') not like '%主人：还差 早餐、心情%'
-      or (v_msg->>'content') not like '%老婆：还差 睡眠%'
+      if (v_msg->>'content') not like '%主人的今日记录%'
+      or (v_msg->>'content') not like '%老婆的今日记录%'
       then raise exception 'missing details not preserved: %',v_msg;end if;
       if (v_msg->>'content') like '%小岛日记%' then raise exception 'legacy copy present';end if;
       v_variants:=array_append(v_variants,private.tuanzi_copy_variant(v_actor||':'||v_date||':daily:'));
