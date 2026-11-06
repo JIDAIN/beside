@@ -107,3 +107,11 @@ Read-only Vercel deployment history shows latest READY production deployment `dp
 - Authorized Vercel Production deployment `dpl_7szh2ZemZgz6F2qHGV9Sh28mSzjj` is READY, source SHA `d5f4e1330694f46a179446bd4f08f2245ea644ac`, correctly aliased to `couple-better-game.vercel.app`.
 - Initial 15-minute Production Vercel error/fatal log scan found no entries. Real future-message client rendering/click handling still requires a naturally triggered notification; provider accepted does not prove the user clicked or read it. Previously sent messages are not retroactively changed.
 - This documentation-only commit follows deployment and should not be confused with a new Production release.
+
+## 2026-11-06 Together early-completion UX + lifecycle fix (GitHub main only)
+
+- PR #102 merged at `edd9f9ef183117a459eddf60d11f2608cf659328`. Code adds an early `我提前做完了` UI action on an `agreed` proposal, and forward migration `20261106130000_together_early_result_lifecycle.sql` allows only factual `done` reporting before scheduled start.
+- A single actor completing early retains the agreed state and the other actor's pre-start reminder, dismissing only the reporter's unused start nudges. At scheduled end, existing sweep generates result and follow-up reminders for remaining non-reporting actors. Two early `done` results close as `joint_done` without sending later unneeded reminders. After any recorded result, reschedule and cancel are unavailable (backend enforced and UI hidden).
+- Production read-only investigation of the user-reported proposal: scheduled 2026-11-06 21:00 Asia/Shanghai for 15 minutes, screenshot at 20:45; original result buttons were gated by scheduled start. Production PushPlus delivery ledger marked the 17:20 invite, 18:45 acceptance, and both 20:45 before-start messages `accepted`. This verifies provider acceptance, not mobile receipt/read.
+- Ephemeral PostgreSQL 17 Together migration/lifecycle tests passed; Build and Lint passed; full JS suite 436/438, with the same two pre-existing wish-related test failures.
+- **No new Production Supabase migration or Vercel Preview/Production deployment authorized or performed for PR #102.** Deployed Web retains the original no-early-completion rule until a separately authorized release.
