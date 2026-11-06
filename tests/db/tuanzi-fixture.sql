@@ -21,8 +21,8 @@ create table public.life_notification_deliveries(
  reserved_at timestamptz default now(),updated_at timestamptz default now(),completed_at timestamptz,
  unique(couple_space_id,dedupe_key));
 create table public.mood_entries(id uuid primary key default gen_random_uuid(),couple_space_id uuid,partner_key text,mood_date date,mood_key text);
-create table public.sleep_records(id uuid primary key default gen_random_uuid(),couple_space_id uuid,partner_key text,sleep_date date);
-create table public.meals(id uuid primary key default gen_random_uuid(),couple_space_id uuid,partner_key text,meal_date date,meal_type text,status text,deleted_at timestamptz);
+create table public.sleep_records(id uuid primary key default gen_random_uuid(),couple_space_id uuid,partner_key text,sleep_date date,fell_asleep_at timestamptz,woke_at timestamptz);
+create table public.meals(id uuid primary key default gen_random_uuid(),couple_space_id uuid,partner_key text,meal_date date,meal_type text,status text,total_calories_kcal integer,deleted_at timestamptz);
 insert into public.couple_spaces(slug) values('couple-better-game');
 insert into public.partner_profiles select id,k from public.couple_spaces cross join(values ('cat'),('fish')) x(k);
 insert into public.life_notification_preferences(couple_space_id,actor)
@@ -166,3 +166,19 @@ create or replace function private.dispatch_life_pushplus_for_actor(
 create or replace function private.dispatch_due_life_reminders_for_actor(
  p_actor text,p_now timestamptz default now(),p_space_slug text default 'couple-better-game'
 ) returns jsonb language sql as $$select '{}'::jsonb;$$;
+
+-- Minimal proposal reminder dependencies for the daily recap regression suite.
+create table public.life_proposals(
+ id uuid primary key default gen_random_uuid(),
+ couple_space_id uuid not null references public.couple_spaces(id),
+ title text not null,scheduled_at timestamptz not null,candidate_at timestamptz
+);
+create table public.life_reminder_instances(
+ id uuid primary key default gen_random_uuid(),
+ couple_space_id uuid not null,recipient text not null,
+ source_kind text,source_ref text,title text,content text,
+ due_at timestamptz not null,dedupe_key text not null,
+ metadata jsonb,status text default 'pending',snoozed_until timestamptz,
+ notified_at timestamptz,updated_at timestamptz default now(),
+ unique(couple_space_id,recipient,dedupe_key)
+);
