@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - "supabase/migrations/20261106090000_tuanzi_partner_record_notifications.sql"
+      - "supabase/migrations/20261106100000_varied_tuanzi_notification_copy.sql"
       - "tests/db/tuanzi-*.sql"
       - ".github/workflows/tuanzi-db.yml"
   workflow_dispatch:
@@ -43,5 +44,9 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f tests/db/tuanzi-fixture.sql
       - name: Apply migration to disposable database
         run: psql -X -v ON_ERROR_STOP=1 -f supabase/migrations/20261106090000_tuanzi_partner_record_notifications.sql
+      - name: Apply varied copy migration
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/migrations/20261106100000_varied_tuanzi_notification_copy.sql
       - name: Verify notification lifecycle and permissions
         run: psql -X -v ON_ERROR_STOP=1 -f tests/db/tuanzi-lifecycle.sql
+      - name: Verify varied Tuanzi copy and stable retry messages
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/db/tuanzi-copy.sql
