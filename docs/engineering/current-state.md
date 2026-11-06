@@ -82,3 +82,12 @@ Read-only Vercel deployment history shows latest READY production deployment `dp
 - Ephemeral PostgreSQL 17 old+new migration smoke and copy variant tests passed; lint/build passed; full JS suite 436/438 with two pre-existing unrelated wish tests failing.
 - Production Supabase was **read-only checked** and still contains the old `小岛日记` wording in both renderer functions. The latest inspected Vercel READY production deployment `dpl_D3FDdpqGTouT7dpwNo7GmJWGnrAF` is based on `fd19e046abcc3ce4711587448b1d3a3b6fc150ba`, not PR #99.
 - **No Production Supabase migration, Preview deployment or Production deployment was authorized/performed for PR #99.** It must not be claimed live until a separate production release is approved and verified.
+
+## 2026-11-06 Tuanzi Daily Values & Together Copy (GitHub main ahead of Production)
+
+- PR #100 merged as `dd76051651bc23164659b44cae8dbeec9e3a17ff`.
+- New forward migration `20261106110000_daily_recap_proposal_notifications.sql` extends the 21:00 daily-record claim with actual Cat/Fish snapshot payloads, renders canonical Chinese mood, sleep duration, confirmed main-meal/snack kcal and a separately labeled confirmed daily calorie sum (unknown values not counted as 0). A full day still generates a recap.
+- Together proposal notifications retain their reminder source and trigger timing, but use affectionate Tuanzi copy with HTML-escaped proposal title and Beijing date/time.
+- SQL migration and ephemeral PostgreSQL behavioral tests passed (including complete-day claim and unknown snack calorie cases); Build/Lint passed. Full JS suite: 436/438, with the two existing wish-related test failures.
+- **No new Production Supabase migration or Vercel deployment was performed** for PR #100. PR #99's prior Tuanzi branding migration also remains pending Production application; release must apply forward migrations in order with separate explicit authorization.
+- Read-only Production delivery investigation: one Together invite recipient Fish, instance `a40bad4a-535d-431b-98e7-fb7907f25c3c`, had delivery status `accepted`, provider `pushplus_wechat`, provider message ID `a713b5851caa49708bdcebec97e6d5fd`, attempt 1 at 2026-11-06 17:20 Beijing time. Provider acceptance confirms API handoff, not device receipt/read.
