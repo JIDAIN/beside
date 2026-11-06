@@ -69,7 +69,9 @@ describe("Together V1 boundary", () => {
   expect(ui).toContain("今天不了");
   expect(ui).toContain("保留原约定");
   expect(ui).toContain("我的执行结果");
-  expect(ui).toContain("我提前做完了");
+  expect(ui).toContain("我们已完成");
+  expect(ui).toContain("由我确认");
+  expect(ui).toContain("由 Ta 确认");
   expect(ui).toContain('early={Date.parse(p.scheduledAt) > now}');
   expect(ui).toContain("p.durationMinutes * 60000");
   const migration = source("supabase/migrations/20261106130000_together_early_result_lifecycle.sql");
@@ -77,6 +79,10 @@ describe("Together V1 boundary", () => {
   expect(migration).toContain("v_now<v_end");
   expect(migration).toContain("recipient=p_actor");
   expect(migration).toContain("'before','encourage'");
+  const joint = source("supabase/migrations/20261106140000_together_single_joint_completion.sql");
+  expect(joint).toContain("if p_data->>'result'='done' then");
+  expect(joint).toContain("v_outcome:='joint_done'");
+  expect(joint).toContain("private.life_proposal_clear_reminders(v)");
   expect(ui).not.toContain("拒绝次数已满");
  });
 });
