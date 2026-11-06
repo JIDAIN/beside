@@ -1,5 +1,7 @@
 "use client";
 
+
+import { useAppConfirm } from "@/components/ui/AppConfirmDialog";
 import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 import { AppPageShell } from "@/components/ui/AppPageShell";
@@ -41,6 +43,7 @@ function TrashIcon() {
 }
 
 export function LifeMedicinePage() {
+  const confirm = useAppConfirm();
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
@@ -81,7 +84,7 @@ export function LifeMedicinePage() {
   }
 
   async function remove(item: MedicineRecord) {
-    if (!window.confirm(`删除“${item.name}”这条药箱记录？`)) return;
+    if (!(await confirm({ title: "删除药箱记录？", description: `「${item.name}」将从药箱中移除。`, confirmLabel: "删除", tone: "danger" }))) return;
     try { await deleteMedicineItem(item.id); itemsQuery.update((current) => (current ?? []).filter((entry) => entry.id !== item.id)); }
     catch (cause) { setError(cause instanceof Error ? cause.message : "删除失败"); }
   }
