@@ -1,6 +1,6 @@
 import { readFetch } from "../client/read-fetch";
 export type LifeReminderStatus = "pending" | "snoozed" | "completed" | "dismissed";
-export type LifeReminderSourceKind = "custom" | "medicine" | "anniversary" | "system" | "mailbox";
+export type LifeReminderSourceKind = "custom" | "medicine" | "anniversary" | "system" | "mailbox" | "proposal";
 
 export type LifeReminderItem = {
   id: string;
@@ -93,7 +93,6 @@ export async function saveLifeReminderSettings(input: {
 export function effectiveReminderTime(item: LifeReminderItem) {
   return item.snoozedUntil || item.dueAt;
 }
-
 export async function saveLifeCoupleNotificationSettings(input: { partnerRecordNotificationsEnabled: boolean; dailyRecordReminderEnabled: boolean }) {
   const response = await readFetch("/api/life/reminders/settings", {
     method: "PATCH",
