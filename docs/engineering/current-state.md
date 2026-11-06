@@ -142,8 +142,9 @@ Read-only Vercel deployment history shows latest READY production deployment `dp
 - PR CI Build/Lint passed, 441/443 JS tests passed (two pre-existing Wish agent / MCP tests still fail). No live mobile Chrome/WeChat browser visual screenshot was produced, and no new Preview/Production deployment was authorized or performed.
 - Vercel Production remains on earlier `f4639c7f56e81699303221676f108fb0f68ed3d7` deployment (Together single confirmation); merged `main` UI is not live until a separately authorized deployment.
 
-## 2026-11-06 Together notification deep-link login (development branch only)
+## 2026-11-06 Together notification deep-link login (GitHub main only)
 
-- Branch `feat/wechat-reminder-deep-link-login` adds a session-gated `/open/together?proposal=UUID` entry, client-side proposal focus, and a forward SQL migration `20261106150000_together_notification_deep_links.sql` for newly generated PushPlus Together message links.
+- PR #105 merged into main as `ebf33d7005be617b8af2306e4e72bb9dc856d083`; the former development branch adds a session-gated `/open/together?proposal=UUID` entry, client-side proposal focus, and a forward SQL migration `20261106150000_together_notification_deep_links.sql` for newly generated PushPlus Together message links.
 - Login still requires Cat/Fish password on first use in a browser and reuses the existing 30-day signed cookie afterward; no Magic Link, new credential, or permission bypass was introduced.
-- This is repository development only. The SQL migration has **not** been applied to Production Supabase, and no Preview/Production deployment has been authorized in this turn. Real WeChat rendering, first-login return, cookie persistence and Cat/Fish end-to-end confirmation are outstanding.
+- PR CI: Build, Lint, Together PostgreSQL smoke and Tuanzi PostgreSQL migration + deep-link smoke passed. JS suite 444/446 passed; the same two pre-existing Wish agent/MCP tests still fail.
+- This is **GitHub main only**. The SQL migration has **not** been applied to Production Supabase, and no Preview/Production deployment has been authorized in this turn. Real WeChat rendering, first-login return, cookie persistence and Cat/Fish end-to-end confirmation are outstanding.
