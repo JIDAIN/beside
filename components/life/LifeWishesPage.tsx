@@ -5,8 +5,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppPageShell } from "@/components/ui/AppPageShell";
+import { useLifeIdentity } from "@/components/life/LifeIdentityContext";
+import { useStaleQuery } from "@/lib/client/use-stale-query";
 import { wishIntent, type WishEntry, type WishCategory, type WishChecklistItem, type WishVisit, type WishWrite } from "@/lib/life/wish-list-model";
 
+const EMPTY_WISHES: WishEntry[] = [];
 const categories:Record<WishCategory,string>={go:"想去",play:"想玩",eat:"想吃",do:"想做"};
 type View="active"|"want"|"again"|"done"|"all";
 const empty=():WishWrite=>({title:"",category:"go",description:null,location:null,openingHours:null,priceNote:null,durationNote:null,bestTimeNote:null,practicalNotes:null,imagePath:null,referenceUrls:[],checklist:[],visits:[],wantToRepeat:true,archivedAt:null});
@@ -19,8 +22,12 @@ async function endpoint<T>(path:string,method="GET",data?:unknown):Promise<T> {
 }
 export function LifeWishesPage(){
   const confirm = useAppConfirm();
- const [entries,setEntries]=useState<WishEntry[]>([]);
- const [loading,setLoading]=useState(true);
+ const { mePartnerKey } = useLifeIdentity();
+ const fetcher = useCallback(async () => (await endpoint<{items:WishEntry[]}>("/api/life/wishes")).items, []);
+ const wishesQuery = useStaleQuery<WishEntry[]>({ key: "wishes", fetcher, enabled: Boolean(mePartnerKey), staleMs: 30_000 });
+ const entries = wishesQuery.data ?? EMPTY_WISHES;
+ const loading = wishesQuery.loading;
+ const setEntries = wishesQuery.update;
  const [error,setError]=useState("");
  const [filter,setFilter]=useState<View>("active");
  const [category,setCategory]=useState<WishCategory|"all">("all");
@@ -32,8 +39,10 @@ export function LifeWishesPage(){
  const [photoFile,setPhotoFile]=useState<File|null>(null);
  const [preview,setPreview]=useState<string|null>(null);
  const [dirty,setDirty]=useState(false);
- const reload=useCallback(async()=>{try{const data=await endpoint<{items:WishEntry[]}>("/api/life/wishes");setEntries(data.items);setError("");}catch(e){setError(e instanceof Error?e.message:"读取失败");}finally{setLoading(false);}},[]);
- useEffect(()=>{void reload();},[reload]);
+ const reload = useCallback(async () => {
+   try { await wishesQuery.refresh(true); setError(""); }
+   catch (e) { setError(e instanceof Error ? e.message : "读取失败"); }
+ }, [wishesQuery.refresh]);
  useEffect(()=>()=>{if(preview)URL.revokeObjectURL(preview);},[preview]);
  useEffect(()=>{if(!dirty)return;const warn=(event:BeforeUnloadEvent)=>{event.preventDefault();event.returnValue="";};window.addEventListener("beforeunload",warn);return ()=>window.removeEventListener("beforeunload",warn);},[dirty]);
  const visible=useMemo(()=>entries.filter(x=>{
@@ -78,7 +87,7 @@ export function LifeWishesPage(){
  <div className="flex gap-2 overflow-x-auto pb-1">{([["active","待安排"],["want","想尝试"],["again","再来一次"],["done","已体验"],["all","全部"]] as [View,string][]).map(([v,n])=><button key={v} aria-pressed={filter===v} onClick={()=>setFilter(v)} className={"shrink-0 rounded-full px-3 py-2 text-xs font-bold "+(filter===v?"bg-[var(--life-teal)] text-white":"bg-white text-[var(--life-text-body)]")}>{n}</button>)}</div>
  <div className="flex flex-wrap gap-2">{([["all","全部"],["go","想去"],["play","想玩"],["eat","想吃"],["do","想做"]] as [WishCategory|"all",string][]).map(([v,n])=><button aria-pressed={category===v} key={v} onClick={()=>setCategory(v)} className={"rounded-xl border px-3 py-1.5 text-xs "+(category===v?"border-[var(--life-teal)] font-bold":"border-[var(--life-border)]")}>{n}</button>)}</div>
  {error?<p role="alert" className="rounded-xl bg-white p-3 text-sm text-[var(--life-danger)]">{error}</p>:null}
- {loading?<p className="p-4 text-sm">正在读取…</p>:null}
+ {loading && entries.length === 0 ? <p className="p-4 text-sm">正在读取…</p> : null}
  {!loading&&visible.length===0?<p className="life-surface p-8 text-center text-sm text-[var(--life-text-muted)]">这里还没有心愿</p>:null}
  <div className="grid gap-2">{visible.map(x=><button key={x.id} onClick={()=>{setError("");setDetail(x);}} className="life-surface flex w-full items-center gap-3 rounded-2xl p-3 text-left"><span aria-hidden className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[var(--life-cream)] text-xl">{x.imagePath?<Image unoptimized src={cover(x)} width={48} height={48} className="size-12 object-cover" alt=""/>:({go:"⌖",play:"✧",eat:"♨",do:"♡"} as const)[x.category]}</span><span className="min-w-0 flex-1"><strong className="block truncate text-sm">{x.title}</strong><span className="block truncate text-xs text-[var(--life-text-muted)]">{categories[x.category]}{x.location?" · "+x.location:""}</span></span><span className="shrink-0 text-xs text-[var(--life-text-muted)]">{({want:"想尝试",again:"值得再去",done:"已体验"} as const)[wishIntent(x)]}</span><span aria-hidden>›</span></button>)}</div>
  </div>
