@@ -29,6 +29,7 @@ export function LifeWishesPage(){
  const loading = wishesQuery.loading;
  const setEntries = wishesQuery.update;
  const [error,setError]=useState("");
+ const visibleError = error || wishesQuery.error?.message || "";
  const [filter,setFilter]=useState<View>("active");
  const [category,setCategory]=useState<WishCategory|"all">("all");
  const [search,setSearch]=useState("");
@@ -86,9 +87,9 @@ export function LifeWishesPage(){
  <div className="flex items-center gap-2"><input aria-label="搜索心愿" className={fieldClass+" !mt-0 flex-1"} placeholder="搜索心愿…" value={search} onChange={e=>setSearch(e.target.value)}/><button className="rounded-xl bg-[var(--life-teal)] px-4 py-3 text-sm font-bold text-white" onClick={()=>openEditor()}>＋ 新增</button></div>
  <div className="flex gap-2 overflow-x-auto pb-1">{([["active","待安排"],["want","想尝试"],["again","再来一次"],["done","已体验"],["all","全部"]] as [View,string][]).map(([v,n])=><button key={v} aria-pressed={filter===v} onClick={()=>setFilter(v)} className={"shrink-0 rounded-full px-3 py-2 text-xs font-bold "+(filter===v?"bg-[var(--life-teal)] text-white":"bg-white text-[var(--life-text-body)]")}>{n}</button>)}</div>
  <div className="flex flex-wrap gap-2">{([["all","全部"],["go","想去"],["play","想玩"],["eat","想吃"],["do","想做"]] as [WishCategory|"all",string][]).map(([v,n])=><button aria-pressed={category===v} key={v} onClick={()=>setCategory(v)} className={"rounded-xl border px-3 py-1.5 text-xs "+(category===v?"border-[var(--life-teal)] font-bold":"border-[var(--life-border)]")}>{n}</button>)}</div>
- {error?<p role="alert" className="rounded-xl bg-white p-3 text-sm text-[var(--life-danger)]">{error}</p>:null}
+ {visibleError?<p role="alert" className="rounded-xl bg-white p-3 text-sm text-[var(--life-danger)]">{visibleError}<button type="button" onClick={() => void reload()} className="ml-2 underline">重试</button></p>:null}
  {loading && entries.length === 0 ? <p className="p-4 text-sm">正在读取…</p> : null}
- {!loading&&visible.length===0?<p className="life-surface p-8 text-center text-sm text-[var(--life-text-muted)]">这里还没有心愿</p>:null}
+ {!loading&&!visibleError&&visible.length===0?<p className="life-surface p-8 text-center text-sm text-[var(--life-text-muted)]">这里还没有心愿</p>:null}
  <div className="grid gap-2">{visible.map(x=><button key={x.id} onClick={()=>{setError("");setDetail(x);}} className="life-surface flex w-full items-center gap-3 rounded-2xl p-3 text-left"><span aria-hidden className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[var(--life-cream)] text-xl">{x.imagePath?<Image unoptimized src={cover(x)} width={48} height={48} className="size-12 object-cover" alt=""/>:({go:"⌖",play:"✧",eat:"♨",do:"♡"} as const)[x.category]}</span><span className="min-w-0 flex-1"><strong className="block truncate text-sm">{x.title}</strong><span className="block truncate text-xs text-[var(--life-text-muted)]">{categories[x.category]}{x.location?" · "+x.location:""}</span></span><span className="shrink-0 text-xs text-[var(--life-text-muted)]">{({want:"想尝试",again:"值得再去",done:"已体验"} as const)[wishIntent(x)]}</span><span aria-hidden>›</span></button>)}</div>
  </div>
  {detail&&editing===undefined?<div className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 p-2 sm:items-center" onMouseDown={()=>setDetail(null)}><section role="dialog" aria-modal="true" aria-label={detail.title} onMouseDown={e=>e.stopPropagation()} className="island-life-v2 max-h-[94dvh] w-full max-w-lg overflow-y-auto rounded-[26px] bg-[var(--life-surface)] p-4 text-[var(--life-text)]">
