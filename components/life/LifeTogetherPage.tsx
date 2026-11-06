@@ -164,7 +164,9 @@ export function LifeTogetherPage() {
           </div>}
           {p.status === "awaiting_result" && <ResultButtons proposal={p} me={me} busy={busy} onResult={(result) => void perform(p,"result",{result})}/>}
           {p.status === "closed" && <div className="grid gap-2 text-xs text-[var(--life-text-muted)]">
-            {Object.keys(p.results).length > 0 && <p>我的结果：{activityLabel(me ? p.results[me] : undefined)} · Ta：{activityLabel(me === "cat" ? p.results.fish : p.results.cat)}</p>}
+            {p.outcome === "joint_done"
+              ? <p>♡ 我们已完成 · {Object.keys(p.results).length === 2 ? "双方确认" : p.results[me ?? "cat"] === "done" ? "由我确认" : "由 Ta 确认"}</p>
+              : Object.keys(p.results).length > 0 && <p>我的结果：{activityLabel(me ? p.results[me] : undefined)} · Ta：{activityLabel(me === "cat" ? p.results.fish : p.results.cat)}</p>}
             {p.outcome === "unconfirmed" && <ResultButtons proposal={p} me={me} busy={busy} onResult={(result) => void perform(p,"result",{result})}/>}
           </div>}
         </article>)}
@@ -203,14 +205,16 @@ function ResultButtons({ proposal, me, busy, early = false, onResult }: { propos
   if (!me) return null;
   const current = proposal.results[me];
   return <div className="grid gap-2">
-    <p className="text-xs text-[var(--life-text-body)]">我的执行结果{current ? " · 已记录：" + activityLabel(current) : ""}</p>
-    {!current && early && <AppButton variant="primary" disabled={busy} onClick={() => {
-      if (window.confirm("这件小事已经提前做完了吗？记录后就不能修改啦。")) onResult("done");
-    }}>我提前做完了 ♡</AppButton>}
-    {!current && !early && <div className="grid grid-cols-3 gap-2">
-      {([["done","做到了"],["partial","做了一点"],["not_done","今天没做"]] as [ParticipationResult,string][]).map(([value,label]) =>
-        <button key={value} type="button" disabled={busy} onClick={() => onResult(value)}
-          className="rounded-xl border border-[var(--life-border)] bg-[var(--life-cream)] px-1 py-2.5 text-xs font-semibold disabled:opacity-50">{label}</button>)}
-    </div>}
+    {current && <p className="text-xs text-[var(--life-text-body)]">我的执行结果 · 已记录：{activityLabel(current)}</p>}
+    {!current && <>
+      <AppButton variant="primary" disabled={busy} onClick={() => {
+        if (window.confirm("确认你们已经一起完成这件事了吗？确认后约定将归档，剩余提醒也会取消。")) onResult("done");
+      }}>我们已完成 ♡</AppButton>
+      {!early && <div className="grid grid-cols-2 gap-2">
+        {([["partial","做了一点"],["not_done","今天没做"]] as [ParticipationResult,string][]).map(([value,label]) =>
+          <button key={value} type="button" disabled={busy} onClick={() => onResult(value)}
+            className="rounded-xl border border-[var(--life-border)] bg-[var(--life-cream)] px-1 py-2.5 text-xs font-semibold disabled:opacity-50">{label}</button>)}
+      </div>}
+    </>}
   </div>;
 }

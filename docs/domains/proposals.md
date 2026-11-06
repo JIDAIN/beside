@@ -40,6 +40,13 @@
 - 两人都提前记录 `done` 才会关单并取消剩余待发送提醒，最终 outcome 仍为 `joint_done`。早期单人记录不再提前生成“结束确认”提醒。保留每人只可提交一次结果、可信身份、版本防冲突及 lifecycle 去重。
 - 实现为 forward migration `20261106130000_together_early_result_lifecycle.sql` 加 Web UI，**尚未经 Production migration 或部署授权**，上线前不可当成当前线上能力。
 
+## 待发布：一人即可确认共同完成
+
+- 任意一位有可信身份的参与者，在已约定后点击「我们已完成」，即为整个共同约定确认完成：`status=closed`、`outcome=joint_done`，取消所有未发送的开始、结束与跟进提醒，无需另一方再确认。
+- 在 `results` 和 `life_proposal_events` 中**只记录实际提交的 actor**，不伪造另一位参与者独立点击；UI 在历史中显示「我们已完成 · 由我确认／由 Ta 确认」。
+- 可在开始时间之前真实完成并确认；「做了一点」「今天没做」仍只能在原约定开始后登记，不会被解释为「共同完成」。一旦共同完成，不得再二次提交结果。
+- 本实现是在先前尚未上线的 `20261106130000_together_early_result_lifecycle.sql` 之后新增 forward migration `20261106140000_together_single_joint_completion.sql`。**尚未部署 Production**；真实线上行为仍以 Production runtime 为准。
+
 ## 数据、幂等与提醒
 
 - `life_proposals` 保存当前协商/执行状态；`life_proposal_events` 保存 actor 与 system 事件。
