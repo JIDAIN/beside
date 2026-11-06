@@ -51,6 +51,24 @@ begin
  if n<>0 then raise exception 'end reminders generated before end';end if;
 
  begin
+   perform public.mutate_life_proposal('fish','cancel',proposal_id,
+     '{}'::jsonb,(a->>'version')::int,gen_random_uuid());
+   raise exception 'cancel allowed after completed work';
+ exception when others then
+   if sqlerrm='cancel allowed after completed work' then raise;end if;
+   if sqlerrm not like '%cannot cancel%' then raise;end if;
+ end;
+ begin
+   perform public.mutate_life_proposal('fish','reschedule',proposal_id,
+     jsonb_build_object('scheduledAt',now()+interval '4 hours','durationMinutes',15),
+     (a->>'version')::int,gen_random_uuid());
+   raise exception 'reschedule allowed after completed work';
+ exception when others then
+   if sqlerrm='reschedule allowed after completed work' then raise;end if;
+   if sqlerrm not like '%reschedule unavailable%' then raise;end if;
+ end;
+
+ begin
    perform public.mutate_life_proposal('cat','result',proposal_id,
      '{"result":"done"}'::jsonb,(a->>'version')::int,gen_random_uuid());
    raise exception 'duplicate result was allowed';
