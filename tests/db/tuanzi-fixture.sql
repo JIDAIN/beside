@@ -171,7 +171,7 @@ create or replace function private.dispatch_due_life_reminders_for_actor(
 create table public.life_proposals(
  id uuid primary key default gen_random_uuid(),
  couple_space_id uuid not null references public.couple_spaces(id),
- title text not null,scheduled_at timestamptz not null,candidate_at timestamptz
+ title text not null,note text default '',duration_minutes integer default 30,candidate_duration integer,scheduled_at timestamptz not null,candidate_at timestamptz
 );
 create table public.life_reminder_instances(
  id uuid primary key default gen_random_uuid(),
@@ -182,3 +182,15 @@ create table public.life_reminder_instances(
  notified_at timestamptz,updated_at timestamptz default now(),
  unique(couple_space_id,recipient,dedupe_key)
 );
+
+-- Intercept the real PushPlus transport in disposable PostgreSQL only.
+create schema if not exists extensions;
+create type extensions.http_response as (status integer,content text,headers jsonb);
+create or replace function extensions.http_post(p_url text,p_payload text,p_type text)
+returns extensions.http_response language plpgsql as $$
+declare v jsonb:=p_payload::jsonb;
+begin
+  insert into public.push_test_log(recipient,title,content)
+  values(v->>'token',v->>'title',v->>'content');
+  return (200,'{"code":200,"data":"mock-provider"}',null::jsonb)::extensions.http_response;
+end $$;
