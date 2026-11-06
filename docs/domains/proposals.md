@@ -47,4 +47,4 @@
 
 V1 不接入 AI/MCP CRUD、积分或复杂循环任务。未来 B 版可以基于事件历史推导成长统计，不重写事实。
 
-真实 Cat/Fish 双账号权限、并发配额、48 小时自动收尾、重试/去重、PushPlus 收发、移动端 UI 与备份/恢复要在授权的 runtime 中逐项验收。当前 Life 备份/恢复 allowlist 尚未覆盖 `life_proposals`，不能宣称已有完整恢复能力。
+真实 Cat/Fish 双账号权限、并发配额、48 小时自动收尾、重试/去重、PushPlus 收发、移动端 UI 与备份/恢复要在授权的 runtime 中逐项验收。开发分支的 SQL 已使 Life 全量导出、快照、导入与恢复覆盖 `life_proposals` 和 `life_proposal_events`；旧备份缺少这两个字段时保留现有提案，不误删新记录。还未在真实数据库执行/验证；这不代表其他领域（例如 wishes 和图片）已被自动纳入备份。

@@ -502,6 +502,7 @@ restore_life_backup_snapshot
 ~~~
 
 stable rule：
+- V1 Together 的 life_proposals + life_proposal_events 在待应用的 migration 中加入 Life user payload；旧备份不含这些键时保留现有提案；
 - Life facts + 明确 shared config 可以进入 Life backup/import；
 - Legacy Game 默认排除；
 - restore 前建立 pre_restore snapshot；
