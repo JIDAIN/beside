@@ -12,6 +12,7 @@ import {
   fetchLifeReminderSettings,
   fetchLifeReminders,
   saveLifeReminderSettings,
+  saveLifeCoupleNotificationSettings,
   type LifeReminderItem,
   type LifeReminderSettings,
 } from "@/lib/life/reminder-client";
@@ -233,6 +234,21 @@ export function LifeReminderCenterPage() {
     });
   }
 
+  async function saveCoupleSettings(changes: Partial<Pick<LifeReminderSettings, 'partnerRecordNotificationsEnabled' | 'dailyRecordReminderEnabled'>>) {
+    if (!settings) return;
+    setSavingSettings(true); setError(''); setNotice('');
+    try {
+      const next = await saveLifeCoupleNotificationSettings({
+        partnerRecordNotificationsEnabled: changes.partnerRecordNotificationsEnabled ?? settings.partnerRecordNotificationsEnabled,
+        dailyRecordReminderEnabled: changes.dailyRecordReminderEnabled ?? settings.dailyRecordReminderEnabled,
+      });
+      settingsQuery.update(next);
+      setNotice('通知偏好已保存。');
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : '保存通知设置失败');
+    } finally { setSavingSettings(false); }
+  }
+
   async function saveMedicineSettings(enabled = settings?.medicineReminderEnabled ?? true) {
     if (!settings || !medicineOffsets.length) return;
     setSavingSettings(true);
@@ -364,6 +380,27 @@ export function LifeReminderCenterPage() {
                 <Link href="/me" className="text-xs font-extrabold text-[var(--life-teal-strong)]">
                   {settings.pushPlusConfigured ? "管理" : "去绑定"}
                 </Link>
+              </div>
+
+              <div className="rounded-2xl bg-white/60 p-3">
+                <p className="text-xs font-extrabold text-[var(--life-text)]">团子的双人通知</p>
+                <div className="mt-3 grid gap-3">
+                  {([
+                    ['partnerRecordNotificationsEnabled', '老婆的生活动态'],
+                    ['dailyRecordReminderEnabled', '21:00 双人未记录提醒'],
+                  ] as const).map(([key, label]) => (
+                    <label key={key} className="flex items-center justify-between gap-3 text-xs font-bold text-[var(--life-text)]">
+                      <span>{label}</span>
+                      <input
+                        type="checkbox"
+                        checked={settings[key]}
+                        disabled={savingSettings}
+                        onChange={(event) => void saveCoupleSettings({ [key]: event.target.checked })}
+                        className="h-4 w-4 accent-[var(--life-teal)]"
+                      />
+                    </label>
+                  ))}
+                </div>
               </div>
 
               <div className="rounded-2xl bg-white/60 p-3">
