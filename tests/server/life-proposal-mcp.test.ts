@@ -117,7 +117,7 @@ describe("Together in canonical life_query/life_mutate", () => {
       data: { scheduledAt: FUTURE_OFFSET },
     }, { identity: FISH, latestUserText: "我想把时间改到后天21点" });
     expect(mock.mutate.mock.calls[0].slice(0, 5)).toEqual([
-      "fish", "counter", ID, { scheduledAt: FUTURE_OFFSET, durationMinutes: 30 }, 4,
+      "fish", "counter", ID, { scheduledAt: new Date(FUTURE_OFFSET).toISOString(), durationMinutes: 30 }, 4,
     ]);
     expect(() => normalizeLifeMutationArgs({
       resource: "proposal", action: "counter", id: ID, data: {},
