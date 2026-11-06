@@ -1,5 +1,7 @@
 "use client";
 
+
+import { useAppConfirm } from "@/components/ui/AppConfirmDialog";
 import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 import { AppPageShell } from "@/components/ui/AppPageShell";
@@ -195,6 +197,7 @@ function PostcardStamp() {
 }
 
 export function LifeMailboxPage() {
+  const confirm = useAppConfirm();
   const { mePartnerKey, taPartnerKey } = useLifeIdentity();
   const [tab, setTab] = useState<Tab>("inbox");
   const [month, setMonth] = useState("all");
@@ -422,7 +425,7 @@ export function LifeMailboxPage() {
 
   async function sendDraft(item: MailboxLetter) {
     if (item.status !== "draft") return;
-    if (!window.confirm("寄出后将不能再编辑，确认寄出吗？")) return;
+    if (!(await confirm({ title: "把这封信寄出去？", description: "寄出后将不能再修改内容。", confirmLabel: "寄出" }))) return;
     setBusyId(item.id);
     setError(null);
     try {
@@ -443,7 +446,7 @@ export function LifeMailboxPage() {
 
   async function removeDraft(item: MailboxLetter) {
     if (!mePartnerKey || item.status !== "draft" || item.senderKey !== mePartnerKey) return;
-    if (!window.confirm("删除这份待寄出草稿吗？")) return;
+    if (!(await confirm({ title: "删除这份草稿？", description: "尚未寄出的内容将被删除。", confirmLabel: "删除", tone: "danger" }))) return;
     setBusyId(item.id);
     try {
       await deleteMailboxItem(item.id);
