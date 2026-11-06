@@ -115,3 +115,12 @@ Read-only Vercel deployment history shows latest READY production deployment `dp
 - Production read-only investigation of the user-reported proposal: scheduled 2026-11-06 21:00 Asia/Shanghai for 15 minutes, screenshot at 20:45; original result buttons were gated by scheduled start. Production PushPlus delivery ledger marked the 17:20 invite, 18:45 acceptance, and both 20:45 before-start messages `accepted`. This verifies provider acceptance, not mobile receipt/read.
 - Ephemeral PostgreSQL 17 Together migration/lifecycle tests passed; Build and Lint passed; full JS suite 436/438, with the same two pre-existing wish-related test failures.
 - **No new Production Supabase migration or Vercel Preview/Production deployment authorized or performed for PR #102.** Deployed Web retains the original no-early-completion rule until a separately authorized release.
+
+## 2026-11-06 Together shared completion by one person (GitHub main only)
+
+- PR #103 merged at `899e7cc09d9a51a76e5b9f93f84951a0500bc0e8` on top of PR #102.
+- Forward-only migration `20261106140000_together_single_joint_completion.sql` replaces the scoped result mutation so **one trusted participant** may report `done` for the shared agreement and immediately close it with `outcome=joint_done`. The audit result/event records only the actual confirming actor, never a forged partner response.
+- The other person's independent result submission is no longer required for joint completion. Future unsent reminder instances are dismissed on close; historical provider accepted delivery records remain. Partial/not_done continue to follow their existing paths.
+- Web uses one `我们已完成` control and history labels the confirming actor by relative role. Ephemeral PostgreSQL 17 smoke verified early and in-progress one-person completion, actor provenance, idempotent retry, second-submit rejection, and reminder cancellation.
+- CI: Build and Lint passed. JS suite 436/438 passed with the same two pre-existing wish tests failing.
+- **Production remains unchanged:** the pending PR #102 migration `20261106130000_together_early_result_lifecycle.sql` must be applied before the new PR #103 migration `20261106140000_together_single_joint_completion.sql`, and Vercel Production deployment separately authorized. Neither Production Supabase migration nor Vercel deployment was performed in this development turn.
