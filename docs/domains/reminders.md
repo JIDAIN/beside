@@ -175,6 +175,12 @@ Production 正式文案的最终事实源是当前 Supabase functions，例如 l
 - 一起做吧保留原本 source、due time、delivery/claim/去重和 PushPlus 路由，只优化团子文案，附经 HTML 转义的约定名称与北京时间，不泄露自由备注。定时提醒不得误写为对方刚刚发起。
 - Forward migration `20261106110000_daily_recap_proposal_notifications.sql`。此条为**代码待发布行为**，Production 实际效果需核迁移 ledger 与 runtime。上线前不能称已经生效。
 
+### 待发布：统一伴岛链接（PR 开发）
+
+- 所有通过 `private.life_pushplus_send` 发送的 HTML 提醒，统一在消息末尾追加一次可点击的 **「🌷 打开伴岛 Beside」**。普通消息跳转 `https://couple-better-game.vercel.app`；「一起做吧」直达 `/nest/together`，小信箱 PushPlus 后备直达 `/open/mailbox`。URL 由可信固定常量决定，不接收用户输入。
+- 微信测试号的小信箱主通道原有消息点击跳转（`/open/mailbox`）不变；其他当前提醒走 PushPlus。第三方渠道接受消息并不代表微信终端一定会打开外部浏览器，取决于客户端链接处理。
+- 新迁移 `20261106120000_tuanzi_site_footer_proposal_details.sql` 更改实际发送函数与 Together 文案。**仅代码完成，不等于 Production 已应用**。
+
 ## 11. Scheduler
 
 当前 Production 有两条 active cron：
