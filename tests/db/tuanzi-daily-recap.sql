@@ -27,7 +27,7 @@ begin
   values(v_space,'cat',v_day,'snack','confirmed',150);
   v_s:=private.life_daily_summary(v_space,'cat',v_day);
   if v_s->>'mood'<>'心动' then raise exception 'incorrect mood mapping: %',v_s;end if;
-  if (v_s->>'total')::int<>470 or (v_s->>'unknownCount')::int<>1
+  if (v_s->>'total')::int<>470 or (v_s->>'unknownCount')::int<1
     or (v_s->>'snack')::int<>150 then raise exception 'meal aggregation incorrect: %',v_s;end if;
   if private.life_daily_summary_lines(v_s) not like '%今日饮食合计：470 kcal（仅已知部分）%'
     or private.life_daily_summary_lines(v_s) not like '%午餐：热量未知%'
