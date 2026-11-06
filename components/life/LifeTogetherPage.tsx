@@ -153,10 +153,10 @@ export function LifeTogetherPage() {
           {(p.status === "agreed" || p.status === "reschedule") && <div className="grid gap-2">
             <div className="flex items-center justify-between text-xs text-[var(--life-text-muted)]">
               <span>已改期 {p.rescheduleCount}/2 次</span>
-              {p.status === "agreed" && <div className="flex gap-2">
-                {p.rescheduleCount < 2 && Date.parse(p.scheduledAt) > Date.now() && <button type="button" className="underline" onClick={() => edit("reschedule",p)}>改时间</button>}
+              <div className="flex gap-2">
+                {p.status === "agreed" && p.rescheduleCount < 2 && Date.parse(p.scheduledAt) > Date.now() && <button type="button" className="underline" onClick={() => edit("reschedule",p)}>改时间</button>}
                 {Date.parse(p.scheduledAt) > Date.now() && <button type="button" className="underline" disabled={busy} onClick={() => void perform(p,"cancel")}>取消约定</button>}
-              </div>}
+              </div>
             </div>
             {Date.parse(p.scheduledAt) <= Date.now() && <ResultButtons proposal={p} me={me} busy={busy} onResult={(result) => void perform(p,"result",{result})}/>}
           </div>}

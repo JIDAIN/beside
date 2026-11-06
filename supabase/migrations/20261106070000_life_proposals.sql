@@ -138,7 +138,7 @@ create or replace function public.mutate_life_proposal(
 declare
  v_space uuid; v public.life_proposals%rowtype; v_existing uuid;
  v_at timestamptz; v_dur integer; v_title text; v_note text;
- v_other text; v_results jsonb; v_outcome text; v_now timestamptz:=now();
+ v_other text; v_outcome text; v_was_closed boolean:=false; v_now timestamptz:=now();
 begin
  if p_actor not in ('cat','fish') or p_request_id is null then raise exception 'invalid identity or request id'; end if;
  if p_action not in ('create','accept','encourage','counter','reschedule','decline','withdraw','cancel','result') then raise exception 'invalid action'; end if;
@@ -225,6 +225,7 @@ begin
    v.status:='closed';v.outcome:='cancelled';v.closed_at:=v_now;v.waiting_for:=null;v.version:=v.version+1;
    perform private.life_proposal_clear_reminders(v);
   elsif p_action='result' then
+   v_was_closed := (v.status='closed');
    if v.status not in ('agreed','reschedule','awaiting_result') and not (v.status='closed' and v.outcome='unconfirmed') then raise exception 'cannot record result'; end if;
    if v_now<v.scheduled_at then raise exception 'not started'; end if;
    if coalesce(p_data->>'result','') not in ('done','partial','not_done') then raise exception 'invalid result'; end if;
@@ -238,7 +239,9 @@ begin
     v.status:='closed';v.outcome:=v_outcome;v.closed_at:=v_now;
     perform private.life_proposal_clear_reminders(v);
    else
-    v.status:='awaiting_result';v.waiting_for:=null;
+    -- Late supplement of an auto-closed record must not reopen active work.
+    v.status:=case when v_was_closed then 'closed' else 'awaiting_result' end;
+    v.waiting_for:=null;
    end if;
    v.version:=v.version+1;
    if v.status='awaiting_result' then
