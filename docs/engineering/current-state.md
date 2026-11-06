@@ -1,46 +1,34 @@
 # Current Engineering State
 
-Snapshot date: 2026-11-04.
+Snapshot date: 2026-11-06.
 
-本文记录 Production Web、GitHub main、Production Supabase 当前核验状态与未完成事项；业务 contract 由 owning canonical docs 维护。
+这里记录 Production Web、GitHub main 与 Supabase runtime 的已核验差异；业务规则见 owning canonical docs。
 
 ## 1. Production Web
 
-2026-11-04 心愿清单 MCP 资源正式更新：
-- deployment: `dpl_2ojf9xuTjep9d6SG3TNyFtpPAKKx`
-- state: READY
-- target: production
-- source commit: `ad7c851ad71795932e05dc21b5c3d17ebb59ac2d`
-- URL: https://couple-better-game.vercel.app
-- framework: Next.js 16.2.6
+- Vercel Project: `beside`；正式 URL：https://couple-better-game.vercel.app
+- Production deployment `dpl_B2BL6fQ4tzCnz6idDY4aQD5gENZk`，READY，source `bdf43ba579b1a4edbc3cb5337b411d944605b478`。
+- 小窝「一起做吧」Web 与 `/api/life/proposals` 已发布；公开只读 smoke 已通过。未登录提案 API 返回 401。
+- 两人真机协商、微信提醒实际送达尚未端到端验收。
 
-Vercel Production 构建通过（含 TypeScript），兼容 Production 域名已指向此部署。MCP 使用现有 `life_query` / `life_mutate` 接口，不新增工具名称或 OAuth scope。
+## 2. GitHub Main / MCP
 
-## 2. MCP Production Runtime
+- 当前 main 基线 `bdf43ba`，含 Web Together 与既有 wish MCP registry。
+- Production MCP stable tools：`life_capabilities` / `life_query` / `life_mutate`；**目前未注册 proposal**。
+- `proposal` AI/MCP 扩展位于 `feat/together-mcp-resource` 开发分支，未合并 main、未部署。
 
-- 已连接的 Harbor Cat 与 Harbor Fish 分别调用 `life_capabilities`，返回包含 `wish` query / mutate 的新能力。
-- 两个登录身份分别通过 `life_query(resource=wish, name=潭柘寺)` 查询成功，均得到空数组；未写入测试心愿。
-- 最近 30 分钟内 Vercel MCP/Wish 相关错误扫描未发现 runtime error。
-- 尚未执行真实 MCP create/update/add_visit/delete、图片上传及双账号写入同步验收；因此这些写入路径不能宣称已完成端到端实测。
+## 3. Production Supabase
 
-## 3. GitHub Main
+- project ref: `bfhntnzngozdqsmgfvjk`。
+- Together migration ledger `20261106082742` (`life_proposals`) 已应用；表、受限 RPC 与每 5 分钟的 `life-proposal-sweep-v1` cron 已核验。
+- Cat/Fish PushPlus 配置存在；未授权的 anon/authenticated 无直接提案写权限。
 
-部署源 commit `ad7c851` 已包含心愿清单 MCP registry / normalizer / service adapter / targeted tests / canonical docs。此后如果仅进行文档状态收口，GitHub main 会领先已部署源 commit，但不代表有新的业务代码发布。
+## 4. Outstanding Verification
 
-## 4. Production Supabase
+- Together 真机双账号、微信发送及 MCP proposal 实际读写须在发布后验证。
+- 全仓仍有两项旧心愿清单测试失败，与这次 Together 修改无关。
+- 其他 Life backup 缺口（例如 wish 图片）仍然独立存在。
 
-- project ref: `bfhntnzngozdqsmgfvjk`
-- 2026-11-04 已应用心愿清单 migration，ledger `20261104005447`，name `life_wishes`。
-- runtime 已确认共享表、受限 RPC 和私有 `wish-photos` 存储桶存在。
-- 本次 MCP 部署没有执行新的 Supabase DDL、migration 或数据写入。
+## 5. Deployment Protection
 
-## 5. Outstanding Verification and Limits
-
-- `npm run build` 已由此次 Vercel 构建通过；`npm run test` / `npm run lint` 尚无独立执行通过证据。
-- 真实 Cat/Fish 共享 CRUD、Private Storage 图片操作和移动端视觉验收尚未完成。
-- 普通 Life backup/import/restore 尚未覆盖 wishes 和 wish-photos；不得误称已有完整恢复能力。
-- Blank-database full replay 尚未独立执行。
-
-## 6. Deployment Protection
-
-`vercel.json` 仍要求 `git.deploymentEnabled=false`。Git commit/CI success 不等于部署授权；后续每次 Preview / Production deployment 与 Production Supabase 写入都必须分别取得明确授权。
+Git 自动部署关闭。Git merge/CI success 不是部署授权；每一次 Preview/Production 和 Production Supabase 写操作均需独立授权。

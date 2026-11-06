@@ -39,6 +39,7 @@ user language / image-visible facts
 - Meal name/foodName/rawName/displayName → canonical food name fields；
 - medicineName/drugName → name；
 - mailbox content/text/message → body。\n- 心愿清单/愿望清单/收藏清单 → wish，name/title → title，中文想去/想玩/想吃/想做 → go/play/eat/do。
+- 一起做吧/提案/小约定 → proposal，明确北京时间，执行结果做到了/做了一点/没做 → done/partial/not_done。
 
 ## 4. Clarification-required Inputs
 
@@ -101,6 +102,10 @@ text/name/title/description/content/activity → text。
 
 ### Wish List\n心愿清单、心愿、愿望清单、收藏清单 → wish。新增支持标题、一级分类和选填的地点、开放时间、费用、攻略备注、必打卡点位等；有明确地点信息或典型地点名称时可归入想去，否则缺分类应澄清。更新只传增量字段，服务端保留未修改的打卡清单和历史体验；一次体验使用 add_visit 和日期、选填的已完成点位。修改/删除/打卡必须先查询可靠 UUID。\n\n### Weight\nweightKg/weight/kg/value → weightKg。
 缺数值必须问。
+
+### Together / 一起做吧
+
+查询按名称、状态、待我/待 Ta 回应筛选；发起需标题和明确日期时间，时长默认 20 分钟。未达成的时间调整用 counter，已约定后改期用 reschedule。回应或记录结果前先查真实 ID/version，不能替 Ta 决定；缺关键事实要求澄清。合法状态由 Together Domain + canonical RPC 约束。
 
 ### Medicine
 name/medicineName/drugName/title → name；
