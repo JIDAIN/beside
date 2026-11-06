@@ -242,3 +242,16 @@ credentials/config
 
 Reminder source/lifecycle/delivery/provider 改变时更新本文。
 表字段仅在 Data Model 维护；secret 仅在 Configuration；事故步骤仅在 Operations。
+
+## Pending branch change: Tuanzi couple notifications
+
+> This section documents the implementation proposed in `feat/tuanzi-partner-record-notifications`. It is **not** a Production capability until the forward migration is separately authorized/applied and the code is deployed/verified. See Engineering Current State for Production facts.
+
+- New source: `partner_record`. The database captures a first qualifying same-day mood, sleep or confirmed breakfast/lunch/dinner event from canonical tables, regardless of whether the writer is Web or MCP. Edits, drafts, snacks and past-day backfill are not notifications.
+- The same actor/date/kind has one event for dedupe, including after deletion/re-entry; on dispatch, canonical completeness is rechecked so deleted records are not announced.
+- Recipient is the *other* person, never the writer. A five-minute quiet window coalesces events from one writer and date, with a 15-minute maximum accumulation boundary; the existing five-minute job causes additional scheduling latency.
+- `life_partner_record_events` is an internal pending/delivery ledger; `life_notification_deliveries` retains provider outcomes. `partner_record` is separate from stateful reminder instances.
+- Recipient preferences are independent: `partner_record_notifications_enabled` and `daily_record_reminder_enabled`; unrelated reminder sources are unchanged.
+- 21:00 completeness remains based on the five canonical record types. The recipient gets a couple snapshot: **主人** (self) and **老婆** (partner) each show missing items or completion. Either person's missing item triggers the digest for each enabled recipient.
+- Tuanzi text is affectionate, factual, non-competitive. Cat/Fish remain trusted actor keys only and never appear as names in the push body.
+- Proposed migration: `supabase/migrations/20261106090000_tuanzi_partner_record_notifications.sql`. Do not claim the functionality works on Production merely because the branch exists.
