@@ -80,6 +80,8 @@ function shouldPersistKey(key: string) {
     || key.startsWith("weights:")
     || key === "medicines"
     || key === "mailbox"
+    || key === "wishes"
+    || key === "together-proposals"
     || key === "life-settings";
 }
 

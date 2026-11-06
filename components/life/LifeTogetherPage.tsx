@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLifeIdentity } from "@/components/life/LifeIdentityContext";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppPageShell } from "@/components/ui/AppPageShell";
+import { useStaleQuery } from "@/lib/client/use-stale-query";
 import { actOnProposal, createProposal, listProposals } from "@/lib/life/proposal-client";
 import { activeCount, formatProposalTime, outcomeLabel, pendingCount, type ParticipationResult, type Proposal, type ProposalAction } from "@/lib/life/proposal-model";
 
@@ -25,18 +26,23 @@ function dateToIso(value: string) { return new Date(value + ":00+08:00").toISOSt
 function activityLabel(result: ParticipationResult | undefined) {
   return result === "done" ? "做到了" : result === "partial" ? "做了一点" : result === "not_done" ? "今天没做" : "待确认";
 }
+const EMPTY_PROPOSALS: Proposal[] = [];
 const presets = ["一起散步", "一起敷面膜", "早点睡觉", "一起整理房间"];
 
 export function LifeTogetherPage() {
   const confirm = useAppConfirm();
   const { mePartnerKey: me } = useLifeIdentity();
-  const [items, setItems] = useState<Proposal[]>([]);
+  const proposalsQuery = useStaleQuery<Proposal[]>({
+    key: "together-proposals", fetcher: listProposals, enabled: Boolean(me), staleMs: 30_000,
+  });
+  const items = proposalsQuery.data ?? EMPTY_PROPOSALS;
+  const loading = proposalsQuery.loading;
   const [tab, setTab] = useState<Tab>("pending");
   const [targetProposalId, setTargetProposalId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const visibleError = error || proposalsQuery.error?.message || "";
   const [editor, setEditor] = useState<Editor | null>(null);
   const [title, setTitle] = useState("");
   const [note, setNote] = useState("");
@@ -46,23 +52,23 @@ export function LifeTogetherPage() {
   const focusedProposal = useRef<string | null>(null);
 
   const reload = useCallback(async () => {
-    try { setItems(await listProposals()); setError(""); setNow(Date.now()); }
+    try { await proposalsQuery.refresh(true); setError(""); setNow(Date.now()); }
     catch (e) { setError(e instanceof Error ? e.message : "暂时无法读取"); }
-    finally { setLoading(false); }
-  }, []);
+  }, [proposalsQuery.refresh]);
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get("proposal");
     if (!id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return;
     const frame = window.requestAnimationFrame(() => setTargetProposalId(id));
     return () => window.cancelAnimationFrame(frame);
   }, []);
-  useEffect(() => { const task = window.setTimeout(() => { void reload(); }, 0); return () => window.clearTimeout(task); }, [reload]);
+  // Scoped cache owns initial fetch, focus, cross-tab and periodic revalidation.
+  // Only the local clock needs a timer for time-relative labels.
   useEffect(() => {
-    const onFocus = () => { if (document.visibilityState === "visible") void reload(); };
-    document.addEventListener("visibilitychange", onFocus);
-    const timer = window.setInterval(onFocus, 30000);
-    return () => { document.removeEventListener("visibilitychange", onFocus); window.clearInterval(timer); };
-  }, [reload]);
+    const tick = () => setNow(Date.now());
+    tick();
+    const timer = window.setInterval(tick, 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const grouped = useMemo(() => ({
     pending: items.filter(x => x.status === "pending" || x.status === "counter"),
@@ -152,9 +158,9 @@ export function LifeTogetherPage() {
         <span className="text-xs text-[var(--life-text-muted)]">{tab === "pending" ? `我发起 ${mePending}/2` : tab === "agreed" ? `未来 7 天 ${active}/3` : "每件小事都有去处"}</span>
         <AppButton variant="primary" disabled={!me || mePending >= 2} onClick={() => edit("create")}>{mePending >= 2 ? "邀请已满 2/2" : "＋ 发起邀请"}</AppButton>
       </div>
-      {error && !editor && <div role="alert" className="rounded-xl bg-[var(--life-cream)] p-3 text-sm text-[var(--life-danger)]">{error}<button type="button" className="ml-2 underline" onClick={() => void reload()}>重试</button></div>}
+      {visibleError && !editor && <div role="alert" className="rounded-xl bg-[var(--life-cream)] p-3 text-sm text-[var(--life-danger)]">{visibleError}<button type="button" className="ml-2 underline" onClick={() => void reload()}>重试</button></div>}
       {loading ? <p className="text-sm text-[var(--life-text-muted)]">正在打开小窝…</p>
-        : grouped[tab].length === 0 ? <div className={card + " py-10 text-center text-sm text-[var(--life-text-muted)]"}>{tab === "pending" ? "暂时没有等待回应的邀请" : tab === "agreed" ? "还没有正在进行的约定" : "一起做过的小事会留在这里"}</div>
+        : !visibleError && grouped[tab].length === 0 ? <div className={card + " py-10 text-center text-sm text-[var(--life-text-muted)]"}>{tab === "pending" ? "暂时没有等待回应的邀请" : tab === "agreed" ? "还没有正在进行的约定" : "一起做过的小事会留在这里"}</div>
         : grouped[tab].map(p => <article key={p.id} id={`together-proposal-${p.id}`} tabIndex={-1}
           className={card + " grid gap-3 " + (p.id === targetProposalId ? "ring-2 ring-[var(--life-teal)] ring-offset-2" : "")}>
           <div className="flex items-start justify-between gap-3">

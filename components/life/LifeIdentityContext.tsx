@@ -68,6 +68,9 @@ function preloadStaticImage(src: string) {
 }
 
 function warmLifeEssentials(me: LifePartnerKey) {
+  // These routes fetch their own priority data. Do not compete with their
+  // first meaningful paint by preloading Today/Food/Calendar in parallel.
+  if (typeof window !== "undefined" && /^\/nest\/(?:wishes|together)(?:\/|$)/.test(window.location.pathname)) return;
   const date = localDate();
   const month = date.slice(0, 7);
   const ta = oppositePartnerKey(me);
