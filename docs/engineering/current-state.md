@@ -124,3 +124,12 @@ Read-only Vercel deployment history shows latest READY production deployment `dp
 - Web uses one `我们已完成` control and history labels the confirming actor by relative role. Ephemeral PostgreSQL 17 smoke verified early and in-progress one-person completion, actor provenance, idempotent retry, second-submit rejection, and reminder cancellation.
 - CI: Build and Lint passed. JS suite 436/438 passed with the same two pre-existing wish tests failing.
 - **Production remains unchanged:** the pending PR #102 migration `20261106130000_together_early_result_lifecycle.sql` must be applied before the new PR #103 migration `20261106140000_together_single_joint_completion.sql`, and Vercel Production deployment separately authorized. Neither Production Supabase migration nor Vercel deployment was performed in this development turn.
+
+## 2026-11-06 Together early + single-confirmation Production release
+
+- User authorized Production release after PR #102 and PR #103.
+- Production Supabase applied two forward migrations in order: `20261106130709` / `together_early_result_lifecycle`; `20261106130717` / `together_single_joint_completion`. Read-only verification confirmed both ledger entries, the installed one-actor `done` → `joint_done` mutation and its reminder-clear path, with Together/PushPlus cron jobs still enabled.
+- Authorized Vercel Production deployment `dpl_E3QyoBuMWB6aHRRHix3GN1ecFxAA` is READY, source Git SHA `f4639c7f56e81699303221676f108fb0f68ed3d7`, aliased to the production-compatible URL `couple-better-game.vercel.app`.
+- Initial 15-minute error/fatal deployment log scan found no entries. This is not the same as end-to-end interactive approval of a real joint completion.
+- The existing real balcony/window Together agreement remained `agreed` with `results={}` when checked after release. No user Life record was modified or artificially confirmed by this rollout.
+- This documentation-only main commit is later than the actual Production deploy and does not itself authorize/represent a new deployment.
