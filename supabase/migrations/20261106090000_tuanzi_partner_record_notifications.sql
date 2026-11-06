@@ -288,9 +288,11 @@ begin
       ||v_items||'<br><br>快来看看宝贝的日常吧～ 💗 ——团子');
     if coalesce((v_send->>'ok')::boolean,false) then
       perform public.complete_life_notification_delivery(v_delivery,v_recipient,true,v_send->>'providerMessageId',null,p_space_slug);
+      -- The successful batch settles all included events, even ones cancelled
+      -- before sending. This prevents stale rows from keeping the same
+      -- accepted delivery key and blocking later groups.
       update public.life_partner_record_events e set delivered_at=p_now
-       where e.id=any(v_group.ids) and e.delivered_at is null
-         and coalesce((private.life_daily_record_completeness(v_space,e.source_actor,e.record_date)->>e.record_kind)::boolean,false);
+       where e.id=any(v_group.ids) and e.delivered_at is null;
       v_count := v_count+1;
     else
       perform public.complete_life_notification_delivery(v_delivery,v_recipient,false,null,v_send->>'error',p_space_slug);
