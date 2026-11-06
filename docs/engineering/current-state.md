@@ -133,3 +133,11 @@ Read-only Vercel deployment history shows latest READY production deployment `dp
 - Initial 15-minute error/fatal deployment log scan found no entries. This is not the same as end-to-end interactive approval of a real joint completion.
 - The existing real balcony/window Together agreement remained `agreed` with `results={}` when checked after release. No user Life record was modified or artificially confirmed by this rollout.
 - This documentation-only main commit is later than the actual Production deploy and does not itself authorize/represent a new deployment.
+
+## 2026-11-06 shared Beside confirmations (GitHub main, NOT Production)
+
+- PR #104 merged into GitHub `main` as `9dbfb9871c363fc487fe90cbbaa3a41987403e8f`.
+- New `components/ui/AppConfirmDialog.tsx` provides a shared accessible confirm flow mounted from `app/layout.tsx`, styled by `app/confirm-dialog.css`. Browser-native `window.confirm` calls were replaced in Together, Wishes, Mailbox, Medicines, Favorite Foods, Meal editing, Mood and Sleep.
+- In-app unsaved Meal navigation is explicitly intercepted and uses the same dialog, with cancel preserving unsaved content. Closing/reloading the browser tab remains constrained by native `beforeunload` behavior.
+- PR CI Build/Lint passed, 441/443 JS tests passed (two pre-existing Wish agent / MCP tests still fail). No live mobile Chrome/WeChat browser visual screenshot was produced, and no new Preview/Production deployment was authorized or performed.
+- Vercel Production remains on earlier `f4639c7f56e81699303221676f108fb0f68ed3d7` deployment (Together single confirmation); merged `main` UI is not live until a separately authorized deployment.
