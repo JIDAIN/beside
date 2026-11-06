@@ -145,7 +145,7 @@ describe("R8.3 visual polish and interaction closeout", () => {
     expect(mailbox).toContain("life-postcard-modal");
     expect(mailbox).toContain("PostcardStamp");
     expect(mailbox).toContain('item.status === "draft"');
-    expect(mailbox).toContain("寄出后将不能再编辑");
+    expect(mailbox).toContain("寄出后将不能再修改内容");
     expect(mailbox).toContain("寄出后内容会永久保持只读");
     expect(mailbox).not.toContain("纸张主题");
     expect(css).toContain("aspect-ratio: 1.62 / 1");
