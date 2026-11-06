@@ -32,6 +32,7 @@ export function LifeTogetherPage() {
   const { mePartnerKey: me } = useLifeIdentity();
   const [items, setItems] = useState<Proposal[]>([]);
   const [tab, setTab] = useState<Tab>("pending");
+  const [targetProposalId, setTargetProposalId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -48,6 +49,12 @@ export function LifeTogetherPage() {
     catch (e) { setError(e instanceof Error ? e.message : "暂时无法读取"); }
     finally { setLoading(false); }
   }, []);
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("proposal");
+    if (id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+      setTargetProposalId(id);
+    }
+  }, []);
   useEffect(() => { const task = window.setTimeout(() => { void reload(); }, 0); return () => window.clearTimeout(task); }, [reload]);
   useEffect(() => {
     const onFocus = () => { if (document.visibilityState === "visible") void reload(); };
@@ -61,6 +68,22 @@ export function LifeTogetherPage() {
     agreed: items.filter(x => x.status === "agreed" || x.status === "reschedule" || x.status === "awaiting_result"),
     history: items.filter(x => x.status === "closed"),
   }), [items]);
+  useEffect(() => {
+    if (!targetProposalId || loading) return;
+    const proposal = items.find(p => p.id === targetProposalId);
+    if (!proposal) return;
+    const nextTab: Tab = proposal.status === "closed"
+      ? "history"
+      : proposal.status === "pending" || proposal.status === "counter" ? "pending" : "agreed";
+    if (tab !== nextTab) { setTab(nextTab); return; }
+    const frame = window.requestAnimationFrame(() => {
+      const card = document.getElementById(`together-proposal-${targetProposalId}`);
+      card?.scrollIntoView({ behavior: "smooth", block: "center" });
+      card?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [items, loading, tab, targetProposalId]);
+
   function edit(kind: Editor["kind"], proposal?: Proposal) {
     setEditor({ kind, proposal }); setError(""); setTitle(kind === "create" ? "" : proposal?.title ?? "");
     setNote(kind === "create" ? "" : proposal?.note ?? "");
@@ -127,7 +150,8 @@ export function LifeTogetherPage() {
       {error && !editor && <div role="alert" className="rounded-xl bg-[var(--life-cream)] p-3 text-sm text-[var(--life-danger)]">{error}<button type="button" className="ml-2 underline" onClick={() => void reload()}>重试</button></div>}
       {loading ? <p className="text-sm text-[var(--life-text-muted)]">正在打开小窝…</p>
         : grouped[tab].length === 0 ? <div className={card + " py-10 text-center text-sm text-[var(--life-text-muted)]"}>{tab === "pending" ? "暂时没有等待回应的邀请" : tab === "agreed" ? "还没有正在进行的约定" : "一起做过的小事会留在这里"}</div>
-        : grouped[tab].map(p => <article key={p.id} className={card + " grid gap-3"}>
+        : grouped[tab].map(p => <article key={p.id} id={`together-proposal-${p.id}`} tabIndex={-1}
+          className={card + " grid gap-3 " + (p.id === targetProposalId ? "ring-2 ring-[var(--life-teal)] ring-offset-2" : "")}>
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <strong className="block break-words text-base text-[var(--life-text)]">{p.title}</strong>
