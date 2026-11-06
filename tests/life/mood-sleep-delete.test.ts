@@ -12,7 +12,7 @@ describe("mood and sleep deletion", () => {
     expect(client).toContain("export async function deleteMood");
     expect(client).toContain("export async function deleteSleep");
     expect(mood).toContain("删除这条心情");
-    expect(sleep).toContain("确定删除这条睡眠记录吗？");
+    expect(sleep).toContain("删除这条睡眠记录？");
     expect(mood).toContain("mePartnerKey");
     expect(sleep).toContain("mePartnerKey");
   });
