@@ -91,3 +91,11 @@ Read-only Vercel deployment history shows latest READY production deployment `dp
 - SQL migration and ephemeral PostgreSQL behavioral tests passed (including complete-day claim and unknown snack calorie cases); Build/Lint passed. Full JS suite: 436/438, with the two existing wish-related test failures.
 - **No new Production Supabase migration or Vercel deployment was performed** for PR #100. PR #99's prior Tuanzi branding migration also remains pending Production application; release must apply forward migrations in order with separate explicit authorization.
 - Read-only Production delivery investigation: one Together invite recipient Fish, instance `a40bad4a-535d-431b-98e7-fb7907f25c3c`, had delivery status `accepted`, provider `pushplus_wechat`, provider message ID `a713b5851caa49708bdcebec97e6d5fd`, attempt 1 at 2026-11-06 17:20 Beijing time. Provider acceptance confirms API handoff, not device receipt/read.
+
+## 2026-11-06 PushPlus clickable Beside footer and Together details (not yet deployed)
+
+- PR #101 merged to GitHub main at `18615ec795fad257f44c0e07fcd75459a3fe66fe`.
+- Forward migration `20261106120000_tuanzi_site_footer_proposal_details.sql` makes the PushPlus HTML transport append a single clickable Beside site link. Together routes to `/nest/together`, mailbox fallback to `/open/mailbox`, other PushPlus reminders to the root. The current mailbox WeChat-test-account primary route already has a clickable action URL.
+- Together proposal notifications include an escaped title, scheduled Beijing time, duration and an optional 220-character escaped note preview. Previously sent messages are not retroactively updated or re-sent. Existing notification content is visible to the WeChat recipient and may appear in mobile notification previews.
+- Ephemeral PostgreSQL 17 migration chain and mocked PushPlus HTTP payload checks passed; Lint/Build passed. JS suite 436/438 with the same two pre-existing wish tests failing.
+- No Production Supabase migration or Vercel deployment authorized or executed for PR #101. Production behavior remains unchanged until separately approved migration and deployment.
