@@ -51,6 +51,12 @@
 
 代码迁移 `20261106110000_daily_recap_proposal_notifications.sql` 为现有 proposal Stateful Reminder Source 补充团子亲昵称呼、经 HTML 转义的约定标题以及北京时间。保留 invite/counter/accept/decline/取消/开始前/结束结果等原有事件触发、时间与投递去重契约，不额外曝光自由备注。正式上线状态以 Production Supabase runtime 与 migration ledger 为准；未经授权应用 migration 前，线上仍使用原先文本。
 
+## 待发布：在通知里展示邀约内容
+
+一起做吧的 PushPlus 通知包含当前约定的名称、北京时间、持续分钟数、可选备注摘要（截取 220 字符后 HTML 转义；其余在登录后页面查看），不再仅提示有一条邀约。自由备注属于共享记录的内容，经用户要求纳入微信推送，通知接收端可能显示在锁屏或通知预览中；避免在备注中填写不适合外露的信息。
+
+通知仍遵守 original source/recipient/trigger/delivery dedupe，已送达的历史消息不会追溯重发。本次变更见 `20261106120000_tuanzi_site_footer_proposal_details.sql`，上线状态以 Production Supabase migration ledger 为准。
+
 ## V1 限制与验收
 
 V1 不接入积分或复杂循环任务；MCP 文本查询和操作由独立 AI registry 增量接入。未来 B 版可以基于事件历史推导成长统计，不重写事实。
