@@ -75,6 +75,8 @@ begin
   when 'changed' then '一起做吧｜时间调整好啦'
   when 'declined' then '一起做吧｜这次先休息'
   when 'unchanged' then '一起做吧｜保留原来的约定'
+  when 'cancelled' then '一起做吧｜约定已取消'
+  when 'withdrawn' then '一起做吧｜邀请已撤回'
   when 'before' then '一起做吧｜小约定快开始啦'
   when 'encourage' then '一起做吧｜拉你一把 ♡'
   when 'result' then '一起做吧｜今天做得怎么样？'
@@ -87,6 +89,8 @@ begin
   when 'changed' then '新的约定时间已经确认啦。'
   when 'declined' then '这次邀请先结束了，下次再一起做吧。'
   when 'unchanged' then '这次先按原约定进行，有需要也可以再商量。'
+  when 'cancelled' then 'Ta 已经取消了这次约定，不需要再准备啦。'
+  when 'withdrawn' then 'Ta 已撤回这次邀请，下次再一起做点小事吧。'
   when 'before' then '可以慢慢准备一下啦，不必追求完美。'
   when 'encourage' then '你说过愿意被拉一把，先试 5 分钟也很好呀。'
   when 'result' then '我们的小约定进行得怎么样？去小窝轻轻记录一下吧。'
@@ -138,13 +142,14 @@ create or replace function public.mutate_life_proposal(
 declare
  v_space uuid; v public.life_proposals%rowtype; v_existing uuid;
  v_at timestamptz; v_dur integer; v_title text; v_note text;
- v_other text; v_outcome text; v_was_closed boolean:=false; v_now timestamptz:=now();
+ v_other text; v_outcome text; v_was_closed boolean:=false; v_now timestamptz;
 begin
  if p_actor not in ('cat','fish') or p_request_id is null then raise exception 'invalid identity or request id'; end if;
  if p_action not in ('create','accept','encourage','counter','reschedule','decline','withdraw','cancel','result') then raise exception 'invalid action'; end if;
  select id into v_space from public.couple_spaces where slug=p_space_slug and archived_at is null;
  if v_space is null then raise exception 'couple space not found'; end if;
  perform pg_advisory_xact_lock(hashtext(v_space::text));
+ v_now := clock_timestamp();
  select proposal_id into v_existing from public.life_proposal_events
  where couple_space_id=v_space and actor=p_actor and request_id=p_request_id;
  if found then
@@ -220,10 +225,12 @@ begin
    if v.created_by<>p_actor or v.status not in ('pending','counter') then raise exception 'cannot withdraw'; end if;
    v.status:='closed';v.outcome:='withdrawn';v.closed_at:=v_now;v.waiting_for:=null;v.version:=v.version+1;
    perform private.life_proposal_clear_reminders(v);
+   perform private.life_proposal_notify(v,v_other,'withdrawn',v_now,v.version);
   elsif p_action='cancel' then
    if v.status not in ('agreed','reschedule') or v_now>=v.scheduled_at+make_interval(mins=>v.duration_minutes) then raise exception 'cannot cancel'; end if;
    v.status:='closed';v.outcome:='cancelled';v.closed_at:=v_now;v.waiting_for:=null;v.version:=v.version+1;
    perform private.life_proposal_clear_reminders(v);
+   perform private.life_proposal_notify(v,v_other,'cancelled',v_now,v.version);
   elsif p_action='result' then
    v_was_closed := (v.status='closed');
    if v.status not in ('agreed','reschedule','awaiting_result') and not (v.status='closed' and v.outcome='unconfirmed') then raise exception 'cannot record result'; end if;
@@ -248,8 +255,10 @@ begin
    if v.status='awaiting_result' then
     perform private.life_proposal_clear_reminders(v);
     perform private.life_proposal_notify(v,v_other,'result',v_now,v.version);
-    perform private.life_proposal_notify(v,v_other,'followup',
+    if v.scheduled_at+make_interval(mins=>v.duration_minutes)+interval '24 hours' > v_now + interval '30 minutes' then
+     perform private.life_proposal_notify(v,v_other,'followup',
       v.scheduled_at+make_interval(mins=>v.duration_minutes)+interval '24 hours',v.version);
+    end if;
    end if;
   end if;
   update public.life_proposals set
@@ -298,7 +307,9 @@ begin
    foreach v_actor in array array['cat','fish']::text[] loop
     if not (v.results ? v_actor) then
      perform private.life_proposal_notify(v,v_actor,'result',p_now,v.version);
-     perform private.life_proposal_notify(v,v_actor,'followup',v_end+interval '24 hours',v.version);
+     if v_end+interval '24 hours' > p_now+interval '30 minutes' then
+       perform private.life_proposal_notify(v,v_actor,'followup',v_end+interval '24 hours',v.version);
+     end if;
     end if;
    end loop;
   end if;

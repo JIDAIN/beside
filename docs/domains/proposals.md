@@ -39,7 +39,7 @@
 - 请求 `request_id` 去重；`version` 防并发覆盖；事务级 couple-space advisory lock 串行配额校验。
 - 新 `proposal` Stateful Reminder Source 写入现有 `life_reminder_instances`；投递沿用 `life_notification_deliveries` 和现有 PushPlus 微信端通道，不新增一套消息发送器。
 - 新邀请、回应、改期即时提醒；已约定前 15 分钟；自愿选择「拉我一把」时开始提醒；预计结束与 24 小时未记录提醒。
-- 状态变化取消旧的未投递提醒；通知只包含通用文案，不向微信泄露自由备注。
+- 状态变化取消旧的未投递提醒；撤回/取消告知另一方；超时补充提醒不会与即时提醒同时重复发送。通知只包含通用文案，不向微信泄露自由备注。
 - `private.sweep_life_proposals` 定时推进过期、待结果与自动收尾；投递仍由统一提醒 dispatcher 负责。
 - 微信测试号优先是当前 mailbox 的路由，不代表 proposal 已接入该微信测试号。
 

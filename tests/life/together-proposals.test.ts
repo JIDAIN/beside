@@ -52,6 +52,10 @@ describe("Together V1 boundary", () => {
   expect(sql).toContain("public.life_reminder_instances");
   expect(sql).toContain("private.life_proposal_clear_reminders");
   expect(sql).toContain("private.sweep_life_proposals");
+  expect(sql).toContain("'cancelled',v_now,v.version");
+  expect(sql).toContain("'withdrawn',v_now,v.version");
+  expect(sql).toContain("v_now := clock_timestamp()");
+  expect(sql).toContain("interval '30 minutes'");
   expect(sql).not.toContain("create table notification_jobs");
  });
  it("keeps refusal free and supports voluntary encouragement", () => {

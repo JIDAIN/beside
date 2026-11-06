@@ -54,7 +54,8 @@ Production URL 的旧 slug 仅为兼容地址，不代表产品仍叫 Couple Bet
 | monthly review | 日历 | derived read model | API & Sync + Data Model |
 | weight | 小窝 → 体重 | personal fact | Data Model + Auth |
 | mailbox | 小窝 → 小信箱 | relationship lifecycle | Data Model + Auth + UI Guidelines |
-| medicine | 小窝 → 家庭药箱 | shared fact | Data Model + Auth |\n| wishes | 小窝 → 心愿清单 | shared life collection | Wish List Domain + Auth |
+| medicine | 小窝 → 家庭药箱 | shared fact | Data Model + Auth |
+| wishes | 小窝 → 心愿清单 | shared life collection | Wish List Domain + Auth |
 | proposals | 小窝 → 一起做吧 | shared proposal lifecycle | Together Domain + Auth + Reminder |
 | Legacy Game | 小窝 → 游戏机 | complex legacy domain | Legacy Game Domain |
 | settings | 小窝 / 我的 | shared + personal settings | Data Model + Auth |
