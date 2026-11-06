@@ -57,3 +57,11 @@ Vercel Production 构建通过（含 TypeScript），兼容 Production 域名已
 ### 2026-11-06 Production deployment cross-check
 
 Read-only Vercel deployment history shows latest READY production deployment `dpl_B2BL6fQ4tzCnz6idDY4aQD5gENZk` sourced from `bdf43ba579b1a4edbc3cb5337b411d944605b478` (Together proposal Demo). The reminder PR #96 merged later; **the live deployment does not contain the reminder changes**. This check did not deploy or promote any build.
+
+## 2026-11-06 Tuanzi Reminder Production Release
+
+- Authorized Production Supabase migration `tuanzi_partner_record_notifications` applied successfully; ledger version `20261106085101`.
+- Vercel Production deployment `dpl_DJ7joa2XExmBbMgJpn52vSFvZzDV` is READY, sourced from `7c68d07cd5f64737ee9e059b3afa30b7cb8d21d9`; the `couple-better-game.vercel.app` compatibility domain appears in the deployment aliases.
+- Runtime read-only checks: three source triggers, three requested functions, Cat/Fish partner/daily preferences both enabled, both scheduled at 21:00, existing five-minute cron enabled; anon table SELECT and settings function EXECUTE denied.
+- Post-release scan of deployment error/fatal runtime logs for the recent 15-minute window returned no entries. This is **not** an end-to-end provider-delivery test.
+- Outstanding: actual first-record Web/MCP event capture, five-minute coalescing and two-account PushPlus acceptance/receipt; 21:00 real notification acceptance; unrelated wish tests still had 2 failures in PR CI. No artificial Life records were inserted to test user data.
