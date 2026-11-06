@@ -273,8 +273,8 @@ begin
       where e.id=any(v_group.ids) and e.delivered_at is null
         and coalesce((private.life_daily_record_completeness(v_space,e.source_actor,e.record_date)->>e.record_kind)::boolean,false);
     if v_items is null then
-      update public.life_partner_record_events set delivered_at=p_now
-       where id=any(v_group.ids) and delivered_at is null;
+      -- Keep cancelled records pending until the day ends: a re-created
+      -- record can still generate its first real notification.
       continue;
     end if;
     v_delivery := private.reserve_life_notification_delivery(
@@ -288,8 +288,9 @@ begin
       ||v_items||'<br><br>快来看看宝贝的日常吧～ 💗 ——团子');
     if coalesce((v_send->>'ok')::boolean,false) then
       perform public.complete_life_notification_delivery(v_delivery,v_recipient,true,v_send->>'providerMessageId',null,p_space_slug);
-      update public.life_partner_record_events set delivered_at=p_now
-       where id=any(v_group.ids) and delivered_at is null;
+      update public.life_partner_record_events e set delivered_at=p_now
+       where e.id=any(v_group.ids) and e.delivered_at is null
+         and coalesce((private.life_daily_record_completeness(v_space,e.source_actor,e.record_date)->>e.record_kind)::boolean,false);
       v_count := v_count+1;
     else
       perform public.complete_life_notification_delivery(v_delivery,v_recipient,false,null,v_send->>'error',p_space_slug);
