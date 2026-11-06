@@ -102,6 +102,15 @@ describe("Together in canonical life_query/life_mutate", () => {
     }, { identity: FISH, latestUserText: "我应该怎样回复这个邀请？" })).rejects.toThrow(LifeClarificationError);
     expect(mock.mutate).not.toHaveBeenCalled();
   });
+  it("never turns a negated statement into acceptance or refusal", async () => {
+    await expect(executeLifeAgentTool("life_mutate", {
+      resource: "proposal", action: "accept", id: ID, expectedVersion: 4, data: {},
+    }, { identity: FISH, latestUserText: "我不想答应这个邀请" })).rejects.toThrow(LifeClarificationError);
+    await expect(executeLifeAgentTool("life_mutate", {
+      resource: "proposal", action: "decline", id: ID, expectedVersion: 4, data: {},
+    }, { identity: FISH, latestUserText: "我不想拒绝她" })).rejects.toThrow(LifeClarificationError);
+    expect(mock.mutate).not.toHaveBeenCalled();
+  });
   it("reuses original duration in counter proposal but requires new timestamp", async () => {
     await executeLifeAgentTool("life_mutate", {
       resource: "proposal", action: "counter", id: ID, expectedVersion: 4,

@@ -12,7 +12,7 @@ type Row = Record<string, unknown>;
 type Query = { id?: unknown; name?: unknown; status?: unknown; scope?: unknown; limit?: unknown };
 type MutationContext = { actor: Partner; latestUserText: string; toolCallId?: string };
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function text(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
@@ -75,6 +75,17 @@ export async function queryAgentProposals(query: Query, actor: Partner) {
 }
 
 function ensureExplicitAction(action: string, userText: string) {
+  // A negative instruction must not be turned into approval, refusal or cancellation.
+  const negated: Record<string, RegExp> = {
+    accept: /(?:不想|不愿|不要|别|不|未).{0,3}(?:同意|答应|接受|确认)/,
+    encourage: /(?:不想|不要|别).{0,4}(?:拉我一把|推我一把|鼓励我)/,
+    decline: /(?:不想|不要|别).{0,4}(?:拒绝|说不)/,
+    withdraw: /(?:不想|不要|别).{0,4}(?:撤回|收回)/,
+    cancel: /(?:不想|不要|别).{0,4}(?:取消|作废)/,
+  };
+  if (negated[action]?.test(userText)) {
+    throw new LifeClarificationError("你是在讨论还是确定要这样回应？请明确确认后再执行。", ["action"]);
+  }
   const patterns: Record<string, RegExp> = {
     accept: /同意|答应|接受|好呀|好啊|可以|确认|就这么定|行呀|行啊|好的|就按|照原计划/,
     encourage: /拉我一把|推我一把|带动我|鼓励我|帮我启动/,
