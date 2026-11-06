@@ -139,6 +139,14 @@ stable invariants：
 
 这些参数可调整；“旧 read 不能回滚新 write”是不变量。
 
+### 心愿清单 / 一起做吧加载优化（仓库已实现，待上线）
+
+- `/nest/wishes` 和 `/nest/together` 统一使用 `useStaleQuery`（keys: `wishes` / `together-proposals`），按 Cat/Fish 浏览器 scope 缓存最近成功的共享读取结果，再以受保护 Web session 和 Supabase 重新验证。页面返回或重新打开时不再人为先清空列表。
+- 心愿主记录写入成功后即时同步 `wishes` cache；约定变更成功后强制 read-back。客户端来自 MCP / 另一账号的变化通过 30 秒可见页面重新校验和 focus/visibility 处理，不以缓存作为写入或授权事实。
+- 同一页面移除额外自建 `setInterval(fetch)`，避免与共享缓存定时校验重复；`Together` 仍以独立本地计时器刷新日期相关的展示标签。
+- 当浏览器直接落在这两个功能页面时，先保障当前页面首屏数据请求，避免启动无关的 Today/Food/Calendar 预热任务与之争抢移动网络。
+- 首次访问 / 缓存失效仍依赖服务端网络；有缓存时才可快速显示旧快照，随后后台更新。浏览器断网或 session 无权限时仍按原有权限和错误处理执行。本轮不涉及 Supabase schema 或运行时参数变化。
+
 ## 10. Mutation → Cache Convergence
 
 ~~~text
