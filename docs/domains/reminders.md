@@ -156,6 +156,16 @@ Production 正式文案的最终事实源是当前 Supabase functions，例如 l
 
 注意：lib/server/life-wechat-reminders.ts 中存在历史/辅助 renderer 与 claim helper，它不是当前全部 Production 正式发送文案的唯一事实源。
 
+### 团子模板轮换（仓库已实现，尚未上线）
+
+生活记录动态、21:00 双人汇总及通过 `private.life_pushplus_message` 渲染的纪念日提醒，支持五套亲昵表达，标题与正文只使用正式产品名称 **伴岛 / Beside**，不再引入「小岛日记」等未定义模块名称。
+
+- 由稳定消息信息经 `private.tuanzi_copy_variant(text)` 确定模板编号（1–5），不调用 `random()`；重试应使用同一套表述。
+- 生活动态仍只由真实确认记录决定列出的心情、睡眠、早餐、午餐和晚餐，不通过语气模板编造状态或情绪。
+- 晚间汇总始终分别展示「主人」「老婆」的真实缺失项；语气亲昵但不责备或比较。
+- 纪念日必须保留「今天 / 明天 / 还有 N 天」的真实时间含义。
+- 本轮变更为新的 forward migration `20261106100000_varied_tuanzi_notification_copy.sql`；**未执行 Production Supabase migration 或 Vercel 部署** 时不得把当前文案写成线上事实。
+
 ## 11. Scheduler
 
 当前 Production 有两条 active cron：
