@@ -38,8 +38,10 @@ declare
   v_actor text;
 begin
   if TG_TABLE_NAME = 'mood_entries' then
+    if TG_OP = 'UPDATE' then return NEW; end if;
     v_kind := 'mood'; v_date := NEW.mood_date; v_actor := NEW.partner_key;
   elsif TG_TABLE_NAME = 'sleep_records' then
+    if TG_OP = 'UPDATE' then return NEW; end if;
     v_kind := 'sleep'; v_date := NEW.sleep_date; v_actor := NEW.partner_key;
   elsif TG_TABLE_NAME = 'meals' then
     if NEW.deleted_at is not null or NEW.status <> 'confirmed'
