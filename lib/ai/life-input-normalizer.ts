@@ -88,6 +88,20 @@ function normalizePerson(value: unknown, allowAll: boolean) {
 
 function normalizeAction(resource: string, value: unknown, id: unknown) {
   const raw = text(value).toLowerCase();
+  if (resource === "proposal") {
+    const proposalAliases: Record<string, string> = {
+      新增: "create", 添加: "create", 发起: "create", 邀请: "create", 提案: "create",
+      同意: "accept", 接受: "accept", 答应: "accept", 好呀: "accept",
+      拉我一把: "encourage", 鼓励我: "encourage",
+      提出修改: "counter", 反提案: "counter", 改建议: "counter",
+      改期: "reschedule", 延期: "reschedule", 修改时间: "reschedule",
+      拒绝: "decline", 今天不了: "decline",
+      撤回: "withdraw", 收回: "withdraw",
+      取消: "cancel", 取消约定: "cancel",
+      记录结果: "result", 完成确认: "result", 确认结果: "result",
+    };
+    return proposalAliases[raw] || raw || (text(id) ? "unspecified" : "create");
+  }
   const aliases: Record<string, string> = {
     新增: "create", 添加: "create", 记录: "create", 保存: "create", 创建: "create",
     修改: "update", 更新: "update", 编辑: "update",
@@ -121,6 +135,7 @@ function normalizeResource(value: unknown, mode: "query" | "mutate") {
     设置: "settings",
     常吃食物: "favorite_food", 常见食物: "favorite_food", 常用食物: "favorite_food",
     心愿清单: "wish", 心愿: "wish", 愿望清单: "wish", 收藏清单: "wish", 想去清单: "wish", wishlist: "wish", wishes: "wish",
+    一起做吧: "proposal", 双人提案: "proposal", 生活提案: "proposal", 提案: "proposal", 小约定: "proposal", 共同约定: "proposal", 邀请: "proposal", proposals: "proposal", together: "proposal",
     今日: "day", 日汇总: "day", 生活记录: "day",
   };
   const normalized = common[raw] || raw;
@@ -161,6 +176,33 @@ function normalizeClock(value: unknown, date: string, nextDay = false) {
     return `${targetDate}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00+08:00`;
   }
   return value;
+}
+
+
+// Proposals store absolute instants. Accept explicit Shanghai-local clock input
+// but never silently guess an unknown date or a vague time.
+function normalizeProposalTime(source: JsonRecord, userText: string, now: Date) {
+  const raw = text(first(source, ["scheduledAt", "startAt", "dateTime", "startsAt", "when"]));
+  const dateRaw = text(first(source, ["scheduledDate", "date"]));
+  const timeRaw = text(first(source, ["time", "startTime", "clock"]));
+  const candidate = raw || (timeRaw ? `${dateRaw || (/明天/.test(userText) ? dateInShanghai(now, 1) : /后天/.test(userText) ? dateInShanghai(now, 2) : /今天|今晚/.test(userText) ? dateInShanghai(now) : "")}T${timeRaw}` : "");
+  if (!candidate) throw new LifeClarificationError("想约哪一天、几点？", ["scheduledAt"]);
+  const local = candidate.replace(" ", "T");
+  // Local times supplied without an offset are interpreted as Asia/Shanghai.
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?$/.test(local)) return `${local}+08:00`;
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?(?:Z|[+-]\d{2}:\d{2})$/i.test(local)) return local;
+  throw new LifeClarificationError("请告诉团子明确的日期和时间，例如明天 20:30。", ["scheduledAt"]);
+}
+
+function normalizeProposalResult(raw: unknown) {
+  const value = text(raw).toLowerCase();
+  const aliases: Record<string, string> = {
+    done: "done", completed: "done", 完成: "done", 做到了: "done", 已完成: "done", 做了: "done",
+    partial: "partial", 部分完成: "partial", 做了一点: "partial", 只做了一点: "partial",
+    not_done: "not_done", 未完成: "not_done", 没做: "not_done", 今天没做: "not_done", 没去: "not_done",
+  };
+  if (!aliases[value]) throw new LifeClarificationError("这次是做到了、做了一点，还是没有做？", ["result"]);
+  return aliases[value];
 }
 
 const MOOD_ALIASES: Record<string, MoodKey> = Object.fromEntries(
@@ -255,6 +297,24 @@ export function normalizeLifeQueryArgs(args: unknown, context: NormalizeContext)
     if (name) out.name = name;
     const category = text(first(row, ["category", "type"]));
     if (category) out.category = category;
+  }
+  if (resource === "proposal") {
+    const name = text(first(row, ["name", "query", "keyword", "title"]));
+    if (name) out.name = name;
+    const statusRaw = text(row.status).toLowerCase();
+    const statusAliases: Record<string, string> = {
+      全部: "all", 待回应: "pending", 协商中: "counter", 已约定: "active",
+      进行中: "active", 我们的约定: "active", 待确认: "awaiting_result",
+      待结果确认: "awaiting_result", 历史: "history", 已结束: "closed",
+      待我回应: "all", 等待ta: "all",
+    };
+    out.status = statusAliases[statusRaw] || statusRaw || "all";
+    const scopeRaw = text(first(row, ["scope", "direction"])).toLowerCase();
+    const scopeAliases: Record<string, string> = {
+      待我回应: "waiting_me", 等待ta: "waiting_ta",
+      我发起: "created_me", ta发起: "created_ta",
+    };
+    out.scope = scopeAliases[statusRaw] || scopeAliases[scopeRaw] || scopeRaw || "all";
   }
   if (resource === "medicine") {
     const name = text(first(row, ["name", "query", "keyword", "medicineName", "drugName"]));
@@ -358,6 +418,26 @@ export function normalizeLifeMutationArgs(args: unknown, context: NormalizeConte
     const weight = parseNumber(first(sourceData, ["weightKg", "weight", "kg", "value"]));
     if (weight == null) throw new LifeClarificationError("要记录多少公斤？", ["weightKg"]);
     data.weightKg = weight;
+  }
+
+  if (resource === "proposal") {
+    if (!["create", "accept", "encourage", "counter", "reschedule", "decline", "withdraw", "cancel", "result"].includes(action)) {
+      throw new LifeClarificationError("是发起、同意、拉我一把、改时间、拒绝、取消，还是记录执行结果？", ["action"]);
+    }
+    if (action === "create") {
+      data.title = text(first(sourceData, ["title", "name", "activity", "proposal"]));
+      data.note = text(first(sourceData, ["note", "message", "remarks", "description"]));
+      if (!data.title) throw new LifeClarificationError("想邀请 Ta 一起做什么？", ["title"]);
+    }
+    if (action === "create" || action === "counter" || action === "reschedule") {
+      data.scheduledAt = normalizeProposalTime(sourceData, context.latestUserText, now);
+      const duration = parseDurationMinutes(first(sourceData, ["durationMinutes", "duration", "minutes"]));
+      if (duration != null) data.durationMinutes = duration;
+      else if (action === "create") data.durationMinutes = 20;
+    }
+    if (action === "result") {
+      data.result = normalizeProposalResult(first(sourceData, ["result", "outcome", "completion"]));
+    }
   }
 
   if (resource === "wish" && action === "add_visit") {
