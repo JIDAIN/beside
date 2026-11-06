@@ -239,9 +239,16 @@ begin
                array_position(array['mood','sleep','breakfast','lunch','dinner'],e.record_kind)) as labels
       from public.life_partner_record_events e
      where e.couple_space_id=v_space and e.delivered_at is null
-       and e.created_at <= p_now - interval '5 minutes'
      group by e.source_actor,e.record_date
+    having max(e.created_at) <= p_now - interval '5 minutes'
+        or min(e.created_at) <= p_now - interval '15 minutes'
   loop
+    -- Never emit delayed notifications for an earlier day.
+    if v_group.record_date <> (p_now at time zone 'Asia/Shanghai')::date then
+      update public.life_partner_record_events set delivered_at=p_now
+       where id=any(v_group.ids) and delivered_at is null;
+      continue;
+    end if;
     v_recipient := case when v_group.source_actor='cat' then 'fish' else 'cat' end;
     select * into v_pref from public.life_notification_preferences
       where couple_space_id=v_space and actor=v_recipient;
