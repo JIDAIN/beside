@@ -30,6 +30,7 @@ export function LifeTogetherPage() {
   const [items, setItems] = useState<Proposal[]>([]);
   const [tab, setTab] = useState<Tab>("pending");
   const [loading, setLoading] = useState(true);
+  const [now, setNow] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [editor, setEditor] = useState<Editor | null>(null);
@@ -40,11 +41,11 @@ export function LifeTogetherPage() {
   const requestId = useRef<string | null>(null);
 
   const reload = useCallback(async () => {
-    try { setItems(await listProposals()); setError(""); }
+    try { setItems(await listProposals()); setError(""); setNow(Date.now()); }
     catch (e) { setError(e instanceof Error ? e.message : "暂时无法读取"); }
     finally { setLoading(false); }
   }, []);
-  useEffect(() => { void reload(); }, [reload]);
+  useEffect(() => { const task = window.setTimeout(() => { void reload(); }, 0); return () => window.clearTimeout(task); }, [reload]);
   useEffect(() => {
     const onFocus = () => { if (document.visibilityState === "visible") void reload(); };
     document.addEventListener("visibilitychange", onFocus);
@@ -107,7 +108,7 @@ export function LifeTogetherPage() {
     return p.waitingFor === me ? "待我回应" : "等待 Ta";
   };
   const mePending = me ? pendingCount(items, me) : 0;
-  const active = activeCount(items);
+  const active = activeCount(items, now);
 
   return <AppPageShell title="一起做吧 ♡" subtitle="有件小事，想和你一起做" actions={<Link href="/nest" className="life-back-link">返回小窝</Link>}>
     <div className="grid gap-3 pb-8">
@@ -154,11 +155,11 @@ export function LifeTogetherPage() {
             <div className="flex items-center justify-between text-xs text-[var(--life-text-muted)]">
               <span>已改期 {p.rescheduleCount}/2 次</span>
               <div className="flex gap-2">
-                {p.status === "agreed" && p.rescheduleCount < 2 && Date.parse(p.scheduledAt) > Date.now() && <button type="button" className="underline" onClick={() => edit("reschedule",p)}>改时间</button>}
-                {Date.parse(p.scheduledAt) > Date.now() && <button type="button" className="underline" disabled={busy} onClick={() => void perform(p,"cancel")}>取消约定</button>}
+                {p.status === "agreed" && p.rescheduleCount < 2 && Date.parse(p.scheduledAt) > now && <button type="button" className="underline" onClick={() => edit("reschedule",p)}>改时间</button>}
+                {Date.parse(p.scheduledAt) > now && <button type="button" className="underline" disabled={busy} onClick={() => void perform(p,"cancel")}>取消约定</button>}
               </div>
             </div>
-            {Date.parse(p.scheduledAt) <= Date.now() && <ResultButtons proposal={p} me={me} busy={busy} onResult={(result) => void perform(p,"result",{result})}/>}
+            {Date.parse(p.scheduledAt) <= now && <ResultButtons proposal={p} me={me} busy={busy} onResult={(result) => void perform(p,"result",{result})}/>}
           </div>}
           {p.status === "awaiting_result" && <ResultButtons proposal={p} me={me} busy={busy} onResult={(result) => void perform(p,"result",{result})}/>}
           {p.status === "closed" && <div className="grid gap-2 text-xs text-[var(--life-text-muted)]">

@@ -18,7 +18,8 @@ const tiles: ReadonlyArray<{ href: string; icon: NestIconName; title: string; no
   { href: "/nest/mailbox", icon: "mailbox", title: "小信箱", note: "手札和明信片都收在这里", tone: "is-pink" },
   { href: "/nest/medicine", icon: "medicine", title: "家庭药箱", note: "一起维护数量和有效期", tone: "is-mint" },
   { href: "/nest/game-machine", icon: "game", title: "游戏机", note: "小游戏和旧玩法都从这里进入", tone: "is-yellow" },
-  { href: "/nest/wishes", icon: "wishes", title: "心愿清单", note: "收藏想做的事与值得再去的地方", tone: "is-pink" },\n  { href: "/nest/together", icon: "together", title: "一起做吧", note: "轻轻邀请，一起完成小事", tone: "is-mint" },
+  { href: "/nest/wishes", icon: "wishes", title: "心愿清单", note: "收藏想做的事与值得再去的地方", tone: "is-pink" },
+  { href: "/nest/together", icon: "together", title: "一起做吧", note: "轻轻邀请，一起完成小事", tone: "is-mint" },
 ];
 
 function anniversaryText(value: string | null) {
