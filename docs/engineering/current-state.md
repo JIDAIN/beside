@@ -148,3 +148,12 @@ Read-only Vercel deployment history shows latest READY production deployment `dp
 - Login still requires Cat/Fish password on first use in a browser and reuses the existing 30-day signed cookie afterward; no Magic Link, new credential, or permission bypass was introduced.
 - PR CI: Build, Lint, Together PostgreSQL smoke and Tuanzi PostgreSQL migration + deep-link smoke passed. JS suite 444/446 passed; the same two pre-existing Wish agent/MCP tests still fail.
 - This is **GitHub main only**. The SQL migration has **not** been applied to Production Supabase, and no Preview/Production deployment has been authorized in this turn. Real WeChat rendering, first-login return, cookie persistence and Cat/Fish end-to-end confirmation are outstanding.
+
+## 2026-11-06 Wishes / Together loading & AI tests closeout (GitHub main only)
+
+- PR #107 merged as `312afabfc22742bb256b22b54328397b41339f9d`, rebased on the existing Together WeChat deep-link improvements. Obsolete conflicted PR #106 was closed without merge.
+- The two long-standing Wish AI/MCP CI failures were fixed in their test harness: async cover deletion mock now resolves a Promise, and the visit ISO-date regex now matches actual digits. No Production Wish data or schema was changed.
+- `/nest/wishes` and `/nest/together` now use scoped persisted `useStaleQuery` snapshots for immediate display on return, then revalidate against authenticated Web API. Together retains new `?proposal=` deep-link selection, removes redundant foreground reads, and refreshes display-only time labels separately. Direct entries to these routes do not compete with unrelated Today/Food/Calendar warmup.
+- Read-only Production SQL counts at investigation: 4 non-deleted wishes and 1 proposal. `EXPLAIN ANALYZE` for the two list RPCs showed ~2.35ms and ~2.63ms respectively; this is database execution time, **not** authenticated end-to-end page-load latency. Recent Vercel runtime logs did not provide a network waterfall or precise mobile TTFB evidence; real mobile performance acceptance remains pending.
+- PR CI **450/450 tests**, Build and Lint all passed.
+- No Vercel Preview/Production deploy and no Production Supabase write was authorized/performed. Production currently remains deployment `dpl_E3QyoBuMWB6aHRRHix3GN1ecFxAA` from `f4639c7f56e81699303221676f108fb0f68ed3d7`; the merged loading improvement is not live.
