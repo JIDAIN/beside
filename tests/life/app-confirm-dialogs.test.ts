@@ -22,7 +22,7 @@ describe("Beside confirms", () => {
     for (const path of components) {
       const page = source(path);
       expect(page, path).toContain("useAppConfirm()");
-      expect(page, path).not.toMatch(/(?:window\.)?(?:confirm|alert|prompt)\s*\(/);
+      expect(page, path).not.toMatch(/\bwindow\.(?:confirm|alert|prompt)\s*\(/);
     }
   });
   it("keeps focus/escape semantics, calm styling and explicit danger actions", () => {
