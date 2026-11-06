@@ -1,0 +1,51 @@
+name: Together DB smoke (ephemeral)
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "supabase/migrations/20261106070000_life_proposals.sql"
+      - "tests/db/together-*.sql"
+      - ".github/workflows/together-db.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      PGPASSWORD: postgres
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: postgres
+      PGDATABASE: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: PostgreSQL client
+        run: |
+          if ! command -v psql >/dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y postgresql-client
+          fi
+      - name: Create disposable dependencies
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/db/together-fixture.sql
+      - name: Apply proposal migration to disposable database
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/migrations/20261106070000_life_proposals.sql
+      - name: Verify actor guards, quotas, lifecycle, backup, reminders
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/db/together-lifecycle.sql
