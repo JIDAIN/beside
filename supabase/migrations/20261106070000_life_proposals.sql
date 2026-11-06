@@ -74,6 +74,7 @@ begin
   when 'accepted' then '一起做吧｜小约定成立啦'
   when 'changed' then '一起做吧｜时间调整好啦'
   when 'declined' then '一起做吧｜这次先休息'
+  when 'unchanged' then '一起做吧｜保留原来的约定'
   when 'before' then '一起做吧｜小约定快开始啦'
   when 'encourage' then '一起做吧｜拉你一把 ♡'
   when 'result' then '一起做吧｜今天做得怎么样？'
@@ -85,6 +86,7 @@ begin
   when 'accepted' then '我们的小约定定好啦！'
   when 'changed' then '新的约定时间已经确认啦。'
   when 'declined' then '这次邀请先结束了，下次再一起做吧。'
+  when 'unchanged' then '这次先按原约定进行，有需要也可以再商量。'
   when 'before' then '可以慢慢准备一下啦，不必追求完美。'
   when 'encourage' then '你说过愿意被拉一把，先试 5 分钟也很好呀。'
   when 'result' then '我们的小约定进行得怎么样？去小窝轻轻记录一下吧。'
@@ -212,7 +214,8 @@ begin
    else
     v.status:='closed';v.outcome:='declined';v.closed_at:=v_now;v.waiting_for:=null;
    end if;
-   perform private.life_proposal_notify(v,v_other,'declined',v_now,v.version);
+   perform private.life_proposal_notify(v,v_other,
+    case when v.status='agreed' then 'unchanged' else 'declined' end,v_now,v.version);
   elsif p_action='withdraw' then
    if v.created_by<>p_actor or v.status not in ('pending','counter') then raise exception 'cannot withdraw'; end if;
    v.status:='closed';v.outcome:='withdrawn';v.closed_at:=v_now;v.waiting_for:=null;v.version:=v.version+1;
@@ -313,6 +316,10 @@ revoke all on function private.life_proposal_schedule(public.life_proposals) fro
 revoke all on function private.sweep_life_proposals(timestamptz) from public,anon,authenticated;
 revoke all on function public.list_life_proposals(text) from public,anon,authenticated;
 revoke all on function public.mutate_life_proposal(text,text,uuid,jsonb,integer,uuid,text) from public,anon,authenticated;
+grant execute on function private.life_proposal_as_json(public.life_proposals) to service_role;
+grant execute on function private.life_proposal_notify(public.life_proposals,text,text,timestamptz,integer) to service_role;
+grant execute on function private.life_proposal_clear_reminders(public.life_proposals) to service_role;
+grant execute on function private.life_proposal_schedule(public.life_proposals) to service_role;
 grant execute on function public.list_life_proposals(text) to service_role;
 grant execute on function public.mutate_life_proposal(text,text,uuid,jsonb,integer,uuid,text) to service_role;
 
