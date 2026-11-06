@@ -1,5 +1,7 @@
 "use client";
 
+
+import { useAppConfirm } from "@/components/ui/AppConfirmDialog";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLifeIdentity } from "@/components/life/LifeIdentityContext";
@@ -26,6 +28,7 @@ function activityLabel(result: ParticipationResult | undefined) {
 const presets = ["一起散步", "一起敷面膜", "早点睡觉", "一起整理房间"];
 
 export function LifeTogetherPage() {
+  const confirm = useAppConfirm();
   const { mePartnerKey: me } = useLifeIdentity();
   const [items, setItems] = useState<Proposal[]>([]);
   const [tab, setTab] = useState<Tab>("pending");
@@ -65,9 +68,9 @@ export function LifeTogetherPage() {
     setDuration(proposal?.candidateDuration ?? proposal?.durationMinutes ?? 20);
     requestId.current = null;
   }
-  function close() {
+  async function close() {
     if (busy) return;
-    if (editor?.kind === "create" && (title.trim() || note.trim()) && !window.confirm("还没有发送邀请，确定离开吗？")) return;
+    if (editor?.kind === "create" && (title.trim() || note.trim()) && !(await confirm({ title: "离开这份邀请？", description: "尚未发出的内容不会保存。", confirmLabel: "离开" }))) return;
     setEditor(null); requestId.current = null;
   }
   async function save() {
@@ -94,7 +97,7 @@ export function LifeTogetherPage() {
   }
   async function perform(proposal: Proposal, action: ProposalAction, data: Record<string, unknown> = {}) {
     if (busy) return;
-    if (["cancel", "withdraw"].includes(action) && !window.confirm("确定结束这次邀请吗？")) return;
+    if (["cancel", "withdraw"].includes(action) && !(await confirm({ title: action === "cancel" ? "取消这次约定？" : "撤回这份邀请？", description: "操作后会通知另一位主人。", confirmLabel: action === "cancel" ? "取消约定" : "撤回邀请", tone: "danger" }))) return;
     setBusy(true); setError("");
     try { await actOnProposal(proposal, action, data); await reload(); }
     catch (e) { setError(e instanceof Error ? e.message : "操作未完成"); }
@@ -203,12 +206,13 @@ export function LifeTogetherPage() {
 
 function ResultButtons({ proposal, me, busy, early = false, onResult }: { proposal: Proposal; me: "cat" | "fish" | null; busy: boolean; early?: boolean; onResult: (result: ParticipationResult) => void }) {
   if (!me) return null;
+  const confirm = useAppConfirm();
   const current = proposal.results[me];
   return <div className="grid gap-2">
     {current && <p className="text-xs text-[var(--life-text-body)]">我的执行结果 · 已记录：{activityLabel(current)}</p>}
     {!current && <>
       <AppButton variant="primary" disabled={busy} onClick={() => {
-        if (window.confirm("确认你们已经一起完成这件事了吗？确认后约定将归档，剩余提醒也会取消。")) onResult("done");
+        void confirm({ title: "我们已完成这件小事？", description: "确认后会存入历史，并取消尚未发送的提醒。只需要一人确认就好 ♡", confirmLabel: "我们已完成" }).then((approved) => { if (approved) onResult("done"); });
       }}>我们已完成 ♡</AppButton>
       {!early && <div className="grid grid-cols-2 gap-2">
         {([["partial","做了一点"],["not_done","今天没做"]] as [ParticipationResult,string][]).map(([value,label]) =>
