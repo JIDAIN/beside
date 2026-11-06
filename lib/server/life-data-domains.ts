@@ -8,6 +8,8 @@ export const ISLAND_LIFE_TABLES = [
   "weight_measurements",
   "medicine_items",
   "mailbox_letters",
+  "life_proposals",
+  "life_proposal_events",
 ] as const;
 
 export const LEGACY_GAME_TABLES = [
