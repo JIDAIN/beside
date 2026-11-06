@@ -53,3 +53,7 @@ Vercel Production 构建通过（含 TypeScript），兼容 Production 域名已
 - GitHub Actions lint/build and ephemeral PostgreSQL 17 migration/lifecycle smoke passed on the PR. The complete JS test suite retained two failures in unrelated wish-agent and wish-MCP tests (425/427 passed).
 - No Vercel Preview/Production deployment authorized or performed for this reminder change; do not equate merged `main` with Production Web.
 - Real PushPlus delivery, two-account runtime verification and Production migration ledger verification remain outstanding; each Production write/deployment requires separate express authorization.
+
+### 2026-11-06 Production deployment cross-check
+
+Read-only Vercel deployment history shows latest READY production deployment `dpl_B2BL6fQ4tzCnz6idDY4aQD5gENZk` sourced from `bdf43ba579b1a4edbc3cb5337b411d944605b478` (Together proposal Demo). The reminder PR #96 merged later; **the live deployment does not contain the reminder changes**. This check did not deploy or promote any build.
