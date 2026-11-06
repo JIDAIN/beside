@@ -165,3 +165,10 @@ Read-only Vercel deployment history shows latest READY production deployment `dp
 - Initial 15-minute Vercel Production error/fatal runtime-log check returned no entries; no authenticated mobile end-to-end first-paint timing or real WeChat deep-link device validation was performed.
 - No Supabase Production migration or data write was authorized or performed in this release. `20261106150000_together_notification_deep_links.sql` remains unapplied until separately approved. Existing generic notification behavior remains until that migration.
 - This follow-up documentation commit is later than the production deployment SHA and is not itself a new deployment.
+
+## 2026-11-06 Together PushPlus deep-link Production migration release
+
+- Following separate user authorization, Production Supabase applied forward migration `together_notification_deep_links`; ledger version `20261106142727`.
+- Read-only verification: installed `private.life_proposal_notify` includes the record-specific `/open/together?proposal=` link, retains varied Tuanzi copy, HTML escaping and the existing destination metadata; `anon` and `authenticated` EXECUTE remain denied, while `service_role` retains EXECUTE.
+- Latest previously deployed Production Web was confirmed READY at `dpl_HgR3uh9cMfNnWcALvdhzb3vuM7Yj` with source SHA `62929e93b793c07d059305274da2461ca4879eb9`, which contains `/open/together`. No new Vercel deployment was performed in this migration action.
+- Existing delivered PushPlus notifications are not rewritten. Newly generated Together messages can carry the link; actual Cat/Fish WeChat-client rendering, first-login return, cookie persistence and real notification interaction remain to be accepted with naturally occurring notifications.
