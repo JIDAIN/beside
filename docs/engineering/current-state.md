@@ -99,3 +99,11 @@ Read-only Vercel deployment history shows latest READY production deployment `dp
 - Together proposal notifications include an escaped title, scheduled Beijing time, duration and an optional 220-character escaped note preview. Previously sent messages are not retroactively updated or re-sent. Existing notification content is visible to the WeChat recipient and may appear in mobile notification previews.
 - Ephemeral PostgreSQL 17 migration chain and mocked PushPlus HTTP payload checks passed; Lint/Build passed. JS suite 436/438 with the same two pre-existing wish tests failing.
 - No Production Supabase migration or Vercel deployment authorized or executed for PR #101. Production behavior remains unchanged until separately approved migration and deployment.
+
+## 2026-11-06 PR #101 authorized Production release
+
+- Authorized Production Supabase migration `tuanzi_site_footer_proposal_details` applied successfully; ledger `20261106100520`. No Life data records were inserted or altered for testing.
+- Read-only SQL confirmed `private.life_pushplus_send` calls `private.life_pushplus_append_site_link`, `private.life_proposal_notify` includes optional note and duration, and live helper returns a clickable HTML anchor to `/nest/together` for Together and the root URL for other PushPlus reminders. Both `life-proposal-sweep-v1` and `life-pushplus-reminders-v1` remained enabled with `*/5 * * * *` scheduling.
+- Authorized Vercel Production deployment `dpl_7szh2ZemZgz6F2qHGV9Sh28mSzjj` is READY, source SHA `d5f4e1330694f46a179446bd4f08f2245ea644ac`, correctly aliased to `couple-better-game.vercel.app`.
+- Initial 15-minute Production Vercel error/fatal log scan found no entries. Real future-message client rendering/click handling still requires a naturally triggered notification; provider accepted does not prove the user clicked or read it. Previously sent messages are not retroactively changed.
+- This documentation-only commit follows deployment and should not be confused with a new Production release.
