@@ -1,0 +1,47 @@
+name: Tuanzi reminders DB smoke (ephemeral)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "supabase/migrations/20261106090000_tuanzi_partner_record_notifications.sql"
+      - "tests/db/tuanzi-*.sql"
+      - ".github/workflows/tuanzi-db.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      PGPASSWORD: postgres
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: postgres
+      PGDATABASE: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: |
+          if ! command -v psql >/dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y postgresql-client
+          fi
+      - name: Prepare disposable schema
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/db/tuanzi-fixture.sql
+      - name: Apply migration to disposable database
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/migrations/20261106090000_tuanzi_partner_record_notifications.sql
+      - name: Verify notification lifecycle and permissions
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/db/tuanzi-lifecycle.sql

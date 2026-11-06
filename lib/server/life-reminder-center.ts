@@ -12,6 +12,8 @@ export type LifeReminderSettings = {
   anniversaryReminderEnabled: boolean;
   anniversaryOffsets: number[];
   pushPlusConfigured: boolean;
+  partnerRecordNotificationsEnabled: boolean;
+  dailyRecordReminderEnabled: boolean;
 };
 
 function secret() {
@@ -104,6 +106,15 @@ export function updateLifeReminderSettings(
     p_actor: actor,
     p_medicine_enabled: input.medicineReminderEnabled,
     p_medicine_offsets: input.medicineOffsets,
+    p_space_slug: SPACE_SLUG,
+  });
+}
+
+export function updateLifeCoupleNotificationSettings(actor: LifePartnerKey, input: { partnerRecordNotificationsEnabled: boolean; dailyRecordReminderEnabled: boolean }) {
+  return rpc<LifeReminderSettings>("update_life_couple_notification_settings", {
+    p_actor: actor,
+    p_partner_enabled: input.partnerRecordNotificationsEnabled,
+    p_daily_enabled: input.dailyRecordReminderEnabled,
     p_space_slug: SPACE_SLUG,
   });
 }
