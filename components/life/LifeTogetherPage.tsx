@@ -155,11 +155,12 @@ export function LifeTogetherPage() {
             <div className="flex items-center justify-between text-xs text-[var(--life-text-muted)]">
               <span>已改期 {p.rescheduleCount}/2 次</span>
               <div className="flex gap-2">
-                {p.status === "agreed" && p.rescheduleCount < 2 && Date.parse(p.scheduledAt) > now && <button type="button" className="underline" onClick={() => edit("reschedule",p)}>改时间</button>}
-                {Date.parse(p.scheduledAt) + p.durationMinutes * 60000 > now && <button type="button" className="underline" disabled={busy} onClick={() => void perform(p,"cancel")}>取消约定</button>}
+                {p.status === "agreed" && Object.keys(p.results).length === 0 && p.rescheduleCount < 2 && Date.parse(p.scheduledAt) > now && <button type="button" className="underline" onClick={() => edit("reschedule",p)}>改时间</button>}
+                {Object.keys(p.results).length === 0 && Date.parse(p.scheduledAt) + p.durationMinutes * 60000 > now && <button type="button" className="underline" disabled={busy} onClick={() => void perform(p,"cancel")}>取消约定</button>}
               </div>
             </div>
-            {Date.parse(p.scheduledAt) <= now && <ResultButtons proposal={p} me={me} busy={busy} onResult={(result) => void perform(p,"result",{result})}/>}
+            {p.status === "agreed" && <ResultButtons proposal={p} me={me} busy={busy} early={Date.parse(p.scheduledAt) > now} onResult={(result) => void perform(p,"result",{result})}/>}
+            {p.status === "reschedule" && Date.parse(p.scheduledAt) <= now && <ResultButtons proposal={p} me={me} busy={busy} onResult={(result) => void perform(p,"result",{result})}/>}
           </div>}
           {p.status === "awaiting_result" && <ResultButtons proposal={p} me={me} busy={busy} onResult={(result) => void perform(p,"result",{result})}/>}
           {p.status === "closed" && <div className="grid gap-2 text-xs text-[var(--life-text-muted)]">
@@ -198,12 +199,15 @@ export function LifeTogetherPage() {
   </AppPageShell>;
 }
 
-function ResultButtons({ proposal, me, busy, onResult }: { proposal: Proposal; me: "cat" | "fish" | null; busy: boolean; onResult: (result: ParticipationResult) => void }) {
+function ResultButtons({ proposal, me, busy, early = false, onResult }: { proposal: Proposal; me: "cat" | "fish" | null; busy: boolean; early?: boolean; onResult: (result: ParticipationResult) => void }) {
   if (!me) return null;
   const current = proposal.results[me];
   return <div className="grid gap-2">
     <p className="text-xs text-[var(--life-text-body)]">我的执行结果{current ? " · 已记录：" + activityLabel(current) : ""}</p>
-    {!current && <div className="grid grid-cols-3 gap-2">
+    {!current && early && <AppButton variant="primary" disabled={busy} onClick={() => {
+      if (window.confirm("这件小事已经提前做完了吗？记录后就不能修改啦。")) onResult("done");
+    }}>我提前做完了 ♡</AppButton>}
+    {!current && !early && <div className="grid grid-cols-3 gap-2">
       {([["done","做到了"],["partial","做了一点"],["not_done","今天没做"]] as [ParticipationResult,string][]).map(([value,label]) =>
         <button key={value} type="button" disabled={busy} onClick={() => onResult(value)}
           className="rounded-xl border border-[var(--life-border)] bg-[var(--life-cream)] px-1 py-2.5 text-xs font-semibold disabled:opacity-50">{label}</button>)}

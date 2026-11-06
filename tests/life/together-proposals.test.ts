@@ -69,7 +69,14 @@ describe("Together V1 boundary", () => {
   expect(ui).toContain("今天不了");
   expect(ui).toContain("保留原约定");
   expect(ui).toContain("我的执行结果");
+  expect(ui).toContain("我提前做完了");
+  expect(ui).toContain('early={Date.parse(p.scheduledAt) > now}');
   expect(ui).toContain("p.durationMinutes * 60000");
+  const migration = source("supabase/migrations/20261106130000_together_early_result_lifecycle.sql");
+  expect(migration).toContain("v.status<>'agreed' or p_data->>'result'<>'done'");
+  expect(migration).toContain("v_now<v_end");
+  expect(migration).toContain("recipient=p_actor");
+  expect(migration).toContain("'before','encourage'");
   expect(ui).not.toContain("拒绝次数已满");
  });
 });
