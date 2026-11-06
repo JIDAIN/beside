@@ -43,6 +43,7 @@ function sourceLabel(sourceKind: LifeReminderItem["sourceKind"]) {
   if (sourceKind === "medicine") return "药箱";
   if (sourceKind === "anniversary") return "纪念日";
   if (sourceKind === "mailbox") return "小信箱";
+  if (sourceKind === "proposal") return "一起做吧";
   if (sourceKind === "system") return "系统";
   return "自定义";
 }
@@ -84,8 +85,9 @@ function ReminderItemCard({
 
       <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-2">
         <button type="button" disabled={busy} onClick={() => onAction(item, "complete")} className="text-xs font-extrabold text-[var(--life-teal-strong)] disabled:opacity-40">
-          完成
+          {item.sourceKind === "proposal" ? "已知晓" : "完成"}
         </button>
+        {item.sourceKind === "proposal" ? <Link href="/nest/together" className="text-xs font-bold text-[var(--life-teal-strong)]">去看看</Link> : null}
         <button type="button" disabled={busy} onClick={() => onAction(item, "snooze")} className="text-xs font-bold text-[var(--life-text-muted)] disabled:opacity-40">
           1 小时后
         </button>
