@@ -43,6 +43,7 @@ export function LifeTogetherPage() {
   const [time, setTime] = useState("");
   const [duration, setDuration] = useState(20);
   const requestId = useRef<string | null>(null);
+  const focusedProposal = useRef<string | null>(null);
 
   const reload = useCallback(async () => {
     try { setItems(await listProposals()); setError(""); setNow(Date.now()); }
@@ -69,13 +70,14 @@ export function LifeTogetherPage() {
     history: items.filter(x => x.status === "closed"),
   }), [items]);
   useEffect(() => {
-    if (!targetProposalId || loading) return;
+    if (!targetProposalId || loading || focusedProposal.current === targetProposalId) return;
     const proposal = items.find(p => p.id === targetProposalId);
     if (!proposal) return;
     const nextTab: Tab = proposal.status === "closed"
       ? "history"
       : proposal.status === "pending" || proposal.status === "counter" ? "pending" : "agreed";
     if (tab !== nextTab) { setTab(nextTab); return; }
+    focusedProposal.current = targetProposalId;
     const frame = window.requestAnimationFrame(() => {
       const card = document.getElementById(`together-proposal-${targetProposalId}`);
       card?.scrollIntoView({ behavior: "smooth", block: "center" });
