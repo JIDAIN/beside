@@ -1,6 +1,6 @@
 # Together / 一起做吧 Domain
 
-> 本文对应开发分支的 V1 代码设计与实现；尚未部署 Production，Supabase migration 尚未应用。
+> 本文记录一起做吧 V1 的 current Domain contract。Web/Production Supabase 于 2026-11-06 发布；AI/MCP proposal 代码通过 PR #98 增量接入，线上是否生效以另行授权的 Vercel Production 部署为准。
 
 ## 目标与边界
 
@@ -43,8 +43,12 @@
 - `private.sweep_life_proposals` 定时推进过期、待结果与自动收尾；投递仍由统一提醒 dispatcher 负责。
 - 微信测试号优先是当前 mailbox 的路由，不代表 proposal 已接入该微信测试号。
 
+## AI/MCP 边界
+
+保留 life_capabilities / life_query / life_mutate 三个稳定工具，新增 proposal 业务资源，使用原 OAuth life:read / life:write。共享只读；写入经服务端可信 actor → AI normalizer → canonical list/mutate service → 受限 RPC，继承配额、版本、防重试及团子提醒。必须先可靠查询 ID/version，不替 Ta 回应/确认；时间必须明确，不自动写入 Life activity 或 Legacy Game。
+
 ## V1 限制与验收
 
-V1 不接入 AI/MCP CRUD、积分或复杂循环任务。未来 B 版可以基于事件历史推导成长统计，不重写事实。
+V1 不接入积分或复杂循环任务；MCP 文本查询和操作由独立 AI registry 增量接入。未来 B 版可以基于事件历史推导成长统计，不重写事实。
 
-真实 Cat/Fish 双账号权限、并发配额、48 小时自动收尾、重试/去重、PushPlus 收发、移动端 UI 与备份/恢复要在授权的 runtime 中逐项验收。开发分支的 SQL 已使 Life 全量导出、快照、导入与恢复覆盖 `life_proposals` 和 `life_proposal_events`；旧备份缺少这两个字段时保留现有提案，不误删新记录。还未在真实数据库执行/验证；这不代表其他领域（例如 wishes 和图片）已被自动纳入备份。
+真实 Cat/Fish 双账号权限、并发配额、48 小时自动收尾、重试/去重、PushPlus 收发、移动端 UI 与备份/恢复要在授权的 runtime 中逐项验收。开发分支的 SQL 已使 Life 全量导出、快照、导入与恢复覆盖 `life_proposals` 和 `life_proposal_events`；旧备份缺少这两个字段时保留现有提案，不误删新记录。SQL 已于 2026-11-06 执行，但尚未实测新备份恢复；这不代表其他领域（例如 wishes 和图片）已被自动纳入备份。

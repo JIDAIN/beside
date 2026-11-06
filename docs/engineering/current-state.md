@@ -65,3 +65,9 @@ Read-only Vercel deployment history shows latest READY production deployment `dp
 - Runtime read-only checks: three source triggers, three requested functions, Cat/Fish partner/daily preferences both enabled, both scheduled at 21:00, existing five-minute cron enabled; anon table SELECT and settings function EXECUTE denied.
 - Post-release scan of deployment error/fatal runtime logs for the recent 15-minute window returned no entries. This is **not** an end-to-end provider-delivery test.
 - Outstanding: actual first-record Web/MCP event capture, five-minute coalescing and two-account PushPlus acceptance/receipt; 21:00 real notification acceptance; unrelated wish tests still had 2 failures in PR CI. No artificial Life records were inserted to test user data.
+
+## 2026-11-06 Together MCP branch (not deployed)
+
+- PR #98 implements `proposal` within existing `life_query` / `life_mutate` and reuses the existing Supabase proposal RPC; no new tool, OAuth scope or DB migration.
+- This MCP change has **not been deployed to Production**, regardless of its GitHub merge state. A separate Vercel deployment authorization is still required.
+- Current Web Together and Production Supabase proposal functions remain unchanged by this MCP-only implementation.
