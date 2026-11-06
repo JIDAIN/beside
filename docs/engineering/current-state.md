@@ -44,3 +44,12 @@ Vercel Production 构建通过（含 TypeScript），兼容 Production 域名已
 ## 6. Deployment Protection
 
 `vercel.json` 仍要求 `git.deploymentEnabled=false`。Git commit/CI success 不等于部署授权；后续每次 Preview / Production deployment 与 Production Supabase 写入都必须分别取得明确授权。
+
+## 2026-11-06 reminder development state (GitHub main only)
+
+- PR #96 merged as commit `7298116c7946ef7ce115846d05bd997a67e956dc`.
+- The repository now includes Tuanzi partner record batching, per-recipient notification switches, and the two-person 21:00 completeness renderer.
+- Proposed forward migration: `20261106090000_tuanzi_partner_record_notifications.sql`. **Not applied to Production Supabase in this change**.
+- GitHub Actions lint/build and ephemeral PostgreSQL 17 migration/lifecycle smoke passed on the PR. The complete JS test suite retained two failures in unrelated wish-agent and wish-MCP tests (425/427 passed).
+- No Vercel Preview/Production deployment authorized or performed for this reminder change; do not equate merged `main` with Production Web.
+- Real PushPlus delivery, two-account runtime verification and Production migration ledger verification remain outstanding; each Production write/deployment requires separate express authorization.
