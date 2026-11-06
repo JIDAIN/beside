@@ -20,7 +20,8 @@ Supabase 是正式 Source of Truth
 | sleep | personal | sleep_records | owner | 起床日归档的睡眠事实 | 本文 + Auth |
 | activity | personal/shared | activity_entries | actor / both | 多事件活动事实 | 本文 + Auth |
 | weight | personal | weight_measurements | owner | 个人体重事实 | 本文 + Auth |
-| wishes | shared | life_wishes + private wish-photos | shared | 可重复体验的心愿、打卡模板与按次完成事实 | Wish List Domain |\n| medicine | shared | medicine_items | shared | 家庭药箱 + 派生有效期 | 本文 + Auth |
+| wishes | shared | life_wishes + private wish-photos | shared | 可重复体验的心愿、打卡模板与按次完成事实 | Wish List Domain |\n| proposals | shared | life_proposals + life_proposal_events | shared | 双人提案状态与不可丢失的事件历史 | Together Domain |
+| medicine | shared | medicine_items | shared | 家庭药箱 + 派生有效期 | 本文 + Auth |
 | mailbox | relationship lifecycle | mailbox_letters | sender/recipient | draft / sent | 本文 + Auth |
 | settings | mixed | app_configs / partner_profiles | shared/personal | 纪念日 + 目标体重 | 本文 + Auth |
 | Meal | personal complex | meals + meal_items + favorite_food_templates | owner | 餐食正式事实 | Meal Domain |

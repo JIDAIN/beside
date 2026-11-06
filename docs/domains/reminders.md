@@ -32,6 +32,7 @@ PushPlus、微信测试号等最终渠道，不定义提醒业务语义。
 | custom | Stateful | instance | PushPlus |
 | medicine | Stateful | instance | PushPlus |
 | anniversary | Stateful | instance | PushPlus |
+| proposal | Stateful | reminder instance | PushPlus → 微信端 |
 | mailbox | Stateful | instance | WeChat test account primary → PushPlus fallback |
 | daily completeness | Condition Nudge | no long-lived instance | PushPlus |
 

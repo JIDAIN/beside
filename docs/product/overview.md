@@ -55,6 +55,7 @@ Production URL 的旧 slug 仅为兼容地址，不代表产品仍叫 Couple Bet
 | weight | 小窝 → 体重 | personal fact | Data Model + Auth |
 | mailbox | 小窝 → 小信箱 | relationship lifecycle | Data Model + Auth + UI Guidelines |
 | medicine | 小窝 → 家庭药箱 | shared fact | Data Model + Auth |\n| wishes | 小窝 → 心愿清单 | shared life collection | Wish List Domain + Auth |
+| proposals | 小窝 → 一起做吧 | shared proposal lifecycle | Together Domain + Auth + Reminder |
 | Legacy Game | 小窝 → 游戏机 | complex legacy domain | Legacy Game Domain |
 | settings | 小窝 / 我的 | shared + personal settings | Data Model + Auth |
 | reminders | /me/reminders + 提醒设置 | system orchestration | Reminder Domain |
@@ -120,6 +121,10 @@ Production URL 的旧 slug 仅为兼容地址，不代表产品仍叫 Couple Bet
 
 ### 家庭药箱
 双方共同维护药品、数量、有效期相关事实；提醒偏好是每个 actor 自己的 Reminder 配置。
+
+### 一起做吧
+
+双人生活提案、协商、温柔启动与执行记录；对应独立 Together Domain，团子通知复用现有 Reminder Engine。
 
 ### 游戏机
 当前唯一小游戏是“变美变瘦大作战”。它保留自己的旧游戏数据、结算和玩法；未来游戏机可以容纳其他小游戏，但不能把新游戏规则塞进 Legacy Game Domain。

@@ -15,6 +15,7 @@ Domain 不是代码文件夹的同义词。简单功能可以由 Product + Data 
 | activity | simple | personal/shared | Today | [Data Model](../architecture/data-model.md) + [Auth](../architecture/auth-and-identity.md) | lib/life/life-service.ts | CRUD | context |
 | weight | simple | personal | Nest | [Data Model](../architecture/data-model.md) + [Auth](../architecture/auth-and-identity.md) | lib/life/weight-service.ts | CRUD | no |
 | wishes | lifecycle + media | shared | Nest | [Wish List](wishes.md) + [Auth](../architecture/auth-and-identity.md) | lib/life/wish-list-model.ts | not exposed | no |\n| medicine | simple | shared | Nest | [Data Model](../architecture/data-model.md) + [Auth](../architecture/auth-and-identity.md) | lib/life/medicine-service.ts | CRUD | Stateful source |
+| proposals | lifecycle + reminder | shared | Nest | [Together](proposals.md) + [Auth](../architecture/auth-and-identity.md) | lib/server/life-proposals.ts | no | Stateful source |
 | mailbox | simple lifecycle-sensitive | sender/recipient | Nest | [Data Model](../architecture/data-model.md) + [Auth](../architecture/auth-and-identity.md) + [UI](../product/ui-guidelines.md) | lib/life/mailbox-service.ts | draft/send | Stateful source |
 | settings | simple mixed | shared/personal | Nest/Me | [Data Model](../architecture/data-model.md) + [Auth](../architecture/auth-and-identity.md) | lib/life/settings-service.ts | update | config input |
 | Meal | complex | personal | Food | [Meal MOC](meal/README.md) | lib/nutrition/* | rich | no direct |
@@ -25,6 +26,7 @@ Domain 不是代码文件夹的同义词。简单功能可以由 Product + Data 
 
 ## 2. Complex Domains
 
+- [Together / 一起做吧](proposals.md)：双人邀请、协商改期、执行结果与提醒。
 - [Wish List](wishes.md)：共享心愿、重复体验和私有封面；已部署 Production；详见 Current State 的待验收项。\n- [Meal](meal/README.md)：多 contract，保留子目录。
 - [Reminder](reminders.md)：单文件复杂 Domain，覆盖 generation/state/delivery/provider。
 - [Legacy Game](legacy-game.md)：单文件复杂 Domain，覆盖 settlement/currency/wallet/heatmap 等。
