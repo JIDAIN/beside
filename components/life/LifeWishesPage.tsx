@@ -65,7 +65,7 @@ export function LifeWishesPage(){
    const payload=await response.json().catch(()=>({error:"封面上传失败"}));
    if(!response.ok||!payload.ok)throw new Error(payload.error||"封面上传失败");
    saved=payload.item as WishEntry;
-   setEntries(cur=>[saved,...cur.filter(x=>x.id!==saved.id)]);
+   setEntries(cur=>[saved,...(cur ?? []).filter(x=>x.id!==saved.id)]);
  }
  setDetail(saved);setEditing(undefined);setPhotoFile(null);setPreview(null);setDirty(false);setError("");
  }catch(e){setError(e instanceof Error?e.message:"保存失败");}finally{setSaving(false);}
