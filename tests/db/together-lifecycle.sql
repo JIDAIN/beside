@@ -26,6 +26,10 @@ begin
  select count(*) into n from public.life_reminder_instances where source_ref=p->>'id'
   and status='pending' and source_kind='proposal';
  if n<4 then raise exception 'missing accepted, before, or encouragement reminder: %',n;end if;
+ if not has_table_privilege('service_role','public.life_proposals','DELETE')
+  or not has_table_privilege('service_role','public.life_proposal_events','DELETE') then
+  raise exception 'restore requires service_role DELETE permissions';
+ end if;
  if has_table_privilege('anon','public.life_proposals','SELECT')
   or has_function_privilege('anon','public.mutate_life_proposal(text,text,uuid,jsonb,integer,uuid,text)','EXECUTE') then
   raise exception 'unauthorized table/function grant';

@@ -25,7 +25,7 @@ create table public.life_proposals (
 create index life_proposals_space_open_idx on public.life_proposals(couple_space_id,status,scheduled_at);
 alter table public.life_proposals enable row level security;
 revoke all on public.life_proposals from public,anon,authenticated;
-grant select,insert,update on public.life_proposals to service_role;
+grant select,insert,update,delete on public.life_proposals to service_role;
 
 create table public.life_proposal_events (
   id uuid primary key default gen_random_uuid(),
@@ -41,7 +41,7 @@ create table public.life_proposal_events (
 create index life_proposal_events_proposal_idx on public.life_proposal_events(proposal_id,created_at);
 alter table public.life_proposal_events enable row level security;
 revoke all on public.life_proposal_events from public,anon,authenticated;
-grant select,insert on public.life_proposal_events to service_role;
+grant select,insert,delete on public.life_proposal_events to service_role;
 
 alter table public.life_reminder_instances drop constraint if exists life_reminder_instances_source_kind_check;
 alter table public.life_reminder_instances add constraint life_reminder_instances_source_kind_check

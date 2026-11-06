@@ -39,6 +39,8 @@ describe("Together V1 boundary", () => {
   expect(sql).toContain("enable row level security");
   expect(sql).toContain("from public,anon,authenticated");
   expect(sql).toContain("to service_role");
+  expect(sql).toContain("grant select,insert,update,delete on public.life_proposals to service_role");
+  expect(sql).toContain("grant select,insert,delete on public.life_proposal_events to service_role");
   expect(sql).toContain("pg_advisory_xact_lock");
   expect(sql).toContain("VERSION_CONFLICT");
   expect(sql).toContain("PENDING_QUOTA");
