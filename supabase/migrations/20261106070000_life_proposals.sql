@@ -107,7 +107,7 @@ begin
        due_at=excluded.due_at, title=excluded.title, content=excluded.content, updated_at=now()
    where public.life_reminder_instances.notified_at is null
      and public.life_reminder_instances.status='dismissed';
-end; $;
+end; $$;
 
 create or replace function private.life_proposal_clear_reminders(p public.life_proposals)
 returns void language sql security invoker set search_path=pg_catalog,public as $$
