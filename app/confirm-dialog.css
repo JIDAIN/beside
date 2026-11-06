@@ -1,0 +1,90 @@
+/* Beside confirmation dialog: warm surface, no browser-native URL/title bar. */
+.app-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(38, 45, 42, .38);
+  backdrop-filter: blur(4px);
+}
+.app-confirm-panel {
+  width: min(100%, 390px);
+  max-height: min(85dvh, 620px);
+  overflow-y: auto;
+  border: 1px solid var(--life-border, #e5dfd3);
+  border-radius: 28px;
+  background: var(--life-surface, #fffcf6);
+  padding: 26px 22px 22px;
+  color: var(--life-text, #51463e);
+  text-align: center;
+  box-shadow: 0 20px 65px rgba(54, 49, 41, .18);
+}
+.app-confirm-symbol {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  background: var(--life-cream, #f9f0df);
+  color: var(--life-teal-strong, #578f83);
+  font-size: 25px;
+}
+.app-confirm-title {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.55;
+  font-weight: 800;
+  letter-spacing: .01em;
+  overflow-wrap: anywhere;
+}
+.app-confirm-description {
+  margin: 10px auto 0;
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--life-text-body, #746d64);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.app-confirm-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 25px;
+}
+.app-confirm-actions button {
+  min-height: 46px;
+  border-radius: 16px;
+  padding: 10px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: filter .15s ease, transform .15s ease;
+}
+.app-confirm-actions button:active { transform: scale(.985); }
+.app-confirm-actions button:focus-visible { outline: 3px solid var(--life-teal-strong, #578f83); outline-offset: 2px; }
+.app-confirm-cancel {
+  border: 1px solid var(--life-border, #e5dfd3);
+  background: var(--life-surface-soft, #f7f3ed);
+  color: var(--life-text-body, #746d64);
+}
+.app-confirm-accept {
+  border: 1px solid transparent;
+  background: var(--life-mint, #b9ded0);
+  color: var(--life-text, #51463e);
+}
+.app-confirm-accept.is-danger {
+  background: var(--life-cream, #f9f0df);
+  border-color: var(--life-border, #e5dfd3);
+  color: var(--life-danger, #ae6460);
+}
+@media (max-width: 450px) {
+  .app-confirm-overlay { align-items: flex-end; padding: 16px 14px calc(14px + env(safe-area-inset-bottom)); }
+  .app-confirm-panel { width: 100%; border-radius: 26px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-confirm-actions button { transition: none; }
+}
