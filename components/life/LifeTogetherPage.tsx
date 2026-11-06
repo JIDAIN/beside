@@ -205,8 +205,8 @@ export function LifeTogetherPage() {
 }
 
 function ResultButtons({ proposal, me, busy, early = false, onResult }: { proposal: Proposal; me: "cat" | "fish" | null; busy: boolean; early?: boolean; onResult: (result: ParticipationResult) => void }) {
-  if (!me) return null;
   const confirm = useAppConfirm();
+  if (!me) return null;
   const current = proposal.results[me];
   return <div className="grid gap-2">
     {current && <p className="text-xs text-[var(--life-text-body)]">我的执行结果 · 已记录：{activityLabel(current)}</p>}
