@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppPageShell } from "@/components/ui/AppPageShell";
 import { useLifeIdentity } from "@/components/life/LifeIdentityContext";
 import { useStaleQuery } from "@/lib/client/use-stale-query";
+import { readFetch } from "@/lib/client/read-fetch";
 import { wishIntent, type WishEntry, type WishCategory, type WishChecklistItem, type WishVisit, type WishWrite } from "@/lib/life/wish-list-model";
 
 const EMPTY_WISHES: WishEntry[] = [];
@@ -15,7 +16,7 @@ type View="active"|"want"|"again"|"done"|"all";
 const empty=():WishWrite=>({title:"",category:"go",description:null,location:null,openingHours:null,priceNote:null,durationNote:null,bestTimeNote:null,practicalNotes:null,imagePath:null,referenceUrls:[],checklist:[],visits:[],wantToRepeat:true,archivedAt:null});
 const fieldClass="mt-1 w-full rounded-xl border border-[var(--life-border)] bg-white px-3 py-2.5 text-sm text-[var(--life-text)]";
 async function endpoint<T>(path:string,method="GET",data?:unknown):Promise<T> {
- const response=await fetch(path,{method,headers:{"Content-Type":"application/json"},body:data===undefined?undefined:JSON.stringify(data),cache:"no-store"});
+ const response=await readFetch(path,{method,headers:{"Content-Type":"application/json"},body:data===undefined?undefined:JSON.stringify(data),cache:"no-store"});
  const result=await response.json().catch(()=>({error:"网络错误"}));
  if(!response.ok||!result.ok)throw new Error(result.error||"操作失败");
  return result as T;
