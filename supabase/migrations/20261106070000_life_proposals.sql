@@ -228,6 +228,7 @@ begin
    v_was_closed := (v.status='closed');
    if v.status not in ('agreed','reschedule','awaiting_result') and not (v.status='closed' and v.outcome='unconfirmed') then raise exception 'cannot record result'; end if;
    if v_now<v.scheduled_at then raise exception 'not started'; end if;
+   if v.results ? p_actor then raise exception 'RESULT_ALREADY_RECORDED'; end if;
    if coalesce(p_data->>'result','') not in ('done','partial','not_done') then raise exception 'invalid result'; end if;
    v.results:=jsonb_set(v.results,array[p_actor],to_jsonb(p_data->>'result'),true);
    if v.results ? 'cat' and v.results ? 'fish' then

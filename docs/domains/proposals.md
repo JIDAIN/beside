@@ -27,6 +27,7 @@
 `pending/counter → agreed → awaiting_result → closed`，已约定可在开始前临时进入 `reschedule`。
 
 - 预计结束时进入 `awaiting_result`；每位 actor 独立提交 `done/partial/not_done`。
+- 每人每次约定只能提交一次结果，防止重复提醒；另一人可以在自动收尾后补记此前缺失的结果。
 - 双方提交后派生 `joint_done/partial/solo/not_done`，不把单人参与伪造成共同完成。
 - 预计结束 48 小时后仍有未确认，自动 `closed/unconfirmed`，保留已填结果，并支持事后补记。
 - 拒绝、过期、撤回、取消分别保存 `declined/expired/withdrawn/cancelled`，与真实未完成区别。

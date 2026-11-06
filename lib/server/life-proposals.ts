@@ -64,6 +64,7 @@ async function rpc<T>(name: string, body: Record<string, unknown>): Promise<T> {
     if (message.includes("PENDING_QUOTA")) throw new ProposalError("已经有 2 个邀请在等待回应啦", 409);
     if (message.includes("AGREEMENT_QUOTA")) throw new ProposalError("未来 7 天的 3 个约定已经排满啦", 409);
     if (message.includes("VERSION_CONFLICT")) throw new ProposalError("对方刚刚更新了提案，请刷新再试", 409);
+    if (message.includes("RESULT_ALREADY_RECORDED")) throw new ProposalError("你的结果已经记录过了", 409);
     if (message.includes("not your turn")) throw new ProposalError("现在轮到 Ta 回应啦", 409);
     if (message.includes("reschedule unavailable")) throw new ProposalError("这条约定不能继续改期了", 409);
     if (message.includes("proposal expired")) throw new ProposalError("这份邀请已经过期了", 409);

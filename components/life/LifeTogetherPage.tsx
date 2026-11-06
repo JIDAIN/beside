@@ -119,7 +119,7 @@ export function LifeTogetherPage() {
       </div>
       <div className="flex items-center justify-between gap-3">
         <span className="text-xs text-[var(--life-text-muted)]">{tab === "pending" ? `我发起 ${mePending}/2` : tab === "agreed" ? `未来 7 天 ${active}/3` : "每件小事都有去处"}</span>
-        <AppButton variant="primary" onClick={() => edit("create")}>＋ 发起邀请</AppButton>
+        <AppButton variant="primary" disabled={!me || mePending >= 2} onClick={() => edit("create")}>{mePending >= 2 ? "邀请已满 2/2" : "＋ 发起邀请"}</AppButton>
       </div>
       {error && !editor && <div role="alert" className="rounded-xl bg-[var(--life-cream)] p-3 text-sm text-[var(--life-danger)]">{error}<button type="button" className="ml-2 underline" onClick={() => void reload()}>重试</button></div>}
       {loading ? <p className="text-sm text-[var(--life-text-muted)]">正在打开小窝…</p>
