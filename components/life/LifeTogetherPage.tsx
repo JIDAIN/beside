@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLifeIdentity } from "@/components/life/LifeIdentityContext";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppPageShell } from "@/components/ui/AppPageShell";
+import { useStaleQuery } from "@/lib/client/use-stale-query";
 import { actOnProposal, createProposal, listProposals } from "@/lib/life/proposal-client";
 import { activeCount, formatProposalTime, outcomeLabel, pendingCount, type ParticipationResult, type Proposal, type ProposalAction } from "@/lib/life/proposal-model";
 
@@ -25,14 +26,18 @@ function dateToIso(value: string) { return new Date(value + ":00+08:00").toISOSt
 function activityLabel(result: ParticipationResult | undefined) {
   return result === "done" ? "做到了" : result === "partial" ? "做了一点" : result === "not_done" ? "今天没做" : "待确认";
 }
+const EMPTY_PROPOSALS: Proposal[] = [];
 const presets = ["一起散步", "一起敷面膜", "早点睡觉", "一起整理房间"];
 
 export function LifeTogetherPage() {
   const confirm = useAppConfirm();
   const { mePartnerKey: me } = useLifeIdentity();
-  const [items, setItems] = useState<Proposal[]>([]);
+  const proposalsQuery = useStaleQuery<Proposal[]>({
+    key: "together-proposals", fetcher: listProposals, enabled: Boolean(me), staleMs: 30_000,
+  });
+  const items = proposalsQuery.data ?? EMPTY_PROPOSALS;
+  const loading = proposalsQuery.loading;
   const [tab, setTab] = useState<Tab>("pending");
-  const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -44,17 +49,17 @@ export function LifeTogetherPage() {
   const requestId = useRef<string | null>(null);
 
   const reload = useCallback(async () => {
-    try { setItems(await listProposals()); setError(""); setNow(Date.now()); }
+    try { await proposalsQuery.refresh(true); setError(""); setNow(Date.now()); }
     catch (e) { setError(e instanceof Error ? e.message : "暂时无法读取"); }
-    finally { setLoading(false); }
-  }, []);
-  useEffect(() => { const task = window.setTimeout(() => { void reload(); }, 0); return () => window.clearTimeout(task); }, [reload]);
+  }, [proposalsQuery.refresh]);
+  // Query cache handles mount, focus, cross-tab and 30-second revalidation.
+  // Keep this local clock separate so status/date labels update without extra reads.
   useEffect(() => {
-    const onFocus = () => { if (document.visibilityState === "visible") void reload(); };
-    document.addEventListener("visibilitychange", onFocus);
-    const timer = window.setInterval(onFocus, 30000);
-    return () => { document.removeEventListener("visibilitychange", onFocus); window.clearInterval(timer); };
-  }, [reload]);
+    const tick = () => setNow(Date.now());
+    tick();
+    const timer = window.setInterval(tick, 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const grouped = useMemo(() => ({
     pending: items.filter(x => x.status === "pending" || x.status === "counter"),
