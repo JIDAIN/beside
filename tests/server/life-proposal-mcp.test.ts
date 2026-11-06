@@ -17,6 +17,8 @@ const CAT = { partnerKey: "cat" as const, displayName: "猫猫" };
 const FISH = { partnerKey: "fish" as const, displayName: "鱼鱼" };
 const ID = "00000000-0000-4000-8000-000000000001";
 const START = "2026-12-01T20:30:00+08:00";
+const FUTURE_LOCAL = `${new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10)}T21:00`;
+const FUTURE_OFFSET = `${FUTURE_LOCAL}+08:00`;
 const row: Proposal = {
   id: ID, createdBy: "cat", recipientKey: "fish",
   title: "一起散步", note: "走十分钟就好",
@@ -66,16 +68,16 @@ describe("Together in canonical life_query/life_mutate", () => {
   it("creates a proposal with signed actor, Shanghai time and a conservative duration default", async () => {
     await executeLifeAgentTool("life_mutate", {
       resource: "双人提案", action: "发起", data: {
-        title: "一起敷面膜", scheduledAt: "2099-01-01T21:00",
+        title: "一起敷面膜", scheduledAt: FUTURE_LOCAL,
         createdBy: "fish", recipientKey: "cat",
       },
-    }, { identity: CAT, latestUserText: "帮我发起一个邀请，2099年1月1日21点一起敷面膜" });
+    }, { identity: CAT, latestUserText: "帮我发起一个邀请，过两天21点一起敷面膜" });
     const call = mock.mutate.mock.calls[0];
     expect(call[0]).toBe("cat");
     expect(call[1]).toBe("create");
     expect(call[2]).toBeNull();
     expect(call[3]).toEqual({
-      title: "一起敷面膜", note: "", scheduledAt: "2099-01-01T13:00:00.000Z",
+      title: "一起敷面膜", note: "", scheduledAt: new Date(FUTURE_OFFSET).toISOString(),
       durationMinutes: 20,
     });
     expect(call[5]).toMatch(/^[0-9a-f-]{36}$/);
@@ -103,10 +105,10 @@ describe("Together in canonical life_query/life_mutate", () => {
   it("reuses original duration in counter proposal but requires new timestamp", async () => {
     await executeLifeAgentTool("life_mutate", {
       resource: "proposal", action: "counter", id: ID, expectedVersion: 4,
-      data: { scheduledAt: "2099-01-02T21:00+08:00" },
-    }, { identity: FISH, latestUserText: "我想把时间改到2099年1月2日21点" });
+      data: { scheduledAt: FUTURE_OFFSET },
+    }, { identity: FISH, latestUserText: "我想把时间改到后天21点" });
     expect(mock.mutate.mock.calls[0].slice(0, 5)).toEqual([
-      "fish", "counter", ID, { scheduledAt: "2099-01-02T21:00+08:00", durationMinutes: 30 }, 4,
+      "fish", "counter", ID, { scheduledAt: FUTURE_OFFSET, durationMinutes: 30 }, 4,
     ]);
     expect(() => normalizeLifeMutationArgs({
       resource: "proposal", action: "counter", id: ID, data: {},
