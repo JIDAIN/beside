@@ -156,7 +156,7 @@ export function LifeTogetherPage() {
               <span>已改期 {p.rescheduleCount}/2 次</span>
               <div className="flex gap-2">
                 {p.status === "agreed" && p.rescheduleCount < 2 && Date.parse(p.scheduledAt) > now && <button type="button" className="underline" onClick={() => edit("reschedule",p)}>改时间</button>}
-                {Date.parse(p.scheduledAt) > now && <button type="button" className="underline" disabled={busy} onClick={() => void perform(p,"cancel")}>取消约定</button>}
+                {Date.parse(p.scheduledAt) + p.durationMinutes * 60000 > now && <button type="button" className="underline" disabled={busy} onClick={() => void perform(p,"cancel")}>取消约定</button>}
               </div>
             </div>
             {Date.parse(p.scheduledAt) <= now && <ResultButtons proposal={p} me={me} busy={busy} onResult={(result) => void perform(p,"result",{result})}/>}

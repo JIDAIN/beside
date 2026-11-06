@@ -36,6 +36,30 @@ begin
  end if;
 end $$;
 
+
+-- Each partner's pending proposal cap: two per initiator, not globally two.
+truncate public.life_proposal_events, public.life_proposals cascade;
+truncate public.life_reminder_instances;
+do $$
+declare p jsonb; n integer;
+begin
+ for n in 1..2 loop
+   p:=public.mutate_life_proposal('cat','create',null,
+     jsonb_build_object('title','待回应 '||n,'scheduledAt',now()+interval '5 hours','durationMinutes',10),0,gen_random_uuid());
+ end loop;
+ begin
+   perform public.mutate_life_proposal('cat','create',null,
+     jsonb_build_object('title','第三个待回应','scheduledAt',now()+interval '5 hours','durationMinutes',10),0,gen_random_uuid());
+   raise exception 'pending quota bypassed';
+ exception when others then
+   if sqlerrm not like '%PENDING_QUOTA%' then raise;end if;
+ end;
+ -- Fish may still initiate two of their own.
+ p:=public.mutate_life_proposal('fish','create',null,
+   jsonb_build_object('title','Fish 的邀请','scheduledAt',now()+interval '5 hours','durationMinutes',10),0,gen_random_uuid());
+ if p->>'createdBy'<>'fish' then raise exception 'actor ownership wrong';end if;
+end $$;
+
 -- Reject quota overflow, then verify negotiation and two successful reschedules.
 truncate public.life_proposal_events, public.life_proposals cascade;
 truncate public.life_reminder_instances;
@@ -144,6 +168,30 @@ begin
  perform public.restore_life_backup_snapshot(legacy_id,'cat');
  select count(*) into count_after from public.life_proposals;
  if count_after<>1 then raise exception 'old snapshot erased future proposal data';end if;
+end $$;
+
+
+-- Reject malformed/cross-couple backups atomically without altering any record.
+do $$
+declare payload jsonb; snapshot_id uuid; hostile_id uuid; old_count integer;
+begin
+ select id,payload into snapshot_id,payload from public.life_backup_snapshots
+  where reason='manual' order by created_at desc limit 1;
+ select count(*) into old_count from public.life_proposals;
+ payload:=jsonb_set(payload,'{user,life_proposals,0,couple_space_id}',
+   to_jsonb('00000000-0000-4000-8000-000000000001'::text),false);
+ insert into public.life_backup_snapshots(couple_space_id,scope,reason,payload,created_by)
+ select couple_space_id,'user','import',payload,'cat' from public.life_backup_snapshots
+ where id=snapshot_id returning id into hostile_id;
+ begin
+   perform public.restore_life_backup_snapshot(hostile_id,'cat');
+   raise exception 'cross couple restore bypassed';
+ exception when others then
+   if sqlerrm not like '%space mismatch%' then raise;end if;
+ end;
+ if (select count(*) from public.life_proposals)<>old_count then
+  raise exception 'invalid restore altered live proposal state';
+ end if;
 end $$;
 
 select 'Together migration smoke passed' as result;

@@ -69,6 +69,7 @@ describe("Together V1 boundary", () => {
   expect(ui).toContain("今天不了");
   expect(ui).toContain("保留原约定");
   expect(ui).toContain("我的执行结果");
+  expect(ui).toContain("p.durationMinutes * 60000");
   expect(ui).not.toContain("拒绝次数已满");
  });
 });
