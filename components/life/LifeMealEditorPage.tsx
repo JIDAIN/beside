@@ -1,5 +1,7 @@
 "use client";
 
+import { useAppConfirm } from "@/components/ui/AppConfirmDialog";
+
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -184,6 +186,7 @@ function displayNutrition(value: number | null, unit: string) {
 }
 
 export function LifeMealEditorPage() {
+  const confirm = useAppConfirm();
   const router = useRouter();
   const params = useSearchParams();
   const { mePartnerKey, loading: identityLoading } = useLifeIdentity();
@@ -266,17 +269,24 @@ export function LifeMealEditorPage() {
 
   useEffect(() => {
     if (!dirty) return;
-    const beforeUnload = (event: BeforeUnloadEvent) => { event.preventDefault(); };
+    // Browser unload warnings are required for closing the tab; in-app link
+    // navigation uses the Beside dialog instead of a browser-native confirm.
+    const beforeUnload = (event: BeforeUnloadEvent) => { if (dirtyRef.current) event.preventDefault(); };
     const interceptLink = (event: MouseEvent) => {
       if (!dirtyRef.current || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       const target = event.target instanceof Element ? event.target.closest("a[href]") : null;
       if (!(target instanceof HTMLAnchorElement) || target.target === "_blank" || target.download) return;
-      if (window.confirm("这餐还有未保存的修改，确定离开吗？")) {
-        clearDirty();
-        return;
-      }
+      const destination = target.href;
+      if (new URL(destination).pathname === window.location.pathname && new URL(destination).search === window.location.search) return;
       event.preventDefault();
       event.stopPropagation();
+      void confirm({ title: "离开这餐的编辑？", description: "还有没有保存的修改，离开后将无法恢复。", confirmLabel: "放弃修改" }).then((approved) => {
+        if (!approved) return;
+        clearDirty();
+        const next = new URL(destination);
+        if (next.origin === window.location.origin) router.push(next.pathname + next.search + next.hash);
+        else window.location.assign(destination);
+      });
     };
     window.addEventListener("beforeunload", beforeUnload);
     document.addEventListener("click", interceptLink, true);
@@ -284,7 +294,7 @@ export function LifeMealEditorPage() {
       window.removeEventListener("beforeunload", beforeUnload);
       document.removeEventListener("click", interceptLink, true);
     };
-  }, [dirty]);
+  }, [dirty, confirm, router]);
 
   useEffect(() => {
     if (!mealId || !partnerKey || !canEdit || invalidRequest) return;
@@ -534,7 +544,7 @@ export function LifeMealEditorPage() {
   }
 
   async function removeMeal() {
-    if (!meal || !canEdit || !window.confirm(`删除这条${title}记录吗？`)) return;
+    if (!meal || !canEdit || !(await confirm({ title: `删除这条${title}记录？`, description: "删除后无法恢复这餐的内容。", confirmLabel: "删除", tone: "danger" }))) return;
     setSaving(true);
     try {
       await deleteMealRecord(meal.id);

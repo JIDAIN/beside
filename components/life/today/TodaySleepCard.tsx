@@ -1,5 +1,7 @@
 "use client";
 
+
+import { useAppConfirm } from "@/components/ui/AppConfirmDialog";
 import { useMemo, useState } from "react";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
@@ -30,6 +32,7 @@ export function TodaySleepCard({
   onError?: (message: string) => void;
   readOnly?: boolean;
 }) {
+  const confirm = useAppConfirm();
   const { mePartnerKey, taPartnerKey } = useLifeIdentity();
   const formId = `life-sleep-form-${date}`;
   const [editing, setEditing] = useState(false);
@@ -62,7 +65,7 @@ export function TodaySleepCard({
 
   async function removeMine() {
     if (!mePartnerKey || !mySleep || readOnly || saving) return;
-    if (!window.confirm("确定删除这条睡眠记录吗？")) return;
+    if (!(await confirm({ title: "删除这条睡眠记录？", description: "删除后可以重新填写睡眠时间。", confirmLabel: "删除", tone: "danger" }))) return;
     setSaving(true);
     try {
       await deleteSleep(mySleep.id, mePartnerKey);

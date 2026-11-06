@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Cursor } from "animal-island-ui";
+import { AppConfirmProvider } from "@/components/ui/AppConfirmDialog";
 import { LifeIdentityProvider } from "@/components/life/LifeIdentityContext";
 import { PersistentLifeChrome } from "@/components/life/PersistentLifeChrome";
 import { LifeServiceWorker } from "@/components/life/LifeServiceWorker";
@@ -15,6 +16,7 @@ import "./r8-3-hotfix.css";
 import "./mailbox-visual-closeout.css";
 import "./food-compact.css";
 import "./food-editor-closeout.css";
+import "./confirm-dialog.css";
 
 export const metadata: Metadata = {
   applicationName: "伴岛",
@@ -44,12 +46,14 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="zh-CN" className="h-full antialiased">
       <body className="min-h-full flex flex-col font-sans">
+        <AppConfirmProvider>
         <LifeIdentityProvider>
           <Cursor className="app-cursor-root">
             <PersistentLifeChrome>{children}</PersistentLifeChrome>
           </Cursor>
           <LifeServiceWorker />
         </LifeIdentityProvider>
+        </AppConfirmProvider>
       </body>
     </html>
   );

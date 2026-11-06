@@ -29,6 +29,6 @@ describe("shared wish list boundary", () => {
   it("keeps edit identity on photo failure to avoid duplicate POST", () => {
     expect(ui).toContain("setEditing(saved)");
     expect(ui).toContain("setPhotoFile(null)");
-    expect(ui).toContain('window.confirm("有尚未保存的修改');
+    expect(ui).toContain('title: "放弃未保存的修改？"');
   });
 });

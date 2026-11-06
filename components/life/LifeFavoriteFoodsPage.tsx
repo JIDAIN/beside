@@ -1,5 +1,7 @@
 "use client";
 
+
+import { useAppConfirm } from "@/components/ui/AppConfirmDialog";
 import Link from "next/link";
 import { useCallback, useState } from "react";
 import { useLifeIdentity } from "@/components/life/LifeIdentityContext";
@@ -52,6 +54,7 @@ function summary(food: FavoriteFoodRecord) {
 }
 
 export function LifeFavoriteFoodsPage() {
+  const confirm = useAppConfirm();
   const { mePartnerKey } = useLifeIdentity();
   const fetcher = useCallback(async () => mePartnerKey ? fetchFavoriteFoods(mePartnerKey) : [], [mePartnerKey]);
   const cacheKey = mePartnerKey ? `favorite-foods:${mePartnerKey}` : "favorite-foods:pending";
@@ -132,7 +135,7 @@ export function LifeFavoriteFoodsPage() {
   }
 
   async function removeTemplate() {
-    if (!editing || !window.confirm(`删除常吃食物“${editing.name}”吗？`)) return;
+    if (!editing || !(await confirm({ title: "删除常吃食物？", description: `「${editing.name}」将从常吃食物中移除。`, confirmLabel: "删除", tone: "danger" }))) return;
     setSaving(true);
     setError(null);
     try {

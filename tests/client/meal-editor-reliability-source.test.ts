@@ -31,7 +31,7 @@ describe("meal editor reliability", () => {
     expect(editor).toContain("<AppSelect value={currentSlot}");
     expect(editor).not.toContain("加餐时段<AppSelect");
     expect(editor).toContain("beforeunload");
-    expect(editor).toContain("这餐还有未保存的修改");
+    expect(editor).toContain("离开这餐的编辑？");
   });
 
   it("keeps food editing in compact sheets instead of expanded page forms", () => {
