@@ -181,6 +181,13 @@ Production 正式文案的最终事实源是当前 Supabase functions，例如 l
 - 微信测试号的小信箱主通道原有消息点击跳转（`/open/mailbox`）不变；其他当前提醒走 PushPlus。第三方渠道接受消息并不代表微信终端一定会打开外部浏览器，取决于客户端链接处理。
 - 新迁移 `20261106120000_tuanzi_site_footer_proposal_details.sql` 更改实际发送函数与 Together 文案。**仅代码完成，不等于 Production 已应用**。
 
+### Together 消息直达（GitHub main 开发能力，需部署验收）
+
+- 新生成的 Together PushPlus 消息内，附上 `/open/together?proposal=<UUID>` 的具体约定链接；通用「打开伴岛 Beside」页脚仍保留。
+- 约定 ID 仅用于定位记录，不能推断 Cat/Fish 身份。点击链接必须复用受信任的 Web Cookie，未登录先密码登录并安全返回原约定。
+- 只有新生成的消息拥有具体链接，历史已发消息不追溯修改；发布须应用 forward migration `20261106150000_together_notification_deep_links.sql`。
+- 微信内置浏览器与系统浏览器 Cookie 可能隔离，真实跳转、登录保持、通知 HTML 显示需在发布后验收。
+
 ## 11. Scheduler
 
 当前 Production 有两条 active cron：

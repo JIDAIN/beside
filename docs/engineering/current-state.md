@@ -141,3 +141,9 @@ Read-only Vercel deployment history shows latest READY production deployment `dp
 - In-app unsaved Meal navigation is explicitly intercepted and uses the same dialog, with cancel preserving unsaved content. Closing/reloading the browser tab remains constrained by native `beforeunload` behavior.
 - PR CI Build/Lint passed, 441/443 JS tests passed (two pre-existing Wish agent / MCP tests still fail). No live mobile Chrome/WeChat browser visual screenshot was produced, and no new Preview/Production deployment was authorized or performed.
 - Vercel Production remains on earlier `f4639c7f56e81699303221676f108fb0f68ed3d7` deployment (Together single confirmation); merged `main` UI is not live until a separately authorized deployment.
+
+## 2026-11-06 Together notification deep-link login (development branch only)
+
+- Branch `feat/wechat-reminder-deep-link-login` adds a session-gated `/open/together?proposal=UUID` entry, client-side proposal focus, and a forward SQL migration `20261106150000_together_notification_deep_links.sql` for newly generated PushPlus Together message links.
+- Login still requires Cat/Fish password on first use in a browser and reuses the existing 30-day signed cookie afterward; no Magic Link, new credential, or permission bypass was introduced.
+- This is repository development only. The SQL migration has **not** been applied to Production Supabase, and no Preview/Production deployment has been authorized in this turn. Real WeChat rendering, first-login return, cookie persistence and Cat/Fish end-to-end confirmation are outstanding.

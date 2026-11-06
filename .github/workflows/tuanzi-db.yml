@@ -7,6 +7,8 @@ on:
       - "supabase/migrations/20261106100000_varied_tuanzi_notification_copy.sql"
       - "supabase/migrations/20261106110000_daily_recap_proposal_notifications.sql"
       - "supabase/migrations/20261106120000_tuanzi_site_footer_proposal_details.sql"
+      - "supabase/migrations/20261106150000_together_notification_deep_links.sql"
+      - "tests/db/together-notification-deep-links.sql"
       - "tests/db/tuanzi-*.sql"
       - ".github/workflows/tuanzi-db.yml"
   workflow_dispatch:
@@ -60,3 +62,7 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f supabase/migrations/20261106120000_tuanzi_site_footer_proposal_details.sql
       - name: Verify clickable footer and full proposal details
         run: psql -X -v ON_ERROR_STOP=1 -f tests/db/tuanzi-site-footer.sql
+      - name: Apply Together-specific reminder deep links
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/migrations/20261106150000_together_notification_deep_links.sql
+      - name: Verify deep-linked proposal notification and generic footer
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/db/together-notification-deep-links.sql

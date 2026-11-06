@@ -31,6 +31,8 @@ Browser session → /api/ai/chat → AI Gateway → registry/executor → canoni
 
 登录成功签发 HttpOnly signed session。真实账号凭据只在 server/Supabase 使用。
 
+Together 微信通知入口 `GET /open/together?proposal=<UUID>` 只接受 UUID 作为目标定位：已有 signed session 重定向到 `/nest/together?proposal=<UUID>`；无会话则进入 `/login?next=...`，登录后返回同一记录。入口本身不创建 session、不授予权限、不接受 actor 参数，实际操作始终由已有 Web API 检查 trusted actor。具体约定页面会选择相应状态 tab，并定位卡片。
+
 ## 4. Life API Family Map
 
 | Family | Caller | Trusted actor | Canonical service / adapter | Read model | Domain |
