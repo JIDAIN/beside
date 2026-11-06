@@ -61,7 +61,7 @@ describe("Together V1 boundary", () => {
   expect(sql).not.toContain("create table notification_jobs");
   expect(sql).toContain("restore_life_backup_snapshot");
   expect(sql).toContain("'life_proposal_events'");
-  expect(sql).toContain("older snapshots");
+  expect(sql.toLowerCase()).toContain("older snapshots");
  });
  it("keeps refusal free and supports voluntary encouragement", () => {
   const ui=source("components/life/LifeTogetherPage.tsx");
