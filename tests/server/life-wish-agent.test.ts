@@ -16,7 +16,7 @@ const existing={
  visits:[{id:"v1",visitedOn:"2026-10-02",note:"很漂亮",completedItemIds:[POINT]}],
  wantToRepeat:true,archivedAt:null,createdBy:"cat",createdAt:"2026-10-01",updatedAt:"2026-10-02",
 };
-beforeEach(()=>{vi.clearAllMocks();mocks.list.mockResolvedValue([existing]);mocks.write.mockResolvedValue(existing);});
+beforeEach(()=>{vi.clearAllMocks();mocks.list.mockResolvedValue([existing]);mocks.write.mockResolvedValue(existing);mocks.deletePhoto.mockResolvedValue(undefined);});
 describe("wish agent service",()=>{
  it("does not create a second wish when the same title/category already exists",async()=>{
   const result=await mutateAgentWish("create",null,{title:"潭柘寺",category:"想去"},"fish");
