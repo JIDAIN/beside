@@ -128,6 +128,10 @@ Legacy Game UI 当前主要位于 components/home/*。
 ### Mailbox
 当前使用纸信 / 明信片视觉，postcard 水平横向。draft/sent 权限不属于 Design System。
 
+### 共享确认交互（GitHub 待上线）
+
+`components/ui/AppConfirmDialog.tsx` 提供全局 `AppConfirmProvider/useAppConfirm`，承载跨 Domain 的确认弹窗，样式来自 `app/confirm-dialog.css` 与 Life tokens；禁止各功能页重新制造相似却风格不一的系统确认窗口。统一卡片层级、危险动作色彩、短文案、移动安全区和键盘可访问性。此为待发布 main/branch 实现，线上以正式部署为准。
+
 ## 9. Responsive / Accessibility
 
 - safe-area 不遮挡主要操作；
