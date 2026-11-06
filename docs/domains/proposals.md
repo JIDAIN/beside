@@ -1,6 +1,6 @@
 # Together / 一起做吧 Domain
 
-> 本文记录一起做吧 V1 的 current Domain contract。Web/Production Supabase 于 2026-11-06 发布，MCP proposal 仍在独立开发分支，尚未部署。
+> 本文记录一起做吧 V1 的 current Domain contract。Web/Production Supabase 于 2026-11-06 发布；AI/MCP proposal 代码通过 PR #98 增量接入，线上是否生效以另行授权的 Vercel Production 部署为准。
 
 ## 目标与边界
 

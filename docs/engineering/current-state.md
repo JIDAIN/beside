@@ -68,6 +68,6 @@ Read-only Vercel deployment history shows latest READY production deployment `dp
 
 ## 2026-11-06 Together MCP branch (not deployed)
 
-- Separate development branch `feat/together-mcp-resource` / PR #98 adds proposal to existing `life_query` and `life_mutate` without new tool or OAuth scope.
-- This is **not yet in Production MCP**; no Vercel Preview/Production deployment or Production Supabase write was authorized for this change.
-- Current Web Together and Supabase proposal functions remain in their previously deployed form.
+- PR #98 implements `proposal` within existing `life_query` / `life_mutate` and reuses the existing Supabase proposal RPC; no new tool, OAuth scope or DB migration.
+- This MCP change has **not been deployed to Production**, regardless of its GitHub merge state. A separate Vercel deployment authorization is still required.
+- Current Web Together and Production Supabase proposal functions remain unchanged by this MCP-only implementation.
