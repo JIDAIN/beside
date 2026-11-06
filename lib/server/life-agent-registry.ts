@@ -67,6 +67,7 @@ import { parseFavoriteFoodWritePayload } from "../nutrition/favorite-food-servic
 import { createFavoriteFood, deleteFavoriteFood, getFavoriteFoodOwner, listFavoriteFoods, updateFavoriteFood } from "./supabase-favorite-foods";
 import { loadHomeSyncSnapshot, saveHomeSyncSnapshot } from "./supabase-home-sync";
 import { mutateAgentWish, queryAgentWishes } from "./life-wish-agent";
+import { mutateAgentProposal, queryAgentProposals } from "./life-proposal-agent";
 
 export type LifeAgentAttachment = {
   bytes: Buffer;
@@ -297,7 +298,7 @@ export const LIFE_AGENT_TOOLS = [
         properties: {
           resource: {
             type: "string",
-            description: "day/mood/sleep/activity/month/meal/favorite_food/weight/medicine/mailbox/wish/settings/life_export/legacy_home；也接受对应中文别名。mailbox 返回当前账号可见的收信、已寄出和自己的待寄出草稿。",
+            description: "day/mood/sleep/activity/month/meal/favorite_food/weight/medicine/mailbox/wish/proposal/settings/life_export/legacy_home；也接受对应中文别名。mailbox 返回当前账号可见的收信、已寄出和自己的待寄出草稿。",
           },
           date: { type: "string", description: "可选 YYYY-MM-DD；day/mood/sleep/activity/meal 默认今天；weight 有 date 时只返回该日" },
           dateFrom: { type: "string", description: "weight 可选起始日期 YYYY-MM-DD" },
@@ -305,10 +306,11 @@ export const LIFE_AGENT_TOOLS = [
           monthStart: { type: "string", description: "可选 YYYY-MM-01；month 默认本月" },
           person: { type: "string", description: "me/ta/all/cat/fish。day/mood/sleep/activity/meal 支持 all；weight 仅 me/ta/cat/fish" },
           limit: { type: "integer", minimum: 1, maximum: 1000 },
-          id: { type: "string", description: "wish 可用准确 UUID 定位单条心愿" },
+          id: { type: "string", description: "wish/proposal 用准确 UUID 定位单条记录；写 proposal 必须先查询" },
           category: { type: "string", description: "wish 可选分类：go/play/eat/do 或 想去/想玩/想吃/想做" },
-          status: { type: "string", description: "wish 可选状态：want/again/done/active/all" },
-          name: { type: "string", description: "medicine、favorite_food 或 wish 名称模糊过滤，也可使用 query/keyword/medicineName" },
+          status: { type: "string", description: "wish 状态 want/again/done/active/all；proposal 状态 pending/agreed/active/awaiting_result/history/all" },
+           scope: { type: "string", description: "proposal 可选 all/waiting_me/waiting_ta/created_me/created_ta" },
+          name: { type: "string", description: "medicine、favorite_food、wish 或 proposal 标题过滤；也可 query/keyword" },
         },
         required: ["resource"],
         additionalProperties: true,
@@ -325,14 +327,15 @@ export const LIFE_AGENT_TOOLS = [
         properties: {
           resource: {
             type: "string",
-            description: "mood/sleep/activity/meal/favorite_food/weight/medicine/mailbox/wish/settings/legacy_home；也接受对应中文别名。",
+            description: "mood/sleep/activity/meal/favorite_food/weight/medicine/mailbox/wish/proposal/settings/legacy_home；也接受对应中文别名。",
           },
-          action: { type: "string", description: "可选。记录/新增=create，修改=update，删除=delete；favorite_food 支持 create/update/delete；wish 支持 create/update/add_visit/delete；meal 补录食物=append_meal_item，饭后确认估算餐=confirm_estimated_meal；mood/sleep 默认 upsert，settings 默认 update。mailbox 寄出已有草稿使用 update + data.status=sent。" },
-          id: { type: "string", description: "update/delete 的记录 UUID；禁止猜测，不知道时先查询" },
+          action: { type: "string", description: "可选。记录/新增=create，修改=update，删除=delete；favorite_food 支持 create/update/delete；wish 支持 create/update/add_visit/delete；proposal 支持 create/accept/encourage/counter/reschedule/decline/withdraw/cancel/result；meal 补录食物=append_meal_item，饭后确认估算餐=confirm_estimated_meal；mood/sleep 默认 upsert，settings 默认 update。mailbox 寄出已有草稿使用 update + data.status=sent。" },
+          id: { type: "string", description: "已有记录（含 proposal 回应）必须先查询真实 UUID" },
+           expectedVersion: { type: "integer", minimum: 1, description: "proposal 非 create 必填：从查询结果的 version 获取，防止误操作" },
           attachPhoto: { type: "boolean", description: "meal 是否绑定本轮图片" },
           data: {
             type: "object",
-            description: "自然业务字段。wish 新增支持 title/name、category(想去/想玩/想吃/想做)、location、openingHours、practicalNotes、checklist(必打卡文字列表)、referenceUrls；add_visit 支持 visitedOn、note、completedSpots；想去的地点收藏请用 wish 而非 activity。favorite_food 可填写 name、portionDescription、caloriesKcal、proteinG、carbsG、fatG；或以 fromMealId + mealDate + 可选 fromMealItemId 复制已有食物，只保存模板不记录当天饮食。活动：participantScope=me 表示本人，both 表示双方共同活动；不要用 ta 创建个人活动。mailbox：status=draft/sent；draft 只有当前账号可见可编辑，sent 寄出后双方可见且不可编辑。",
+            description: "自然业务字段。wish 新增支持 title/name、category(想去/想玩/想吃/想做)、location、openingHours、practicalNotes、checklist(必打卡文字列表)、referenceUrls；add_visit 支持 visitedOn、note、completedSpots；想去的地点收藏请用 wish 而非 activity。favorite_food 可填写 name、portionDescription、caloriesKcal、proteinG、carbsG、fatG；或以 fromMealId + mealDate + 可选 fromMealItemId 复制已有食物，只保存模板不记录当天饮食。活动：participantScope=me 表示本人，both 表示双方共同活动；不要用 ta 创建个人活动。mailbox：status=draft/sent；draft 只有当前账号可见可编辑，sent 寄出后双方可见且不可编辑。proposal：create 需 title、scheduledAt（明确日期时间）、durationMinutes（默认20）；counter/reschedule 需新时间；result 需 done/partial/not_done；不可指定 actor。",
             additionalProperties: true,
           },
         },
@@ -373,6 +376,7 @@ function capabilities(identity: FixedLifeIdentity) {
       medicine: "家庭药箱，可按药名/关键词过滤",
       mailbox: "当前账号可见的小信箱：自己的 draft + 双方相关的 sent；可用 limit 取最近 N 条",
       wish: "Cat/Fish 共享心愿清单，支持名称、分类、状态与 ID 过滤；含攻略、必打卡点位与历史体验",
+      proposal: "一起做吧共享提案；按标题、状态、ID 和待我/待 Ta 回应过滤；返回 version 供安全操作",
       settings: "周年日、当前两人的目标体重",
       life_export: "伴岛生活数据完整导出",
       legacy_home: "旧 /game 完整同步快照",
@@ -387,6 +391,7 @@ function capabilities(identity: FixedLifeIdentity) {
       medicine: "create/update/delete；medicineName/drugName/name 均可；数量缺省为 1",
       mailbox: "create draft/sent；update/delete 仅限自己的 draft；update draft + status=sent 表示寄出；sent 永久只读",
       wish: "create/update/add_visit/delete；Cat/Fish 共同维护，更新只提交字段补丁，创建同名同分类不重复建；每次体验独立打卡；封面暂不接受 AI 直接上传",
+      proposal: "create/accept/encourage/counter/reschedule/decline/withdraw/cancel/result；复用网页同一状态机、配额与提醒；回应需 id 和最新 version，只代当前 OAuth actor 操作",
       settings: "update；支持 anniversary/anniversaryDate、targetWeight/targetWeightKg",
       legacy_home: "replace；仍要求用户当前消息明确包含“确认覆盖游戏数据”",
     },
@@ -398,6 +403,7 @@ function capabilities(identity: FixedLifeIdentity) {
       "短时间内相同 activity/meal create 的网络重试使用语义幂等键去重",
       "update/delete 的记录 ID 不允许自动猜测",
       "wish 是双人共享，不允许模型修改 createdBy 或直接指定私有封面路径；删除须明确用户意图",
+      "proposal 的接受/拒绝/拉我一把/改期/取消/结果只能由当前 OAuth actor 明确授权；每次操作前查询当前 ID/version，不能代理 Ta 回应",
     ],
   };
 }
@@ -462,6 +468,8 @@ async function queryLife(args: JsonRecord, context: LifeAgentExecutionContext) {
     }
     case "wish":
       return queryAgentWishes({id:args.id,name:args.name??args.query??args.keyword,category:args.category,status:args.status,limit:args.limit});
+    case "proposal":
+      return queryAgentProposals({id:args.id,name:args.name??args.query??args.keyword,status:args.status,scope:args.scope,limit:args.limit},context.identity.partnerKey);
     case "settings":
       return getLifeSettings();
     case "life_export":
@@ -704,6 +712,11 @@ async function mutateLife(args: JsonRecord, context: LifeAgentExecutionContext) 
     }
     case "wish": {
       return mutateAgentWish(action, args.id, data, actor);
+    }
+    case "proposal": {
+      return mutateAgentProposal(action, args.id, data, args.expectedVersion, {
+        actor, latestUserText: context.latestUserText, toolCallId: context.toolCallId,
+      });
     }
     case "settings": {
       if (action !== "update") throw new Error("settings 只支持 update");

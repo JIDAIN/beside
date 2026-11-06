@@ -67,6 +67,7 @@ signed Web user
 - medicine
 - mailbox
 - wish
+- proposal
 - settings
 - life_export
 - legacy_home
@@ -89,6 +90,7 @@ signed Web user
 | weight | create / update / delete |
 | medicine | create / update / delete |
 | mailbox | create draft/sent；update/delete own draft；send draft |\n| wish | create / update / add_visit / delete（共享心愿） |
+| proposal | create / accept / encourage / counter / reschedule / decline / withdraw / cancel / result（仅当前 OAuth actor） |
 | settings | update |
 | legacy_home | replace（high risk） |
 
@@ -146,6 +148,7 @@ tool call
 - update/delete 不猜 UUID；
 - personal fact 不替 Ta 写；
 - mailbox sent 永久只读；
+- proposal 仅根据可信 OAuth actor 操作自己的回应；先查询准确 ID/version，不能代 Ta 同意、拒绝、改期或确认结果；复用 Web canonical RPC。
 - legacy_home replace 需要精确高风险确认；
 - tool result 成功后才可告诉用户“已保存/已删除”。\n- wish：创建相同名称及分类优先返回已存在项，不再写入第二条；修改只做增量字段合并，不覆盖历史体验或私有封面；AI 不支持心愿封面上传，继续使用 Web 受控媒体接口。
 
@@ -182,6 +185,7 @@ life_mutate attachPhoto=true
 AI Architecture 只维护 cross-domain mechanism。
 
 例如：
+- Together 生命周期与提醒 → Together Domain
 - Meal chat draft / estimated / before-after → Meal AI Contract
 - Reminder source/provider → Reminder Domain
 - Legacy settlement → Legacy Game Domain
