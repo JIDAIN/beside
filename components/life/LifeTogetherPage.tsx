@@ -155,8 +155,8 @@ export function LifeTogetherPage() {
             <div className="flex items-center justify-between text-xs text-[var(--life-text-muted)]">
               <span>已改期 {p.rescheduleCount}/2 次</span>
               <div className="flex gap-2">
-                {p.status === "agreed" && p.rescheduleCount < 2 && Date.parse(p.scheduledAt) > now && <button type="button" className="underline" onClick={() => edit("reschedule",p)}>改时间</button>}
-                {Date.parse(p.scheduledAt) + p.durationMinutes * 60000 > now && <button type="button" className="underline" disabled={busy} onClick={() => void perform(p,"cancel")}>取消约定</button>}
+                {p.status === "agreed" && Object.keys(p.results).length === 0 && p.rescheduleCount < 2 && Date.parse(p.scheduledAt) > now && <button type="button" className="underline" onClick={() => edit("reschedule",p)}>改时间</button>}
+                {Object.keys(p.results).length === 0 && Date.parse(p.scheduledAt) + p.durationMinutes * 60000 > now && <button type="button" className="underline" disabled={busy} onClick={() => void perform(p,"cancel")}>取消约定</button>}
               </div>
             </div>
             {p.status === "agreed" && <ResultButtons proposal={p} me={me} busy={busy} early={Date.parse(p.scheduledAt) > now} onResult={(result) => void perform(p,"result",{result})}/>}
