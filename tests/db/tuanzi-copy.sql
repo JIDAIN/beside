@@ -60,6 +60,7 @@ do $$
 declare v_space uuid;v_day date;v_msg text;
 begin
  select id into v_space from public.couple_spaces limit 1;
+ perform public.update_life_couple_notification_settings('fish',true,true);
  v_day:=(now() at time zone 'Asia/Shanghai')::date;
  insert into public.life_partner_record_events(couple_space_id,source_actor,record_date,record_kind,created_at)
  values(v_space,'cat',v_day,'breakfast',now()-interval '12 minutes');
