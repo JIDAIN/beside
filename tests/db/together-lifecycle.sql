@@ -173,16 +173,16 @@ end $$;
 
 -- Reject malformed/cross-couple backups atomically without altering any record.
 do $$
-declare payload jsonb; snapshot_id uuid; hostile_id uuid; old_count integer;
+declare v_bad_payload jsonb; snapshot_id uuid; hostile_id uuid; old_count integer;
 begin
- select id,payload into snapshot_id,payload from public.life_backup_snapshots
-  where reason='manual' order by created_at desc limit 1;
+ select b.id,b.payload into snapshot_id,v_bad_payload from public.life_backup_snapshots b
+  where b.reason='manual' order by b.created_at desc limit 1;
  select count(*) into old_count from public.life_proposals;
- payload:=jsonb_set(payload,'{user,life_proposals,0,couple_space_id}',
+ v_bad_payload:=jsonb_set(v_bad_payload,'{user,life_proposals,0,couple_space_id}',
    to_jsonb('00000000-0000-4000-8000-000000000001'::text),false);
  insert into public.life_backup_snapshots(couple_space_id,scope,reason,payload,created_by)
- select couple_space_id,'user','import',payload,'cat' from public.life_backup_snapshots
- where id=snapshot_id returning id into hostile_id;
+ select b.couple_space_id,'user','import',v_bad_payload,'cat' from public.life_backup_snapshots b
+ where b.id=snapshot_id returning id into hostile_id;
  begin
    perform public.restore_life_backup_snapshot(hostile_id,'cat');
    raise exception 'cross couple restore bypassed';
