@@ -41,6 +41,7 @@ export function LifeTogetherPage() {
   const [now, setNow] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const visibleError = error || proposalsQuery.error?.message || "";
   const [editor, setEditor] = useState<Editor | null>(null);
   const [title, setTitle] = useState("");
   const [note, setNote] = useState("");
@@ -129,9 +130,9 @@ export function LifeTogetherPage() {
         <span className="text-xs text-[var(--life-text-muted)]">{tab === "pending" ? `我发起 ${mePending}/2` : tab === "agreed" ? `未来 7 天 ${active}/3` : "每件小事都有去处"}</span>
         <AppButton variant="primary" disabled={!me || mePending >= 2} onClick={() => edit("create")}>{mePending >= 2 ? "邀请已满 2/2" : "＋ 发起邀请"}</AppButton>
       </div>
-      {error && !editor && <div role="alert" className="rounded-xl bg-[var(--life-cream)] p-3 text-sm text-[var(--life-danger)]">{error}<button type="button" className="ml-2 underline" onClick={() => void reload()}>重试</button></div>}
+      {visibleError && !editor && <div role="alert" className="rounded-xl bg-[var(--life-cream)] p-3 text-sm text-[var(--life-danger)]">{visibleError}<button type="button" className="ml-2 underline" onClick={() => void reload()}>重试</button></div>}
       {loading ? <p className="text-sm text-[var(--life-text-muted)]">正在打开小窝…</p>
-        : grouped[tab].length === 0 ? <div className={card + " py-10 text-center text-sm text-[var(--life-text-muted)]"}>{tab === "pending" ? "暂时没有等待回应的邀请" : tab === "agreed" ? "还没有正在进行的约定" : "一起做过的小事会留在这里"}</div>
+        : !visibleError && grouped[tab].length === 0 ? <div className={card + " py-10 text-center text-sm text-[var(--life-text-muted)]"}>{tab === "pending" ? "暂时没有等待回应的邀请" : tab === "agreed" ? "还没有正在进行的约定" : "一起做过的小事会留在这里"}</div>
         : grouped[tab].map(p => <article key={p.id} className={card + " grid gap-3"}>
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
