@@ -88,7 +88,7 @@ export function LifeTogetherPage() {
         await actOnProposal(editor.proposal, editor.kind, { scheduledAt, durationMinutes: duration }, id);
       }
       setEditor(null); requestId.current = null; await reload();
-    } catch (e) { setError(e instanceof Error ? e.message : "保存失败"); await reload(); }
+    } catch (e) { setError(e instanceof Error ? e.message : "保存失败"); }
     finally { setBusy(false); }
   }
   async function perform(proposal: Proposal, action: ProposalAction, data: Record<string, unknown> = {}) {
@@ -96,7 +96,7 @@ export function LifeTogetherPage() {
     if (["cancel", "withdraw"].includes(action) && !window.confirm("确定结束这次邀请吗？")) return;
     setBusy(true); setError("");
     try { await actOnProposal(proposal, action, data); await reload(); }
-    catch (e) { setError(e instanceof Error ? e.message : "操作未完成"); await reload(); }
+    catch (e) { setError(e instanceof Error ? e.message : "操作未完成"); }
     finally { setBusy(false); }
   }
   const statusText = (p: Proposal) => {
@@ -155,7 +155,7 @@ export function LifeTogetherPage() {
               <span>已改期 {p.rescheduleCount}/2 次</span>
               {p.status === "agreed" && <div className="flex gap-2">
                 {p.rescheduleCount < 2 && Date.parse(p.scheduledAt) > Date.now() && <button type="button" className="underline" onClick={() => edit("reschedule",p)}>改时间</button>}
-                <button type="button" className="underline" disabled={busy} onClick={() => void perform(p,"cancel")}>取消约定</button>
+                {Date.parse(p.scheduledAt) > Date.now() && <button type="button" className="underline" disabled={busy} onClick={() => void perform(p,"cancel")}>取消约定</button>}
               </div>}
             </div>
             {Date.parse(p.scheduledAt) <= Date.now() && <ResultButtons proposal={p} me={me} busy={busy} onResult={(result) => void perform(p,"result",{result})}/>}

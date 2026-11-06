@@ -224,7 +224,7 @@ begin
   elsif p_action='result' then
    if v.status not in ('agreed','reschedule','awaiting_result') and not (v.status='closed' and v.outcome='unconfirmed') then raise exception 'cannot record result'; end if;
    if v_now<v.scheduled_at then raise exception 'not started'; end if;
-   if p_data->>'result' not in ('done','partial','not_done') then raise exception 'invalid result'; end if;
+   if coalesce(p_data->>'result','') not in ('done','partial','not_done') then raise exception 'invalid result'; end if;
    v.results:=jsonb_set(v.results,array[p_actor],to_jsonb(p_data->>'result'),true);
    if v.results ? 'cat' and v.results ? 'fish' then
     v_outcome:=case
@@ -238,6 +238,12 @@ begin
     v.status:='awaiting_result';v.waiting_for:=null;
    end if;
    v.version:=v.version+1;
+   if v.status='awaiting_result' then
+    perform private.life_proposal_clear_reminders(v);
+    perform private.life_proposal_notify(v,v_other,'result',v_now,v.version);
+    perform private.life_proposal_notify(v,v_other,'followup',
+      v.scheduled_at+make_interval(mins=>v.duration_minutes)+interval '24 hours',v.version);
+   end if;
   end if;
   update public.life_proposals set
    scheduled_at=v.scheduled_at,duration_minutes=v.duration_minutes,status=v.status,
@@ -270,7 +276,12 @@ begin
   if v.status in ('pending','counter') then
    v.status:='closed';v.outcome:='expired';v.closed_at:=p_now;v.waiting_for:=null;
   elsif v.status in ('agreed','reschedule') then
-   v.status:='awaiting_result';v.waiting_for:=null;v.candidate_at:=null;v.candidate_duration:=null;
+   if v_end+interval '48 hours'<=p_now then
+    v.status:='closed';v.outcome:='unconfirmed';v.closed_at:=p_now;
+   else
+    v.status:='awaiting_result';
+   end if;
+   v.waiting_for:=null;v.candidate_at:=null;v.candidate_duration:=null;
   else
    v.status:='closed';v.outcome:='unconfirmed';v.closed_at:=p_now;
   end if;
