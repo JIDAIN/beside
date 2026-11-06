@@ -319,3 +319,65 @@ begin
     'fish',jsonb_build_object('legacy',v_fish_legacy,'center',v_fish_center),'partnerRecords',v_partner);
 end; $$;
 revoke all on function private.dispatch_life_pushplus_reminders(timestamptz,text) from public,anon,authenticated;
+
+
+-- Extend reminder settings without changing the medicine-specific update RPC.
+create or replace function public.get_life_reminder_settings(
+  p_actor text,
+  p_space_slug text default 'couple-better-game'
+) returns jsonb
+language plpgsql
+security definer
+set search_path = pg_catalog, public, private
+as $$
+declare
+  v_space_id uuid;
+  v_pref public.life_notification_preferences%rowtype;
+begin
+  if p_actor not in ('cat', 'fish') then raise exception 'Invalid reminder actor'; end if;
+  select id into v_space_id from public.couple_spaces where slug = p_space_slug and archived_at is null;
+  if v_space_id is null then raise exception 'Couple space not found'; end if;
+
+  select * into v_pref
+  from public.life_notification_preferences
+  where couple_space_id = v_space_id and actor = p_actor;
+  if not found then raise exception 'Reminder preferences not found'; end if;
+
+  return jsonb_build_object(
+    'actor', p_actor,
+    'timezone', v_pref.timezone,
+    'medicineReminderEnabled', v_pref.medicine_reminder_enabled,
+    'medicineOffsets', v_pref.medicine_offsets,
+    'anniversaryReminderEnabled', v_pref.anniversary_reminder_enabled,
+    'anniversaryOffsets', v_pref.anniversary_offsets,
+    'partnerRecordNotificationsEnabled', v_pref.partner_record_notifications_enabled,
+    'dailyRecordReminderEnabled', v_pref.daily_record_reminder_enabled,
+    'pushPlusConfigured', private.life_pushplus_token(p_actor) is not null
+  );
+end;
+$$;
+
+
+create or replace function public.update_life_couple_notification_settings(
+  p_actor text,
+  p_partner_enabled boolean,
+  p_daily_enabled boolean,
+  p_space_slug text default 'couple-better-game'
+) returns jsonb language plpgsql security definer
+set search_path=pg_catalog,public,private as $$
+declare v_space uuid;
+begin
+  if p_actor not in ('cat','fish') or p_partner_enabled is null or p_daily_enabled is null then
+    raise exception 'Invalid notification settings';
+  end if;
+  select id into v_space from public.couple_spaces where slug=p_space_slug and archived_at is null;
+  if v_space is null then raise exception 'Couple space not found'; end if;
+  update public.life_notification_preferences
+    set partner_record_notifications_enabled=p_partner_enabled,
+        daily_record_reminder_enabled=p_daily_enabled,updated_at=now()
+  where couple_space_id=v_space and actor=p_actor;
+  if not found then raise exception 'Notification preferences not found'; end if;
+  return public.get_life_reminder_settings(p_actor,p_space_slug);
+end; $$;
+revoke all on function public.update_life_couple_notification_settings(text,boolean,boolean,text) from public,anon,authenticated;
+grant execute on function public.update_life_couple_notification_settings(text,boolean,boolean,text) to service_role;
