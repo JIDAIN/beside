@@ -6,6 +6,7 @@ on:
       - "supabase/migrations/20261106090000_tuanzi_partner_record_notifications.sql"
       - "supabase/migrations/20261106100000_varied_tuanzi_notification_copy.sql"
       - "supabase/migrations/20261106110000_daily_recap_proposal_notifications.sql"
+      - "supabase/migrations/20261106120000_tuanzi_site_footer_proposal_details.sql"
       - "tests/db/tuanzi-*.sql"
       - ".github/workflows/tuanzi-db.yml"
   workflow_dispatch:
@@ -55,3 +56,7 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f tests/db/tuanzi-copy.sql
       - name: Verify daily recap values and Together messages
         run: psql -X -v ON_ERROR_STOP=1 -f tests/db/tuanzi-daily-recap.sql
+      - name: Apply universal notification footer and proposal details
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/migrations/20261106120000_tuanzi_site_footer_proposal_details.sql
+      - name: Verify clickable footer and full proposal details
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/db/tuanzi-site-footer.sql
