@@ -9,6 +9,7 @@ import { resolveFixedLifeIdentity } from "@/lib/server/fixed-life-auth";
 import {
   getLifeReminderSettings,
   updateLifeReminderSettings,
+  updateLifeCoupleNotificationSettings,
 } from "@/lib/server/life-reminder-center";
 
 function actor(request: Request) {
@@ -80,4 +81,21 @@ export async function PUT(request: Request) {
   } catch (error) {
     return fail(error);
   }
+}
+
+export async function PATCH(request: Request) {
+  const auth = await authorizeLifeRequest(request);
+  if (auth) return auth;
+  const currentActor = actor(request);
+  if (!currentActor) return lifeJsonError("请先登录", 401, "UNAUTHORIZED");
+  const parsed = await readJsonBody(request);
+  if (!parsed.ok) return parsed.response;
+  const { partnerRecordNotificationsEnabled, dailyRecordReminderEnabled } = parsed.value ?? {};
+  if (typeof partnerRecordNotificationsEnabled !== "boolean" || typeof dailyRecordReminderEnabled !== "boolean") {
+    return lifeJsonError("通知设置无效", 400, "INVALID_NOTIFICATION_SETTINGS");
+  }
+  try {
+    const settings = await updateLifeCoupleNotificationSettings(currentActor, { partnerRecordNotificationsEnabled, dailyRecordReminderEnabled });
+    return NextResponse.json({ ok: true, settings }, { headers: LIFE_NO_STORE_HEADERS });
+  } catch (error) { return fail(error); }
 }
