@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "supabase/migrations/20261106070000_life_proposals.sql"
+      - "supabase/migrations/20261106130000_together_early_result_lifecycle.sql"
       - "tests/db/together-*.sql"
       - ".github/workflows/together-db.yml"
   workflow_dispatch:
@@ -49,3 +50,7 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f supabase/migrations/20261106070000_life_proposals.sql
       - name: Verify actor guards, quotas, lifecycle, backup, reminders
         run: psql -X -v ON_ERROR_STOP=1 -f tests/db/together-lifecycle.sql
+      - name: Apply early completion migration
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/migrations/20261106130000_together_early_result_lifecycle.sql
+      - name: Verify early completion and partner-specific reminder lifecycle
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/db/together-early-completion.sql
