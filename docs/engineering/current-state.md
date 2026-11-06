@@ -66,8 +66,11 @@ Read-only Vercel deployment history shows latest READY production deployment `dp
 - Post-release scan of deployment error/fatal runtime logs for the recent 15-minute window returned no entries. This is **not** an end-to-end provider-delivery test.
 - Outstanding: actual first-record Web/MCP event capture, five-minute coalescing and two-account PushPlus acceptance/receipt; 21:00 real notification acceptance; unrelated wish tests still had 2 failures in PR CI. No artificial Life records were inserted to test user data.
 
-## 2026-11-06 Together MCP branch (not deployed)
+## 2026-11-06 Together MCP Production Release
 
-- PR #98 implements `proposal` within existing `life_query` / `life_mutate` and reuses the existing Supabase proposal RPC; no new tool, OAuth scope or DB migration.
-- This MCP change has **not been deployed to Production**, regardless of its GitHub merge state. A separate Vercel deployment authorization is still required.
-- Current Web Together and Production Supabase proposal functions remain unchanged by this MCP-only implementation.
+- PR #98 was merged as `791fbc99af5fb43b545909ce4903432fca988191`; the existing `life_query` / `life_mutate` now register `proposal` without a new MCP tool, OAuth scope, or database migration.
+- Authorized Production deployment `dpl_D3FDdpqGTouT7dpwNo7GmJWGnrAF` is **READY** on `https://couple-better-game.vercel.app`, source `fd19e046abcc3ce4711587448b1d3a3b6fc150ba`. No Preview or Production Supabase writes occurred in this release.
+- Real connected **Harbor Cat** and **Harbor Fish** each returned `proposal` under read and write capabilities; each completed a read-only `life_query(resource=proposal)` successfully (`ok=true`; both returned an empty shared list). No test proposal was created, modified or notified.
+- Build and Lint succeeded. The 11 Together MCP tests passed; complete suite retained the same two pre-existing wish tests failures. Vercel runtime errors/log scan showed no related errors during the checked window.
+- Still unverified: actual authorized Cat/Fish proposal writes and their shared result, real PushPlus delivery through new MCP operations; do not claim end-to-end write acceptance.
+- A subsequent GitHub main documentation-only closeout may be ahead of the deployed source commit; it is not a second deployment.
