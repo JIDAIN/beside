@@ -14,7 +14,7 @@ begin
 
   perform private.life_proposal_notify(v_proposal,'fish','invite',now(),1);
   select content into v_content from public.life_reminder_instances
-  where source_ref=v_proposal.id::text and recipient='fish' order by created_at desc limit 1;
+  where source_ref=v_proposal.id::text and recipient='fish' limit 1;
   if v_content not like '%/open/together?proposal='||v_proposal.id::text||'%' then
     raise exception 'missing proposal deep link: %',v_content;
   end if;
