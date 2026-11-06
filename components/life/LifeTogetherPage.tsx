@@ -52,9 +52,9 @@ export function LifeTogetherPage() {
   }, []);
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get("proposal");
-    if (id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
-      setTargetProposalId(id);
-    }
+    if (!id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return;
+    const frame = window.requestAnimationFrame(() => setTargetProposalId(id));
+    return () => window.cancelAnimationFrame(frame);
   }, []);
   useEffect(() => { const task = window.setTimeout(() => { void reload(); }, 0); return () => window.clearTimeout(task); }, [reload]);
   useEffect(() => {
@@ -76,7 +76,10 @@ export function LifeTogetherPage() {
     const nextTab: Tab = proposal.status === "closed"
       ? "history"
       : proposal.status === "pending" || proposal.status === "counter" ? "pending" : "agreed";
-    if (tab !== nextTab) { setTab(nextTab); return; }
+    if (tab !== nextTab) {
+      const frame = window.requestAnimationFrame(() => setTab(nextTab));
+      return () => window.cancelAnimationFrame(frame);
+    }
     focusedProposal.current = targetProposalId;
     const frame = window.requestAnimationFrame(() => {
       const card = document.getElementById(`together-proposal-${targetProposalId}`);
