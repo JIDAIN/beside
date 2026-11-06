@@ -38,7 +38,7 @@ describe("wish resource in canonical AI Access Core",()=>{
     resource:"心愿清单",action:"add_visit",id:ID,data:{note:"看到了小猫",completedSpots:["帝王树"]},
   },{identity:CAT,latestUserText:"今天去潭柘寺了，记录一次体验"});
   expect(fake.mutate).toHaveBeenCalledWith("add_visit",ID,expect.objectContaining({
-    note:"看到了小猫",visitedOn:expect.stringMatching(/^\\d{4}-\\d{2}-\\d{2}$/),
+    note:"看到了小猫",visitedOn:expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
   }),"cat");
  });
 });
