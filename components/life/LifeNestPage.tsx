@@ -11,7 +11,7 @@ import { fetchLifeSettings, patchLifeSettings } from "@/lib/life/settings-client
 import { daysTogether, type LifeSettings } from "@/lib/life/settings-service";
 import { localIsoDate } from "./today/today-life-model";
 
-type NestIconName = "weight" | "mailbox" | "medicine" | "game" | "wishes";
+type NestIconName = "weight" | "mailbox" | "medicine" | "game" | "wishes" | "together";
 
 const tiles: ReadonlyArray<{ href: string; icon: NestIconName; title: string; note: string; tone: string }> = [
   { href: "/nest/weight", icon: "weight", title: "体重", note: "看见变化，也保留每一次记录", tone: "is-blue" },
@@ -19,6 +19,7 @@ const tiles: ReadonlyArray<{ href: string; icon: NestIconName; title: string; no
   { href: "/nest/medicine", icon: "medicine", title: "家庭药箱", note: "一起维护数量和有效期", tone: "is-mint" },
   { href: "/nest/game-machine", icon: "game", title: "游戏机", note: "小游戏和旧玩法都从这里进入", tone: "is-yellow" },
   { href: "/nest/wishes", icon: "wishes", title: "心愿清单", note: "收藏想做的事与值得再去的地方", tone: "is-pink" },
+  { href: "/nest/together", icon: "together", title: "一起做吧", note: "轻轻邀请，一起完成小事", tone: "is-mint" },
 ];
 
 function anniversaryText(value: string | null) {
@@ -142,6 +143,7 @@ function NestFeatureIcon({ name }: { name: NestIconName }) {
       </svg>
     );
   }
+  if (name === "together") return <svg viewBox="0 0 64 64" fill="none" aria-hidden="true"><path d="M32 50s-20-12-20-25a10 10 0 0 1 20-2 10 10 0 0 1 20 2C52 38 32 50 32 50Z" stroke="currentColor" strokeWidth="3" strokeLinejoin="round"/><path d="m23 33 6 6 13-15" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>;
   if (name === "wishes") return <svg viewBox="0 0 64 64" fill="none" aria-hidden="true"><path d="M32 52S11 39 11 24a11 11 0 0 1 21-4 11 11 0 0 1 21 4c0 15-21 28-21 28Z" stroke="currentColor" strokeWidth="3" strokeLinejoin="round"/><path d="m24 32 5 5 11-12" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>;
   return (
     <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">

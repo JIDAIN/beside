@@ -190,3 +190,7 @@ Life import/restore 完成后必须失效相关 read cache，使 UI 从 API/Supa
 
 API/transport/cache 变化更新本文。
 业务生命周期、schema 字段与 provider routing 不在本文复制。
+
+## Together / Proposal Web API
+
+`GET/POST/PATCH /api/life/proposals` 使用 signed Web actor、no-store 响应与 service-role restricted RPC。浏览器没有直接 SQL 写权限，AI/MCP V1 不暴露 proposal mutation。
