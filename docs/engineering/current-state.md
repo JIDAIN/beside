@@ -74,3 +74,11 @@ Read-only Vercel deployment history shows latest READY production deployment `dp
 - Build and Lint succeeded. The 11 Together MCP tests passed; complete suite retained the same two pre-existing wish tests failures. Vercel runtime errors/log scan showed no related errors during the checked window.
 - Still unverified: actual authorized Cat/Fish proposal writes and their shared result, real PushPlus delivery through new MCP operations; do not claim end-to-end write acceptance.
 - A subsequent GitHub main documentation-only closeout may be ahead of the deployed source commit; it is not a second deployment.
+
+## 2026-11-06 Tuanzi copy refresh (main ahead of Production)
+
+- PR #99 merged into GitHub `main` at `e79342fa1528f0478655f0f7601221b7b4930c83` (Tuanzi multi-template / Beside branding).
+- Forward migration `supabase/migrations/20261106100000_varied_tuanzi_notification_copy.sql` replaces only the established `private.life_pushplus_message` and `private.dispatch_life_partner_record_events` copy rendering, adding `private.tuanzi_copy_variant`; delivery/cron/data semantics unchanged.
+- Ephemeral PostgreSQL 17 old+new migration smoke and copy variant tests passed; lint/build passed; full JS suite 436/438 with two pre-existing unrelated wish tests failing.
+- Production Supabase was **read-only checked** and still contains the old `小岛日记` wording in both renderer functions. The latest inspected Vercel READY production deployment `dpl_D3FDdpqGTouT7dpwNo7GmJWGnrAF` is based on `fd19e046abcc3ce4711587448b1d3a3b6fc150ba`, not PR #99.
+- **No Production Supabase migration, Preview deployment or Production deployment was authorized/performed for PR #99.** It must not be claimed live until a separate production release is approved and verified.
