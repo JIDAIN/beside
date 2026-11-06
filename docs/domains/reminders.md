@@ -166,6 +166,15 @@ Production 正式文案的最终事实源是当前 Supabase functions，例如 l
 - 纪念日必须保留「今天 / 明天 / 还有 N 天」的真实时间含义。
 - 本轮变更为新的 forward migration `20261106100000_varied_tuanzi_notification_copy.sql`；**未执行 Production Supabase migration 或 Vercel 部署** 时不得把当前文案写成线上事实。
 
+### 待发布：21:00 真实值小结与一起做吧文案
+
+- 21:00 条件提醒升级为**每天固定一份双人生活小结**，即使两人全量记录完成，也按各自开关分别发送。仍使用每天一次的 `daily_record` delivery key；不更改五分钟 cron。
+- 心情展示 canonical 中文 label（特别注意 neutral = 心动）；睡眠时长按 `woke_at - fell_asleep_at`（起床日归档）；未记录项不误写成没吃/没睡。
+- 饮食主餐分别展示已确认的热量或「热量未知」，snack 为全部确认加餐之和；**今日饮食合计**包含全部已确认主餐和零食的已知 kcal。未估算热量不可当成零；若有未知或缺餐，显示「仅已知部分」。
+- 同一份发送 payload 内携带自己/老婆两个 canonical 日期快照，按接收者视角渲染；不以一条记录有无热量估算来改变“是否已记录”。
+- 一起做吧保留原本 source、due time、delivery/claim/去重和 PushPlus 路由，只优化团子文案，附经 HTML 转义的约定名称与北京时间，不泄露自由备注。定时提醒不得误写为对方刚刚发起。
+- Forward migration `20261106110000_daily_recap_proposal_notifications.sql`。此条为**代码待发布行为**，Production 实际效果需核迁移 ledger 与 runtime。上线前不能称已经生效。
+
 ## 11. Scheduler
 
 当前 Production 有两条 active cron：
