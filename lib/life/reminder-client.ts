@@ -25,6 +25,8 @@ export type LifeReminderSettings = {
   anniversaryReminderEnabled: boolean;
   anniversaryOffsets: number[];
   pushPlusConfigured: boolean;
+  partnerRecordNotificationsEnabled: boolean;
+  dailyRecordReminderEnabled: boolean;
 };
 
 async function readJson<T>(response: Response): Promise<T> {
@@ -90,4 +92,14 @@ export async function saveLifeReminderSettings(input: {
 
 export function effectiveReminderTime(item: LifeReminderItem) {
   return item.snoozedUntil || item.dueAt;
+}
+
+export async function saveLifeCoupleNotificationSettings(input: { partnerRecordNotificationsEnabled: boolean; dailyRecordReminderEnabled: boolean }) {
+  const response = await readFetch("/api/life/reminders/settings", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  const body = await readJson<{ ok: true; settings: LifeReminderSettings }>(response);
+  return body.settings;
 }
