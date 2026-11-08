@@ -526,7 +526,7 @@ export function LifeMealEditorPage() {
         setPhotoSaveFailed(true);
         markDirty();
         router.replace(editorHref(saved));
-        showError(cause instanceof MealApiError ? `餐食已保存，照片未保存：${cause.message}` : "餐食已保存，照片暂时没有保存成功");
+        showError(cause instanceof Error ? `餐食已保存，照片未保存：${cause.message}` : "餐食已保存，照片暂时没有保存成功");
         return;
       }
       setMeal(saved);
