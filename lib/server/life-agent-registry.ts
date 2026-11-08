@@ -304,7 +304,7 @@ export const LIFE_AGENT_TOOLS = [
           dateFrom: { type: "string", description: "weight 可选起始日期 YYYY-MM-DD" },
           dateTo: { type: "string", description: "weight 可选结束日期 YYYY-MM-DD" },
           monthStart: { type: "string", description: "可选 YYYY-MM-01；month 默认本月" },
-          person: { type: "string", description: "me/ta/all/cat/fish。day/mood/sleep/activity/meal 支持 all；weight 仅 me/ta/cat/fish" },
+          person: { type: "string", description: "me/ta/all/cat/fish。day/mood/sleep/activity/meal 支持 all；favorite_food 支持 me/ta/cat/fish（只读）；weight 仅 me/ta/cat/fish" },
           limit: { type: "integer", minimum: 1, maximum: 1000 },
           id: { type: "string", description: "wish/proposal 用准确 UUID 定位单条记录；写 proposal 必须先查询" },
           category: { type: "string", description: "wish 可选分类：go/play/eat/do 或 想去/想玩/想吃/想做" },
@@ -371,7 +371,7 @@ function capabilities(identity: FixedLifeIdentity) {
       activity: "按日期与 me/ta/all 查询活动；both 活动对双方均可见",
       month: "某月双人心情；默认本月",
       meal: "按日期与 me/ta/all 查询餐食；日期默认今天",
-      favorite_food: "当前 OAuth 账号自己的常吃食物模板，可按 name 查询",
+      favorite_food: "按 me/ta/cat/fish 只读查询任一方常吃食物模板，默认 me，可按 name 过滤；写入仍仅本人",
       weight: "按 me/ta 查询体重；支持 date/dateFrom/dateTo/limit",
       medicine: "家庭药箱，可按药名/关键词过滤",
       mailbox: "当前账号可见的小信箱：自己的 draft + 双方相关的 sent；可用 limit 取最近 N 条",
@@ -437,8 +437,7 @@ async function queryLife(args: JsonRecord, context: LifeAgentExecutionContext) {
     }
     case "favorite_food": {
       const person = resolvePerson(args.person, context.identity, false);
-      if (person !== context.identity.partnerKey) throw new Error("只能查询自己的常吃食物");
-      const foods = await listFavoriteFoods(context.identity.partnerKey);
+      const foods = await listFavoriteFoods(person);
       const name = stringValue(args.name).toLowerCase();
       return name ? foods.filter((food) => food.name.toLowerCase().includes(name)) : foods;
     }
