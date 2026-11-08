@@ -1,4 +1,5 @@
 import { readFetch } from "../client/read-fetch";
+import { prepareMealPhotoUpload } from "./prepare-meal-photo-upload";
 import type {
   MealPhotoDisplay,
   MealQuery,
@@ -40,7 +41,7 @@ async function readJson<T>(response: Response): Promise<T> {
     body = await response.json();
   } catch {
     if (!response.ok) {
-      throw new MealApiError("饮食服务返回了无法识别的响应", response.status);
+      throw new MealApiError(response.status === 413 ? "照片上传请求超过服务器大小限制" : response.status === 504 || response.status === 502 ? "照片上传服务暂时不可用，请稍后重试" : `饮食服务暂时无法处理请求（HTTP ${response.status}）`, response.status);
     }
   }
 
@@ -112,7 +113,7 @@ export function mealPhotoUrl(meal: MealRecord) {
 
 export async function uploadMealPhoto(mealId: string, file: File) {
   const form = new FormData();
-  form.set("file", file);
+  form.set("file", await prepareMealPhotoUpload(file));
   const response = await readFetch(`/api/meals/${encodeURIComponent(mealId)}/photo`, {
     method: "PUT",
     credentials: "same-origin",
