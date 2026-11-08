@@ -172,3 +172,11 @@ Read-only Vercel deployment history shows latest READY production deployment `dp
 - Read-only verification: installed `private.life_proposal_notify` includes the record-specific `/open/together?proposal=` link, retains varied Tuanzi copy, HTML escaping and the existing destination metadata; `anon` and `authenticated` EXECUTE remain denied, while `service_role` retains EXECUTE.
 - Latest previously deployed Production Web was confirmed READY at `dpl_HgR3uh9cMfNnWcALvdhzb3vuM7Yj` with source SHA `62929e93b793c07d059305274da2461ca4879eb9`, which contains `/open/together`. No new Vercel deployment was performed in this migration action.
 - Existing delivered PushPlus notifications are not rewritten. Newly generated Together messages can carry the link; actual Cat/Fish WeChat-client rendering, first-login return, cookie persistence and real notification interaction remain to be accepted with naturally occurring notifications.
+
+
+## 2026-11-08 Meal Photo & Partner Favorite Food Production Release
+
+- User-authorized Production deployment `dpl_ERTyrQyxnRWWTrL6nkBpoyiqcBnS` is READY, source SHA `2362a39750d17d901c8a3a2f5b2e19611af730e2` (PR #108). Vercel aliases include the existing Production compatibility domain `couple-better-game.vercel.app`.
+- Browser meal-photo upload now pre-compresses photos larger than 4 MiB when browser image decoding is available; the canonical server Sharp normalization remains. HTTP errors and client image-preparation failures have more actionable error messages. Large HEIC/HEIF originals that a browser cannot decode may still require conversion; real mobile photo upload acceptance has **not** yet been verified.
+- Existing `life_query(resource=favorite_food, person=me/ta/cat/fish)` now permits read-only partner queries. Live connected Harbor Cat querying `ta` returned Fish-owned templates successfully (`ok=true`); live Harbor Fish querying `ta` returned Cat-owned templates successfully (`ok=true`). Mutations remain actor-owned.
+- GitHub PR #108 CI Test, Lint, Build passed. No Supabase migration, Production data write, or preview deployment was performed as part of this release. Vercel production error/fatal logs and runtime error aggregation showed no entries during the checked post-release window. No real photo upload was attempted for this verification.
