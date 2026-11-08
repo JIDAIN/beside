@@ -146,7 +146,7 @@ Supabase：
 ## 13. Favorite Food AI Access
 
 favorite_food 为个人常吃食物模板，不是 Meal 事件。
-- life_query(resource=favorite_food) 只读当前 OAuth 身份的模板，可按 name 过滤。
+- life_query(resource=favorite_food, person=me/ta/cat/fish) 可只读查询双方任一人的模板，默认 me，可按 name 过滤；不接受 all。身份和范围由服务器 OAuth context 解析，不接受聊天自称切换 actor。
 - life_mutate(resource=favorite_food, action=create/update/delete) 只维护当前身份模板。更新与删除以真实 UUID 定位，服务端重新核验 owner。
 - create 支持 name、portionDescription、caloriesKcal、proteinG、carbsG、fatG；可用 fromMealId + mealDate，从自己已有的单食物 Meal 复制；多食物 Meal 还需 fromMealItemId。
 - 同名模板拒绝重复创建，需先查询后更新。营养不确定时保留 null。
