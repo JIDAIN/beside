@@ -28,6 +28,9 @@ describe("frequent food templates", () => {
     const registry = source("lib/server/life-agent-registry.ts");
     const normalizer = source("lib/ai/life-input-normalizer.ts");
     expect(registry).toContain('case "favorite_food":');
+    expect(registry).toContain("const foods = await listFavoriteFoods(person);");
+    expect(registry).not.toContain("只能查询自己的常吃食物");
+    expect(registry).toContain("requireOwnMutationTarget(args, data, context)");
     expect(registry).toContain("getFavoriteFoodOwner(id)");
     expect(registry).toContain("parseFavoriteFoodWritePayload");
     expect(registry).toContain("fromMealItemId");
