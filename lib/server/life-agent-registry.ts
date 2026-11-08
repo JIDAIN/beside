@@ -437,6 +437,7 @@ async function queryLife(args: JsonRecord, context: LifeAgentExecutionContext) {
     }
     case "favorite_food": {
       const person = resolvePerson(args.person, context.identity, false);
+      if (!person) throw new Error("常吃食物查询必须指定 me/ta/cat/fish");
       const foods = await listFavoriteFoods(person);
       const name = stringValue(args.name).toLowerCase();
       return name ? foods.filter((food) => food.name.toLowerCase().includes(name)) : foods;
