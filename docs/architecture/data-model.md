@@ -393,7 +393,7 @@ record_date / record_kind / meal_id nullable
 created_at / delivered_at nullable
 ~~~
 
-`record_kind`: mood/sleep/breakfast/lunch/dinner/snack. The first five use unique (space, actor, date, kind), while snack uses unique (space, actor, canonical meal_id), allowing multiple snacks on the same day/period. `meal_id` is required for snack events and null for the original daily event kinds. All details are resolved from current Life canonical tables at dispatch, and no historical item/note/photo snapshot is persisted here. RLS remains enabled, with service-only access. The snack extension is pending its separately authorized Production migration.
+`record_kind`: mood/sleep/breakfast/lunch/dinner/snack. The first five use unique (space, actor, date, kind), while snack uses unique (space, actor, canonical meal_id), allowing multiple snacks on the same day/period. `meal_id` is required for snack events and null for the original daily event kinds. All details are resolved from current Life canonical tables at dispatch, and no historical item/note/photo snapshot is persisted here. RLS remains enabled, with service-only access. The snack extension was applied to Production on 2026-11-09 (migration ledger `20261109111535`, `partner_record_detail_notifications`); both partial unique indexes and the snack meal check were verified.
 
 ### 8.4 `life_notification_deliveries`
 
