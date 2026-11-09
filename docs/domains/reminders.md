@@ -195,7 +195,7 @@ The existing partner record source continues to notify only the other authentica
 - `estimated` meals, later edits to confirmed snacks, deleted meals, historical backfills, personal note and photo do not trigger separate Life updates. Multiple snacks are deduped by their own meal IDs; daily main meals/mood/sleep stay deduped by actor/day/type.
 - The existing five-minute quiet window (maximum 15-minute accumulation), actor/date grouping, retry and delivery reservation remain. Details are re-read at dispatch so deleted/unconfirmed food is not announced. Changed items can affect content before delivery, but notifications never guess unknown calories or imply a note/photo detail.
 - Names are capped at four items, 32 characters each, with HTML escaping; never expose unrestricted user notes. Sent messages still include the centralized Beside site footer. No changes to the 21:00 summary, Legacy Game facts or provider.
-- Forward SQL: `20261109190000_partner_record_detail_notifications.sql`; **do not claim live until this migration is separately authorized/applied and runtime is verified**.
+- Forward SQL: `20261109190000_partner_record_detail_notifications.sql`; **Production verified 2026-11-09:** this migration was applied with explicit authorization; the existing scheduler, permissions and live canonical detail renderer were read-only checked. Actual new PushPlus message receipt remains to be validated on the next genuine partner entry..
 
 ## 11. Scheduler
 
