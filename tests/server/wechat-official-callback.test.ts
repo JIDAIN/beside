@@ -116,7 +116,9 @@ describe("WeChat official account secure callback", () => {
   it("accepts signed WeChat octet-stream and omitted media type without weakening signatures", async () => {
     const payload = encryptedMessage(message("你好"));
     for (const headers of [{ "Content-Type": "application/octet-stream" }, {}]) {
-      const response = await POST(new Request(payload.url, { method: "POST", headers, body: payload.xml }));
+      const response = await POST(new Request(payload.url, {
+        method: "POST", headers, body: new TextEncoder().encode(payload.xml),
+      }));
       expect(response.status).toBe(200);
       const encrypted = decodeWechatXmlValue(await response.text(), "Encrypt");
       expect(encrypted).toBeTruthy();
