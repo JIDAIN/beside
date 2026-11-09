@@ -218,3 +218,12 @@ Read-only Vercel deployment history shows latest READY production deployment `dp
 - Deployment `dpl_4Ep5FbZpAnNmLuPXjd9PJdcqCuMz` reached `READY`, with production alias `couple-better-game.vercel.app` and exact requested GitHub SHA. PR #110 Build, Lint and 458/458 tests passed.
 - First 15-minute error/fatal runtime log scan and callback-route runtime error scan returned no entries. **Real WeChat POST inbound and encrypted passive reply remain unverified** pending a fresh user `你好` message; absence of errors alone does not prove delivery.
 - This release made no Supabase write/migration or WeChat console changes. GitHub documentation-only commit after rollout may now be ahead of deployed source, without implying a new release.
+
+## 2026-11-09 Partner life detail notifications — Production Supabase release
+
+- User authorized the reminder release. SQL source: GitHub PR #111 / commit `70d6a6ae65272abe6ad17d6b3dd9292351428e7c`; applied through Supabase migration API as `partner_record_detail_notifications`, ledger `20261109111535`.
+- Before applying, the complete migration was evaluated inside a transaction then rolled back; subsequent read-only checks verified no test DDL remained. Production migration apply returned success.
+- Post-release read-only checks: 3 existing event capture triggers present, 2 expected snack/daily unique indexes, added `meal_id` column and snack-only constraint, `life_partner_record_detail` function present, no pending old events. The existing `life-pushplus-reminders-v1` scheduler remains active; anon/authenticated roles cannot execute the private detail function.
+- A read-only sample of 10 confirmed existing meals (including 4 snacks) successfully rendered 10 detail strings; no personal content was logged or returned, and no actual Life records were changed.
+- This release is SQL-only. Vercel Production remains at its prior ready deployment (`dpl_4Ep5FbZpAnNmLuPXjd9PJdcqCuMz`); no new Vercel deployment was necessary or created. New GitHub documentation commits do not imply Web production deploys.
+- **Still outstanding:** real new confirmed snack and partner message recipient PushPlus acceptance/phone display. Existing user records were not modified or synthetic records inserted for smoke tests.
