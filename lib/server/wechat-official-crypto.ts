@@ -20,7 +20,7 @@ export class WechatCallbackError extends Error {
 
 const MAX_XML_BYTES = 64 * 1024;
 const SAFE_STRING = /^[\w-]{1,128}$/;
-const AES_KEY = /^[a-zA-Z0-9]{43}$/;
+const AES_KEY = /^[a-zA-Z0-9+/]{43}$/;
 
 export function loadWechatOfficialConfig(env: NodeJS.ProcessEnv = process.env): WechatOfficialConfig {
   const appId = env.WECHAT_OFFICIAL_APP_ID?.trim() ?? "";
