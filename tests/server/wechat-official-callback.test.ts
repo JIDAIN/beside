@@ -113,6 +113,22 @@ describe("WeChat official account secure callback", () => {
     expect(await reply.text()).toBe("success");
   });
 
+  it("accepts signed WeChat octet-stream and omitted media type without weakening signatures", async () => {
+    const payload = encryptedMessage(message("你好"));
+    for (const headers of [{ "Content-Type": "application/octet-stream" }, {}]) {
+      const response = await POST(new Request(payload.url, { method: "POST", headers, body: payload.xml }));
+      expect(response.status).toBe(200);
+      const encrypted = decodeWechatXmlValue(await response.text(), "Encrypt");
+      expect(encrypted).toBeTruthy();
+      expect(decodeWechatXmlValue(decryptWechatPayload(encrypted!, loadWechatOfficialConfig()), "Content")).toContain("团子来啦");
+    }
+    const tampered = payload.url.replace("msg_signature=", "msg_signature=0");
+    const rejection = await POST(new Request(tampered, {
+      method: "POST", headers: { "Content-Type": "application/octet-stream" }, body: payload.xml,
+    }));
+    expect(rejection.status).toBe(403);
+  });
+
   it("rejects modified ciphertext, invalid signatures, oversized and malformed messages", async () => {
     const payload = encryptedMessage(message("你好"));
     const headers = { "Content-Type": "application/xml" };
