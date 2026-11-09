@@ -204,3 +204,11 @@ Read-only Vercel deployment history shows latest READY production deployment `dp
 - Existing deployment `dpl_B8vBTDaaEiPTtDgaKvfBX9uSoXqB` remains READY. Recent Vercel runtime error scans had no entries, but route contained no diagnostic logs, so request delivery and failure stage could not be established. The Hobby observability API did not provide request-level evidence.
 - PR #110 merged as `f58937faf4bc82c448f968bbf4b4135111fdbc0c`: POST now accepts signed XML with application/xml, text/xml, application/octet-stream or absent Content-Type; strict `encrypt_type=aes`, `msg_signature`, AES/AppID, size and XML validation remain unchanged. Privacy-safe stage/status logging does **not** output user messages, OpenID, URL, ciphertext or secrets.
 - CI: Build, Lint and all **458/458 tests** passed. No new Supabase migration, production write or Vercel deployment performed. Current production **does not yet contain PR #110**, and live reply failure remains unverified until a separately authorized deployment and new end-to-end WeChat message test.
+
+## 2026-11-09 WeChat callback compatibility fix Production rollout
+
+- User explicitly authorized this Vercel Production deployment only. Verified GitHub main `85a3aee45dcf27038c3ab0c6a792488ee57308e5` against previously deployed `6b4c0e2f6e8e04d77ccfd912d0a2c4ab53afb80b`; only WeChat callback route, tests and owning docs changed.
+- Three required `WECHAT_OFFICIAL_*` variables were confirmed present for Production without decrypting or exposing secret values.
+- Deployment `dpl_4Ep5FbZpAnNmLuPXjd9PJdcqCuMz` reached `READY`, with production alias `couple-better-game.vercel.app` and exact requested GitHub SHA. PR #110 Build, Lint and 458/458 tests passed.
+- First 15-minute error/fatal runtime log scan and callback-route runtime error scan returned no entries. **Real WeChat POST inbound and encrypted passive reply remain unverified** pending a fresh user `你好` message; absence of errors alone does not prove delivery.
+- This release made no Supabase write/migration or WeChat console changes. GitHub documentation-only commit after rollout may now be ahead of deployed source, without implying a new release.
