@@ -205,6 +205,12 @@ Read-only Vercel deployment history shows latest READY production deployment `dp
 - PR #110 merged as `f58937faf4bc82c448f968bbf4b4135111fdbc0c`: POST now accepts signed XML with application/xml, text/xml, application/octet-stream or absent Content-Type; strict `encrypt_type=aes`, `msg_signature`, AES/AppID, size and XML validation remain unchanged. Privacy-safe stage/status logging does **not** output user messages, OpenID, URL, ciphertext or secrets.
 - CI: Build, Lint and all **458/458 tests** passed. No new Supabase migration, production write or Vercel deployment performed. Current production **does not yet contain PR #110**, and live reply failure remains unverified until a separately authorized deployment and new end-to-end WeChat message test.
 
+## 2026-11-09 Partner life update details (GitHub implementation; Production pending)
+
+- New forward migration `20261109190000_partner_record_detail_notifications.sql` expands the existing partner PushPlus event capture to include individual confirmed snacks and renders factual current mood, sleep duration, meal items and known/unknown kcal (no user notes or photos). Grouping, delivery provider, recipient preference and 21:00 summary remain unchanged.
+- No migration applied to Production Supabase and no Vercel Preview/Production deployment authorized for this feature; not live. Requires separate Production Supabase migration authorization and disposable-database SQL verification.
+- Pending direct Cat/Fish PushPlus delivery smoke after deployment; do not mistake GitHub CI passing for runtime proof.
+
 ## 2026-11-09 WeChat callback compatibility fix Production rollout
 
 - User explicitly authorized this Vercel Production deployment only. Verified GitHub main `85a3aee45dcf27038c3ab0c6a792488ee57308e5` against previously deployed `6b4c0e2f6e8e04d77ccfd912d0a2c4ab53afb80b`; only WeChat callback route, tests and owning docs changed.
