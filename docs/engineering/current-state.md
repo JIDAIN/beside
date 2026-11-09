@@ -197,3 +197,10 @@ Read-only Vercel deployment history shows latest READY production deployment `dp
 - Post-release 15-minute error/fatal deployment log and callback-route runtime error scans found no entries. This does **not** prove a successful WeChat GET configuration handshake or real incoming message roundtrip: those remain manual Tencent backend / WeChat tests.
 - No Supabase migration or Life data operation, no official account backend activation. Existing PushPlus remains in use.
 - This docs-only GitHub commit postdates the deployed commit and does not itself represent another Production deployment.
+
+## 2026-11-09 WeChat inbound reply incident investigation (GitHub main only)
+
+- Account admin confirmed message-push status `已启用`, supporting a successful initial server URL GET verification; end-user `你好` did not yield a reply. A successful GET handshake does not prove the actual encrypted POST message / passive reply flow.
+- Existing deployment `dpl_B8vBTDaaEiPTtDgaKvfBX9uSoXqB` remains READY. Recent Vercel runtime error scans had no entries, but route contained no diagnostic logs, so request delivery and failure stage could not be established. The Hobby observability API did not provide request-level evidence.
+- PR #110 merged as `f58937faf4bc82c448f968bbf4b4135111fdbc0c`: POST now accepts signed XML with application/xml, text/xml, application/octet-stream or absent Content-Type; strict `encrypt_type=aes`, `msg_signature`, AES/AppID, size and XML validation remain unchanged. Privacy-safe stage/status logging does **not** output user messages, OpenID, URL, ciphertext or secrets.
+- CI: Build, Lint and all **458/458 tests** passed. No new Supabase migration, production write or Vercel deployment performed. Current production **does not yet contain PR #110**, and live reply failure remains unverified until a separately authorized deployment and new end-to-end WeChat message test.
