@@ -27,7 +27,7 @@ Browser session → /api/ai/chat → AI Gateway → registry/executor → canoni
 - `GET /api/wechat/official/callback`：公众号服务器接入 URL 验证；校验时间戳、nonce 与签名，返回 `echostr`。支持公众号常规明文验证及带 `msg_signature` 的加密 challenge。
 - `POST /api/wechat/official/callback`：仅接收 XML 安全模式（`encrypt_type=aes`），验证 SHA-1 消息签名、AES-256-CBC 解密、校验解密尾部 AppID，再解析有限字段；仅 `你好/hi/hello` 返回加密的固定欢迎语，其余消息回复 `success`。
 - V1 不调用 AI、Supabase、生活记录服务或主动通知；没有 Cat/Fish 绑定，不把 `FromUserName` OpenID 当作可信 Life actor。被重复投递的消息只会重复产生无副作用的回复；**尚无跨 Serverless 实例的持久化去重**。
-- 签名不通过、配置缺失、非法 XML/密文均拒绝，消息正文不记录日志；XML 解析限制大小并拒绝 DTD/Entity，不做任意 XML 扩展。
+- 签名不通过、配置缺失、非法 XML/密文均拒绝；兼容微信的 XML、octet-stream 及缺省 Content-Type，但始终必须核验 AES 消息签名。诊断日志仅记录固定阶段名与 HTTP 状态码，不记录消息正文、OpenID、URL、密文或密钥；XML 解析限制大小并拒绝 DTD/Entity，不做任意 XML 扩展。
 - 相关实现：`app/api/wechat/official/callback/route.ts`、`lib/server/wechat-official-crypto.ts`；接口现阶段仅存在于 GitHub 开发代码，正式可用仍取决于当次部署和微信后台 URL 验收。
 
 ## 3. Web Authentication API
