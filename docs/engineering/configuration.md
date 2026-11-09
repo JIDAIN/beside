@@ -51,6 +51,18 @@ DATA_EDIT_PASSWORD
 != MCP OAuth secret
 ~~~
 
+## 5A. 微信公众号安全模式回调（待发布）
+
+| Server-only config | 用途 | 是否必须 |
+|---|---|---|
+| `WECHAT_OFFICIAL_APP_ID` | 公众号 AppID，解密尾部归属校验 | 是 |
+| `WECHAT_OFFICIAL_TOKEN` | 消息推送配置中的 3–32 位签名 Token | 是 |
+| `WECHAT_OFFICIAL_ENCODING_AES_KEY` | 公众号生成的 43 字符消息加解密密钥 | 是 |
+
+三者由运行环境提供。公众号后台 URL 为 `https://couple-better-game.vercel.app/api/wechat/official/callback`，数据格式 XML、消息安全模式。不要把 Token/AESKey 放进代码、客户端变量、聊天或 Git 文档；Vercel 配好对应服务端环境变量并部署后，才能提交微信后台配置以执行 GET 验证。首次验证失败先检查域名、密钥、服务器时间与后台的密文模式。
+
+V1 无需启用 AppSecret，不使用 Access Token，也不进行 Cat/Fish 身份绑定、数据库写入或 AI 操作。后续修改这些能力须另行评估权限与防重放持久化。
+
 ## 6. Vault / DB-managed Secrets
 
 当前 PushPlus token、微信测试号 AppID/AppSecret/Template/OpenID 等由 server/Supabase Vault/DB 管理，不用公开 env 文档保存真实值。
