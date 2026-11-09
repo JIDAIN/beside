@@ -188,6 +188,15 @@ Production 正式文案的最终事实源是当前 Supabase functions，例如 l
 - 只有新生成的消息拥有具体链接，历史已发消息不追溯修改；发布须应用 forward migration `20261106150000_together_notification_deep_links.sql`。
 - 微信内置浏览器与系统浏览器 Cookie 可能隔离，真实跳转、登录保持、通知 HTML 显示需在发布后验收。
 
+### Partner Life updates — concrete facts in PushPlus (GitHub main code; Production migration pending)
+
+The existing partner record source continues to notify only the other authenticated Life actor using her `partner_record_notifications_enabled` switch and the existing PushPlus delivery pipeline. For the first eligible record of the local day it reports the **current** canonical mood label or sleep duration; confirmed breakfast/lunch/dinner reports up to four food-item names and the recorded calorie total. Every **confirmed snack** is an independent event, labelled 上午/下午/晚上加餐 according to `snack_period`, including its own food names and known/unknown kcal.
+
+- `estimated` meals, later edits to confirmed snacks, deleted meals, historical backfills, personal note and photo do not trigger separate Life updates. Multiple snacks are deduped by their own meal IDs; daily main meals/mood/sleep stay deduped by actor/day/type.
+- The existing five-minute quiet window (maximum 15-minute accumulation), actor/date grouping, retry and delivery reservation remain. Details are re-read at dispatch so deleted/unconfirmed food is not announced. Changed items can affect content before delivery, but notifications never guess unknown calories or imply a note/photo detail.
+- Names are capped at four items, 32 characters each, with HTML escaping; never expose unrestricted user notes. Sent messages still include the centralized Beside site footer. No changes to the 21:00 summary, Legacy Game facts or provider.
+- Forward SQL: `20261109190000_partner_record_detail_notifications.sql`; **do not claim live until this migration is separately authorized/applied and runtime is verified**.
+
 ## 11. Scheduler
 
 当前 Production 有两条 active cron：

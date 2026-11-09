@@ -383,6 +383,18 @@ completed_at nullable
 
 current status：pending / snoozed / completed / dismissed。`(couple_space_id, recipient, dedupe_key)` 唯一。
 
+### 8.3A `life_partner_record_events`
+
+Partner-life-notification internal event ledger (not a second source of Life truth):
+
+~~~text
+id / couple_space_id / source_actor
+record_date / record_kind / meal_id nullable
+created_at / delivered_at nullable
+~~~
+
+`record_kind`: mood/sleep/breakfast/lunch/dinner/snack. The first five use unique (space, actor, date, kind), while snack uses unique (space, actor, canonical meal_id), allowing multiple snacks on the same day/period. `meal_id` is required for snack events and null for the original daily event kinds. All details are resolved from current Life canonical tables at dispatch, and no historical item/note/photo snapshot is persisted here. RLS remains enabled, with service-only access. The snack extension is pending its separately authorized Production migration.
+
 ### 8.4 `life_notification_deliveries`
 
 ~~~text
