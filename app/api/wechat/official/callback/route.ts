@@ -14,6 +14,18 @@ export const dynamic = "force-dynamic";
 
 const NO_STORE = { "Cache-Control": "no-store, max-age=0", "X-Content-Type-Options": "nosniff" };
 const WELCOME = "主人主人～团子来啦！💕\n这里是伴岛 Beside。我们已经连上微信啦～现在先试运行简单问候，生活记录和 AI 操作还没有开放哦。";
+type CallbackStage = "configuration" | "query" | "media" | "size" | "signature" | "decrypt" | "fields" | "ignored" | "replied" | "error";
+
+/** Privacy-safe diagnostics: never log request URLs, bodies, identifiers, ciphertext or secrets. */
+function callbackLog(stage: CallbackStage, status: number) {
+  console.info("wechat_official_callback", { stage, status });
+}
+
+function rejectPost(stage: CallbackStage, status: number, message = "invalid callback") {
+  callbackLog(stage, status);
+  return textResponse(message, status);
+}
+
 
 function textResponse(body: string, status = 200, type = "text/plain; charset=utf-8") {
   return new Response(body, {
@@ -67,33 +79,47 @@ export async function GET(request: Request) {
  * the handler performs no writes, notifications, AI calls or user binding.
  */
 export async function POST(request: Request) {
+  let stage: CallbackStage = "configuration";
   try {
     const config = loadWechatOfficialConfig();
+    stage = "query";
     const q = query(request);
-    if (q.encryptedType !== "aes" || !q.messageSignature) return textResponse("invalid callback", 403);
-    if (!/^(application\/xml|text\/xml)(?:\s*;|$)/i.test(request.headers.get("content-type") || "")) {
-      return textResponse("unsupported media type", 415);
+    if (q.encryptedType !== "aes" || !q.messageSignature) return rejectPost(stage, 403);
+    stage = "media";
+    // WeChat may use text/xml, application/xml, application/octet-stream, or
+    // omit Content-Type. Treat the signed and size-limited XML body as authoritative.
+    const mediaType = (request.headers.get("content-type") || "").split(";")[0].trim().toLowerCase();
+    if (mediaType && !["application/xml", "text/xml", "application/octet-stream"].includes(mediaType)) {
+      return rejectPost(stage, 415, "unsupported media type");
     }
+    stage = "size";
     const body = await request.text();
-    if (Buffer.byteLength(body, "utf8") > 64 * 1024) return textResponse("request too large", 413);
+    if (Buffer.byteLength(body, "utf8") > 64 * 1024) return rejectPost(stage, 413, "request too large");
+    stage = "signature";
     const encrypted = decodeWechatXmlValue(body, "Encrypt");
     if (!encrypted || !verifyWechatSignature(config.token, q.timestamp, q.nonce, q.messageSignature, encrypted)) {
-      return textResponse("invalid callback", 403);
+      return rejectPost(stage, 403);
     }
+    stage = "decrypt";
     const decrypted = decryptWechatPayload(encrypted, config);
+    stage = "fields";
     const sender = decodeWechatXmlValue(decrypted, "FromUserName");
     const receiver = decodeWechatXmlValue(decrypted, "ToUserName");
     const messageType = decodeWechatXmlValue(decrypted, "MsgType");
     const content = decodeWechatXmlValue(decrypted, "Content");
 
-    if (!sender || !receiver || !messageType) return textResponse("invalid callback", 400);
-    // Non-text / non-greeting messages have no actions and require no reply.
+    if (!sender || !receiver || !messageType) return rejectPost(stage, 400);
     if (messageType !== "text" || !content || !["你好", "hello", "hi"].includes(content.trim().toLowerCase())) {
+      callbackLog("ignored", 200);
       return textResponse("success");
     }
     const reply = makeWechatTextReply(sender, receiver, WELCOME);
-    return textResponse(encryptWechatReply(reply, config), 200, "application/xml; charset=utf-8");
+    const encryptedReply = encryptWechatReply(reply, config);
+    callbackLog("replied", 200);
+    return textResponse(encryptedReply, 200, "application/xml; charset=utf-8");
   } catch (error) {
-    return reject(error);
+    const response = reject(error);
+    callbackLog(error instanceof WechatCallbackError && error.code === "configuration" ? "configuration" : stage, response.status);
+    return response;
   }
 }
