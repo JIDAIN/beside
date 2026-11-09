@@ -188,3 +188,12 @@ Read-only Vercel deployment history shows latest READY production deployment `dp
 - V1 does not run AI, call Life APIs, bind Cat/Fish identities, query Supabase, or mutate data. Handler is stateless/idempotent for repeated deliveries; persistent cross-instance duplicate tracking is not implemented.
 - CI completed successfully: Build, Lint, **457/457 tests (80 test files)**. Tests exercise signed GET, encrypted GET challenge, POST encrypted roundtrip, response signature, invalid/expired signature, malformed/oversized XML, AppID mismatch and no-action responses.
 - **No Vercel Preview/Production deployment or Production Supabase write was performed.** WeChat console server URL was not enabled or verified, and no live phone message receipt/reply test was performed. Production remains on its prior release until separate deployment authorization.
+
+## 2026-11-09 WeChat Official Account V1 Production rollout
+
+- Explicit user authorization for this Vercel Production deployment. GitHub main source `6b4c0e2f6e8e04d77ccfd912d0a2c4ab53afb80b` was compared with previously deployed source `2362a39750d17d901c8a3a2f5b2e19611af730e2`; changes only concern WeChat callback, tests and documentation.
+- Project `beside` Production environment was verified to contain three required server-only keys `WECHAT_OFFICIAL_APP_ID`, `WECHAT_OFFICIAL_TOKEN`, `WECHAT_OFFICIAL_ENCODING_AES_KEY` without decrypting their values. No new secrets were stored in GitHub or disclosed in chat.
+- Vercel deployment `dpl_B8vBTDaaEiPTtDgaKvfBX9uSoXqB` reached `READY`, correct production alias `couple-better-game.vercel.app`, matching source SHA `6b4c0e2f6e8e04d77ccfd912d0a2c4ab53afb80b`.
+- Post-release 15-minute error/fatal deployment log and callback-route runtime error scans found no entries. This does **not** prove a successful WeChat GET configuration handshake or real incoming message roundtrip: those remain manual Tencent backend / WeChat tests.
+- No Supabase migration or Life data operation, no official account backend activation. Existing PushPlus remains in use.
+- This docs-only GitHub commit postdates the deployed commit and does not itself represent another Production deployment.
